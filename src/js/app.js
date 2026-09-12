@@ -81,7 +81,7 @@ const app = createApp({
 
     function setMainTab(tabKey) {
       activeMainTab.value = tabKey;
-      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       if (tabKey === 'advisories' || tabKey === 'all') {

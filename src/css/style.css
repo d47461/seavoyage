@@ -7263,8 +7263,8 @@ button, a, input, select, textarea {
    ADAPTIVE CATEGORY TABS BREAKPOINTS FOR ALL SCREEN SIZES
    ========================================================================== */
 
-/* Breakpoint 1: Medium Laptops & Desktops (900px to 1240px) */
-@media (max-width: 1240px) and (min-width: 900px) {
+/* Breakpoint 1: Medium Laptops & Desktops (1025px to 1280px) */
+@media (max-width: 1280px) and (min-width: 1025px) {
   .main-tab-nav {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.45rem;
@@ -7300,50 +7300,13 @@ button, a, input, select, textarea {
   }
 }
 
-/* Breakpoint 2: Landscape Tablets & Intermediate Screens (769px to 1024px) */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .main-tab-nav {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.45rem;
-  }
-
-  .main-tab-btn {
-    padding: 0.65rem 0.5rem;
-    min-height: 54px;
-  }
-
-  .tab-btn-inner {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 0.35rem;
-  }
-
-  .tab-title-row {
-    justify-content: center;
-    font-size: 0.84rem;
-    gap: 0.35rem;
-    text-align: center;
-  }
-
-  .tab-icon {
-    font-size: 1.05rem;
-  }
-
-  .tab-badge {
-    font-size: 0.62rem;
-    padding: 0.15rem 0.45rem;
-  }
-}
-
 /* ==========================================================================
-   MOBILE & SMARTPHONE UI: NATIVE FLOATING BOTTOM NAVIGATION APP BAR (<= 768px)
+   MOBILE SMARTPHONE & TABLET / "TAB" UI: NATIVE BOTTOM NAVIGATION APP BAR (<= 1024px)
    ========================================================================== */
-@media (max-width: 768px) {
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
   /* Accommodate fixed bottom app bar height so content is never obscured */
   .app-container {
-    padding-bottom: calc(78px + env(safe-area-inset-bottom, 12px)) !important;
+    padding-bottom: calc(85px + env(safe-area-inset-bottom, 15px)) !important;
   }
 
   /* Fixed Bottom App Bar Container */
@@ -7356,7 +7319,7 @@ button, a, input, select, textarea {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.3rem 0.6rem calc(0.45rem + env(safe-area-inset-bottom, 10px)) 0.6rem !important;
+    padding: 0.35rem 0.6rem calc(0.45rem + env(safe-area-inset-bottom, 10px)) 0.6rem !important;
     background: rgba(6, 18, 34, 0.94) !important;
     backdrop-filter: blur(24px) !important;
     -webkit-backdrop-filter: blur(24px) !important;
@@ -7365,21 +7328,21 @@ button, a, input, select, textarea {
     border-right: none !important;
     border-bottom: none !important;
     border-radius: 20px 20px 0 0 !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.65), 0 -1px 0 rgba(255, 255, 255, 0.08) !important;
     z-index: 9999 !important;
   }
 
-  /* 4 Equal Items Across the Mobile Screen */
+  /* 4 Equal Items Across the Mobile / Tablet Screen */
   .main-tab-nav {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    gap: 0.25rem !important;
+    gap: 0.3rem !important;
     width: 100% !important;
-    max-width: 520px !important;
+    max-width: 580px !important;
     margin: 0 auto !important;
   }
 
-  /* Native Mobile App Bar Item */
+  /* Native Mobile / Tablet App Bar Item */
   .main-tab-btn {
     display: flex !important;
     flex-direction: column !important;
@@ -7387,7 +7350,7 @@ button, a, input, select, textarea {
     justify-content: center !important;
     width: 100% !important;
     min-height: 52px !important;
-    padding: 0.35rem 0.2rem !important;
+    padding: 0.35rem 0.25rem !important;
     background: transparent !important;
     border: none !important;
     border-radius: 12px !important;
@@ -7428,7 +7391,7 @@ button, a, input, select, textarea {
   }
 
   .tab-icon {
-    font-size: 1.22rem !important;
+    font-size: 1.25rem !important;
     color: var(--text-muted, #94a3b8) !important;
     transition: all 0.2s ease !important;
     position: relative !important;
@@ -7444,7 +7407,7 @@ button, a, input, select, textarea {
   }
 
   .tab-label {
-    font-size: 0.72rem !important;
+    font-size: 0.74rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.2px !important;
     color: var(--text-muted, #94a3b8) !important;
@@ -7458,7 +7421,7 @@ button, a, input, select, textarea {
     font-weight: 800 !important;
   }
 
-  /* Concise Labels on Mobile Phone App Bar */
+  /* Concise Labels on Mobile & Tablet App Bar */
   .tab-label-full {
     display: none !important;
   }
@@ -7487,6 +7450,33 @@ button, a, input, select, textarea {
 
   .tab-badge span {
     font-size: 0.52rem !important;
+  }
+}
+
+/* Floating Dock Styling on Tablets / "Tabs" (601px to 1024px) */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .main-tab-nav-wrapper {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 3rem) !important;
+    max-width: 620px !important;
+    bottom: 12px !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(0, 240, 255, 0.32) !important;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.18) !important;
+    padding: 0.4rem 0.85rem !important;
+  }
+
+  .main-tab-btn {
+    min-height: 56px !important;
+  }
+
+  .tab-label {
+    font-size: 0.8rem !important;
+  }
+
+  .tab-icon {
+    font-size: 1.35rem !important;
   }
 }
 
@@ -7597,8 +7587,8 @@ button, a, input, select, textarea {
   border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Mobile Theme Overrides for Bottom Navigation App Bar */
-@media (max-width: 768px) {
+/* Mobile & Tablet Theme Overrides for Bottom Navigation App Bar */
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
   [data-theme="light"] .main-tab-nav-wrapper {
     background: rgba(255, 255, 255, 0.96) !important;
     border-top: 1px solid #cbd5e1 !important;
