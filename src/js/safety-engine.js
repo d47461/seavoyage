@@ -1,5 +1,5 @@
 // Maritime Travel Safety Assessment Engine with Maldives Meteorological Service (MMS) Integration
-import { getRelativeSeaAspect } from './marine-api.js?v=20260912-v6';
+import { getRelativeSeaAspect } from './marine-api.js?v=20260912-v7';
 
 export const VESSEL_PROFILES = {
   maldives_speedboat: {

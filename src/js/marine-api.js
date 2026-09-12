@@ -5,7 +5,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './locations.js?v=20260912-v6';
+} from './locations.js?v=20260912-v7';
 
 export {
   MALDIVES_ISLANDS_DATABASE,
@@ -147,7 +147,7 @@ export async function fetchMMSAlerts() {
     }
     
     if (!res || !res.ok) {
-      res = await fetch('src/data/mms-alerts.json?v=20260912-v6');
+      res = await fetch('src/data/mms-alerts.json?v=20260912-v7');
     }
 
     if (res && res.ok) {

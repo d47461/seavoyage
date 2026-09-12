@@ -23,7 +23,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './marine-api.js?v=20260912-v6';
+} from './marine-api.js?v=20260912-v7';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
@@ -31,10 +31,10 @@ import {
   getDouglasSeaState,
   evaluateDayTripPlanning,
   generateTenDayTripSummary
-} from './safety-engine.js?v=20260912-v6';
+} from './safety-engine.js?v=20260912-v7';
 import { 
   generateCaptainAdvisory 
-} from './ai-advisory.js?v=20260912-v6';
+} from './ai-advisory.js?v=20260912-v7';
 import { 
   initAuthListener, 
   loginAnonymously, 
@@ -44,21 +44,21 @@ import {
   saveFavoriteLocation, 
   fetchFavoriteLocations, 
   removeFavoriteLocation 
-} from './firebase-config.js?v=20260912-v6';
+} from './firebase-config.js?v=20260912-v7';
 import {
   getMoonPhaseInfo,
   getTidePrediction,
   getVisibilityAnalysis,
   findBestTravelWindow
-} from './tide-lunar.js?v=20260912-v6';
+} from './tide-lunar.js?v=20260912-v7';
 import {
   evaluateFishingConditions,
   MALDIVES_FISHING_HOTSPOTS
-} from './fishing-engine.js?v=20260912-v6';
+} from './fishing-engine.js?v=20260912-v7';
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
-} from './nakaiy-engine.js?v=20260912-v6';
+} from './nakaiy-engine.js?v=20260912-v7';
 
 const app = createApp({
   setup() {

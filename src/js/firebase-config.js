@@ -1,8 +1,10 @@
 // Firebase v10 Modular SDK Integration
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { 
-  getAuth, 
-  signInAnonymously, 
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  getAuth,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
@@ -46,7 +48,14 @@ let isFirebaseInitialized = false;
 
 try {
   app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
+  // Initialize Auth with IndexedDB/LocalStorage persistence, eliminating unnecessary OAuth iframe injection
+  try {
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+    });
+  } catch (authInitErr) {
+    auth = getAuth(app);
+  }
   db = getFirestore(app);
   isFirebaseInitialized = true;
   console.log("Firebase initialized successfully with project:", firebaseConfig.projectId);
