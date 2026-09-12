@@ -282,12 +282,12 @@ h1, h2, h3, h4, h5, h6, .brand-title, .section-label, .port-name-main {
   min-width: 320px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 0.5rem 1rem 1rem;
+  padding: 0.5rem 1rem 0;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.5rem;
   overflow: hidden;
 }
 
@@ -1523,8 +1523,8 @@ button, a, input, select, textarea {
 /* Tablet & Medium Desktops (<= 1100px) */
 @media (max-width: 1100px) {
   .app-container {
-    padding: 1.25rem 1.5rem 3.5rem;
-    gap: 1.5rem;
+    padding: 0.4rem 0.85rem 0;
+    gap: 0.5rem;
   }
 
   .metrics-grid {
@@ -1595,8 +1595,8 @@ button, a, input, select, textarea {
 /* Phablets & Large Mobiles (<= 768px) */
 @media (max-width: 768px) {
   .app-container {
-    padding: 1rem 1rem 3rem;
-    gap: 1.25rem;
+    padding: 0.35rem 0.6rem 0;
+    gap: 0.45rem;
   }
 
   /* Navbar */
@@ -1848,8 +1848,8 @@ button, a, input, select, textarea {
 /* Small Smart Phones (<= 400px, e.g. iPhone SE, Galaxy A) */
 @media (max-width: 400px) {
   .app-container {
-    padding: 0.75rem 0.65rem 2.5rem;
-    gap: 1rem;
+    padding: 0.25rem 0.4rem 0;
+    gap: 0.4rem;
   }
 
   .navbar {
@@ -3616,24 +3616,29 @@ button, a, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   background: rgba(8, 22, 45, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 240, 255, 0.28);
   border-radius: var(--radius-lg);
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .atoll-selector-left {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .atoll-selector-label {
@@ -3652,14 +3657,16 @@ button, a, input, select, textarea {
   background: rgba(5, 14, 30, 0.9);
   border: 1px solid rgba(0, 240, 255, 0.4);
   color: #ffffff;
-  padding: 0.45rem 0.95rem;
+  padding: 0.45rem 0.75rem;
   border-radius: var(--radius-md);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .atoll-custom-select:hover,
@@ -3673,6 +3680,8 @@ button, a, input, select, textarea {
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .atoll-chip {
@@ -4117,38 +4126,21 @@ button, a, input, select, textarea {
   letter-spacing: 0.5px;
 }
 
-.a4-bulletin-nav-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.6rem 1.15rem;
-  background: linear-gradient(135deg, #0284c7 0%, #00f0ff 100%);
-  color: #040e1c;
-  font-size: 0.92rem;
-  font-weight: 800;
-  border-radius: var(--radius-md);
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
-  transition: all 0.25s ease;
-}
-
-.a4-bulletin-nav-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 22px rgba(0, 240, 255, 0.6);
-  filter: brightness(1.1);
-}
-
 /* ==========================================================================
    SITE FOOTER (CONCEPT BY AHMED NIMAL)
    ========================================================================== */
 .site-footer {
-  margin-top: 3.5rem;
-  background: rgba(4, 12, 28, 0.92);
-  border-top: 1px solid rgba(0, 240, 255, 0.2);
-  padding: 1.6rem 2.5rem;
+  margin-top: 1.75rem;
+  background: rgba(6, 18, 36, 0.78);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-radius: 14px;
+  padding: 1.25rem 1.75rem;
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .site-footer::before {
@@ -6057,16 +6049,6 @@ button, a, input, select, textarea {
   color: #000000 !important;
 }
 
-[data-theme="dark"] .a4-bulletin-nav-btn {
-  background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 100%) !important;
-  color: #09090b !important;
-  border: 1px solid #ffffff !important;
-  box-shadow: 0 2px 14px rgba(255, 255, 255, 0.25) !important;
-}
-
-[data-theme="dark"] .a4-bulletin-nav-btn i {
-  color: #09090b !important;
-}
 
 [data-theme="dark"] .btn-icon {
   background: #121216 !important;
@@ -7806,9 +7788,13 @@ button, a, input, select, textarea {
    MOBILE SMARTPHONE & TABLET / "TAB" UI: NATIVE BOTTOM NAVIGATION APP BAR (<= 1200px)
    ========================================================================== */
 @media (max-width: 1200px), (hover: none) and (pointer: coarse) {
-  /* Accommodate fixed bottom app bar height so content is never obscured */
+  /* Allow container to extend full height; pane handles bottom safe area for fixed bottom app bar */
   .app-container {
-    padding-bottom: calc(85px + env(safe-area-inset-bottom, 15px)) !important;
+    padding-bottom: 0 !important;
+  }
+
+  .single-screen-pane {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)) !important;
   }
 
   /* Fixed Bottom App Bar Container */
@@ -8439,14 +8425,27 @@ button, a, input, select, textarea {
 .single-screen-pane {
   flex: 1;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  gap: 0.65rem;
-  padding-right: 2px;
+  gap: 0.85rem;
+  padding: 0 4px 1.5rem 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 240, 255, 0.25) transparent;
+  scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
+}
+
+.sub-view-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .single-screen-pane::-webkit-scrollbar {
@@ -8472,6 +8471,7 @@ button, a, input, select, textarea {
   padding: 0.25rem 0.35rem;
   margin-bottom: 0.35rem;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -8518,7 +8518,7 @@ button, a, input, select, textarea {
 .single-screen-map-card {
   flex: 1;
   min-height: 380px;
-  height: calc(100dvh - 210px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -8526,6 +8526,15 @@ button, a, input, select, textarea {
   border-radius: 16px;
   padding: 0 !important;
   margin: 0 !important;
+}
+
+@media (max-width: 1100px) {
+  .single-screen-map-card {
+    height: 340px;
+    min-height: 280px;
+    max-height: 48vh;
+    flex: none;
+  }
 }
 
 .single-screen-map-card #sea-map {

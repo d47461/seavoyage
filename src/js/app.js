@@ -257,10 +257,6 @@ const app = createApp({
       }
     }
 
-    // A4 Bulletin Modal & Export State
-    const showA4BulletinModal = ref(false);
-    const isGeneratingJpeg = ref(false);
-    const jpegDownloadSuccess = ref(false);
 
     // Live Date & Time Display Ticker
     const currentClockTime = ref(new Date());
@@ -541,16 +537,16 @@ const app = createApp({
       return 'Solunar';
     });
 
-    // 1-Click export A4 bulletin for optimal window
+    // 1-Click apply window or hourly departure to route planner
     function applyBestWindowToVoyage(win) {
       if (!win) return;
-      openA4BulletinModal();
+      showRoutePlannerModal.value = true;
     }
 
-    // 1-Click export A4 bulletin for specific hourly departure slot
+    // 1-Click apply hourly slot to route planner
     function applyHourToVoyage(slot) {
       if (!slot) return;
-      openA4BulletinModal();
+      showRoutePlannerModal.value = true;
     }
 
     // Formatters
@@ -1184,80 +1180,6 @@ const app = createApp({
       }, 1000);
     });
 
-    // A4 Bulletin Print & JPEG Export Handlers
-    function openA4BulletinModal() {
-      showA4BulletinModal.value = true;
-    }
-
-    async function downloadA4BulletinJpeg() {
-      const sheet = document.getElementById('a4-bulletin-sheet');
-      if (!sheet) return;
-      isGeneratingJpeg.value = true;
-      jpegDownloadSuccess.value = false;
-
-      try {
-        if (window.html2canvas) {
-          const canvas = await window.html2canvas(sheet, {
-            scale: 2, // High-resolution output for crisp reading in WhatsApp / Viber
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#040d1a',
-            logging: false
-          });
-
-          const jpegUrl = canvas.toDataURL('image/jpeg', 0.95);
-          const link = document.createElement('a');
-          const depName = (departureLocation.value.name || 'Maldives').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 18);
-          const dateStr = new Date().toISOString().slice(0, 10);
-          link.download = `SeaVoyage_Safety_First_Travel_with_Confidence_${depName}_${dateStr}.jpg`;
-          link.href = jpegUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          jpegDownloadSuccess.value = true;
-          setTimeout(() => { jpegDownloadSuccess.value = false; }, 4000);
-        } else {
-          printA4Bulletin();
-        }
-      } catch (err) {
-        console.error("A4 Bulletin JPEG export error:", err);
-        printA4Bulletin();
-      } finally {
-        isGeneratingJpeg.value = false;
-      }
-    }
-
-    async function copyA4BulletinImage() {
-      const sheet = document.getElementById('a4-bulletin-sheet');
-      if (!sheet || !window.html2canvas) return;
-      try {
-        const canvas = await window.html2canvas(sheet, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#040d1a'
-        });
-        canvas.toBlob(async (blob) => {
-          if (blob && navigator.clipboard && navigator.clipboard.write) {
-            await navigator.clipboard.write([
-              new ClipboardItem({ 'image/png': blob })
-            ]);
-            alert("Bulletin copied to clipboard! You can now paste directly into WhatsApp, Viber, or Telegram.");
-          } else {
-            downloadA4BulletinJpeg();
-          }
-        }, 'image/png');
-      } catch (e) {
-        console.warn("Clipboard copy fallback:", e);
-        downloadA4BulletinJpeg();
-      }
-    }
-
-    function printA4Bulletin() {
-      const origTitle = document.title;
-      document.title = 'SeaVoyage • Safety First, Travel with Confidence';
-      window.print();
-      setTimeout(() => { document.title = origTitle; }, 1000);
-    }
 
     return {
       departureLocation,
@@ -1360,15 +1282,7 @@ const app = createApp({
       setDepartureToMaafilaafushi,
       selectIsland,
       MAAFILAAFUSHI_PORT,
-      MAAFILAAFUSHI_DEVICE_LOCATION,
-      showA4BulletinModal,
-      isGeneratingJpeg,
-      jpegDownloadSuccess,
       liveClock,
-      openA4BulletinModal,
-      downloadA4BulletinJpeg,
-      copyA4BulletinImage,
-      printA4Bulletin,
       activeMainTab,
       setMainTab,
       activeAdvisorySubTab,

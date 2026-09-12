@@ -28,11 +28,9 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- html2canvas for High-Resolution JPEG Print/Export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-nakaiy" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260912-scrollclean" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -88,12 +86,6 @@
       </div>
 
       <div class="nav-actions">
-        <!-- A4 Print / JPEG Bulletin Service -->
-        <button class="btn-primary a4-bulletin-nav-btn" @click="openA4BulletinModal()"
-          title="Print / Save A4 JPEG Marine Bulletin for WhatsApp/Viber Groups">
-          <i class="fa-solid fa-file-image"></i>
-          <span class="btn-label">screenshot</span>
-        </button>
 
         <!-- Units Toggle -->
         <button class="btn-icon"
@@ -402,16 +394,13 @@
 
             <!-- Action Buttons -->
             <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap;">
-              <button class="btn-primary" @click="openA4BulletinModal()"
-                style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-file-image"></i> Export A4 Bulletin
-              </button>
-              <button class="btn-secondary" @click="fetchAiBrief" :disabled="isAiLoading"
+              <button class="btn-primary" @click="fetchAiBrief" :disabled="isAiLoading"
                 style="display: inline-flex; align-items: center; gap: 0.5rem;">
                 <span v-if="isAiLoading"><i class="fa-solid fa-spinner fa-spin"></i> Chief Mate Analyzing...</span>
                 <span v-else><i class="fa-solid fa-arrows-rotate"></i> Refresh Captain Brief</span>
               </button>
             </div>
+
           </div>
 
           <!-- Score Gauge Radial Meter -->
@@ -447,11 +436,7 @@
                 style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
                 {{ bestTravelWindow.optimal.qualityRating }} ({{ bestTravelWindow.optimal.score }}% Safety Score)
               </span>
-              <button class="btn-primary"
-                style="padding: 0.45rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;"
-                @click="openA4BulletinModal()">
-                <i class="fa-solid fa-file-image"></i> screenshot
-              </button>
+
             </div>
           </div>
 
@@ -692,6 +677,19 @@
           </div>
         </section>
         </div>
+        <!-- Footer with Concept Attribution -->
+        <footer class="site-footer">
+          <div class="footer-container">
+            <div class="footer-brand">
+              <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+              <span>SEAVOYAGE • Plan your trips Safely.</span>
+            </div>
+            <div class="footer-concept-card">
+              <span class="concept-pre">Concept by</span>
+              <span class="concept-name">Ahmed Nimal</span>
+            </div>
+          </div>
+        </footer>
 
       </div> <!-- END TAB PANE 1: TRAVEL & SAFETY ADVISORIES -->
 
@@ -918,10 +916,7 @@
                   style="font-size: 0.95rem; padding: 0.4rem 1rem;">
                   {{ selectedDayForecast.status }} • {{ selectedDayForecast.score }}% Safety Score
                 </span>
-                <button class="btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem;"
-                  @click="openA4BulletinModal()">
-                  <i class="fa-solid fa-file-image"></i> A4 Bulletin
-                </button>
+
               </div>
             </div>
 
@@ -1522,6 +1517,19 @@
           </div>
         </section>
       </div>
+        <!-- Footer with Concept Attribution -->
+        <footer class="site-footer">
+          <div class="footer-container">
+            <div class="footer-brand">
+              <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+              <span>SEAVOYAGE • Plan your trips Safely.</span>
+            </div>
+            <div class="footer-concept-card">
+              <span class="concept-pre">Concept by</span>
+              <span class="concept-name">Ahmed Nimal</span>
+            </div>
+          </div>
+        </footer>
 
     </div> <!-- END TAB PANE 2: WEATHER & MARINE FORECASTS -->
 
@@ -2018,22 +2026,21 @@
           </div> <!-- END SUB-VIEW 5: SPOTS -->
 
         </div> <!-- END .fishing-section -->
+        <!-- Footer with Concept Attribution -->
+        <footer class="site-footer">
+          <div class="footer-container">
+            <div class="footer-brand">
+              <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+              <span>SEAVOYAGE • Plan your trips Safely.</span>
+            </div>
+            <div class="footer-concept-card">
+              <span class="concept-pre">Concept by</span>
+              <span class="concept-name">Ahmed Nimal</span>
+            </div>
+          </div>
+        </footer>
       </div> <!-- END TAB PANE 3: SPORTFISHING INTELLIGENCE -->
     </main>
-
-    <!-- Main Footer with Concept Attribution -->
-    <footer class="site-footer">
-      <div class="footer-container">
-        <div class="footer-brand">
-          <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
-          <span>SEAVOYAGE • Plan your trips Safely.</span>
-        </div>
-        <div class="footer-concept-card">
-          <span class="concept-pre">Concept by</span>
-          <span class="concept-name">Ahmed Nimal</span>
-        </div>
-      </div>
-    </footer>
 
     </div> <!-- END .app-viewport-shell -->
 
@@ -2458,378 +2465,14 @@
         </div>
       </div>
     </div>
+  </div> <!-- end #app -->
 
-    <!-- MODAL 5: A4 Print & JPEG Marine Bulletin -->
-    <div class="modal-overlay a4-modal-overlay" v-if="showA4BulletinModal" @click.self="showA4BulletinModal = false">
-      <div class="a4-modal-container">
-        <!-- Floating Top Toolbar -->
-        <div class="a4-toolbar">
-          <div class="a4-toolbar-title">
-            <i class="fa-solid fa-file-image" style="color: var(--cyan-primary);"></i>
-            <span>SeaVoyage • Safety First, Travel with Confidence</span>
-          </div>
-          <div class="a4-toolbar-actions">
-            <button class="btn-primary" @click="downloadA4BulletinJpeg()" :disabled="isGeneratingJpeg">
-              <i class="fa-solid fa-spinner fa-spin" v-if="isGeneratingJpeg"></i>
-              <i class="fa-solid fa-download" v-else></i>
-              <span>{{ isGeneratingJpeg ? 'Rendering JPEG...' : 'Save as JPEG' }}</span>
-            </button>
-            <button class="btn-secondary" @click="copyA4BulletinImage()"
-              title="Copy JPEG to clipboard to paste into WhatsApp / Viber">
-              <i class="fa-solid fa-copy"></i>
-              <span>Copy Image</span>
-            </button>
-            <button class="btn-secondary" @click="printA4Bulletin()" title="Print via browser">
-              <i class="fa-solid fa-print"></i>
-              <span>Print / PDF</span>
-            </button>
-            <button class="btn-icon" @click="showA4BulletinModal = false" title="Close">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="jpegDownloadSuccess" class="jpeg-success-toast">
-          <i class="fa-solid fa-circle-check"></i> High-Resolution A4 JPEG saved successfully! Ready to share on
-          WhatsApp, Viber & Telegram groups.
-        </div>
-
-        <!-- The Nicely Outlined A4 Document Sheet -->
-        <div class="a4-sheet-wrapper">
-          <div class="a4-sheet" id="a4-bulletin-sheet">
-            <!-- Outlined Border Corner Accents -->
-            <div class="a4-corner a4-corner-tl"></div>
-            <div class="a4-corner a4-corner-tr"></div>
-            <div class="a4-corner a4-corner-bl"></div>
-            <div class="a4-corner a4-corner-br"></div>
-
-            <!-- Header Section -->
-            <div class="a4-header">
-              <div class="a4-header-top">
-                <div class="a4-brand-block">
-                  <div class="a4-logo"><i class="fa-solid fa-compass"></i></div>
-                  <div>
-                    <div class="a4-main-title">SeaVoyage • Safety First, Travel with Confidence</div>
-                    <div class="a4-sub-title">Maldives Meteorological Data & Oceanic Intelligence</div>
-                  </div>
-                </div>
-                <div class="a4-stamp-block">
-                  <div class="a4-stamp-label">BULLETIN ISSUE TIME</div>
-                  <div class="a4-stamp-time">{{ liveClock ? liveClock.fullStamp : '' }}</div>
-                  <div class="a4-stamp-ref">REF: MVT-{{ new Date().toISOString().slice(0,10).replace(/-/g,'') }}</div>
-                </div>
-              </div>
-
-              <!-- Route Banner -->
-              <div class="a4-route-strip">
-                <div class="a4-route-corridor">
-                  <span class="a4-port-from"><i class="fa-solid fa-anchor"></i> {{ departureLocation.name }} <span
-                      v-if="departureLocation.atoll" style="font-size: 0.82rem; font-weight: 600; color: #a7f3d0;">({{
-                      departureLocation.atoll }} Atoll)</span></span>
-                  <i class="fa-solid fa-arrow-right-long a4-route-arrow"></i>
-                  <span class="a4-port-to"><i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name }}
-                    <span v-if="destinationLocation.atoll"
-                      style="font-size: 0.82rem; font-weight: 600; color: #7dd3fc;">({{ destinationLocation.atoll }}
-                      Atoll)</span></span>
-                </div>
-                <div class="a4-route-stats" v-if="routeData">
-                  <span>Course: <strong>{{ routeData.cardinal }} ({{ routeData.bearing }}°)</strong></span>
-                  <span>Distance: <strong>{{ routeData.distanceNm }} NM ({{ routeData.distanceKm }} km)</strong></span>
-                  <span>Est Transit: <strong>{{ routeData.transitTimeStr }}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Grid 1: Meteorological Alert & Best Travel Window -->
-            <div class="a4-split-row">
-              <div class="a4-card a4-alert-card" :class="'a4-alert-' + (currentMmsAlert.color || 'white')">
-                <div class="a4-card-title">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <span>MALDIVES MET SERVICE ALERT</span>
-                  <span class="a4-badge"
-                    :style="{ background: currentMmsAlert.color === 'yellow' ? '#f59e0b' : (currentMmsAlert.color === 'red' ? '#ef4444' : '#38bdf8'), color: '#000' }">
-                    ALERT {{ (currentMmsAlert.color || 'NORMAL').toUpperCase() }}
-                  </span>
-                </div>
-
-                <!-- Alert Location: Atoll Coverage Range (From Atoll to Atoll) -->
-                <div class="a4-alert-location-row" v-if="currentMmsAlert && currentMmsAlert.areaDesc">
-                  <div class="a4-alert-loc-box">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                    <span class="a4-loc-label">ALERT LOCATION (ATOLL COVERAGE):</span>
-                    <strong class="a4-loc-range">{{ currentMmsAlert.areaDesc }}</strong>
-                  </div>
-                  <div class="a4-alert-time-box" v-if="currentMmsAlert.effective || currentMmsAlert.expires">
-                    <span v-if="currentMmsAlert.effective"><i class="fa-regular fa-clock"></i> {{
-                      currentMmsAlert.effective.slice(11, 16) || currentMmsAlert.effective }}</span>
-                    <span v-if="currentMmsAlert.expires">➔ {{ currentMmsAlert.expires.slice(11, 16) ||
-                      currentMmsAlert.expires }}</span>
-                  </div>
-                </div>
-
-                <!-- Explicit From Which Atoll to Which Atoll Range Pill -->
-                <div class="a4-atoll-range-strip"
-                  v-if="currentMmsAlert && currentMmsAlert.startAtoll && currentMmsAlert.endAtoll">
-                  <div class="a4-atoll-step a4-atoll-from">
-                    <span class="a4-atoll-sub">FROM ATOLL</span>
-                    <span class="a4-atoll-name"><i class="fa-solid fa-circle-dot" style="color: #f59e0b;"></i> {{
-                      currentMmsAlert.startAtoll }}</span>
-                  </div>
-                  <div class="a4-atoll-flow">
-                    <i class="fa-solid fa-arrow-right-long"></i>
-                    <span class="a4-atoll-flow-text">ATOLL ADVISORY CORRIDOR</span>
-                  </div>
-                  <div class="a4-atoll-step a4-atoll-to">
-                    <span class="a4-atoll-sub">TO ATOLL</span>
-                    <span class="a4-atoll-name"><i class="fa-solid fa-flag-checkered" style="color: #ef4444;"></i> {{
-                      currentMmsAlert.endAtoll }}</span>
-                  </div>
-                </div>
-
-                <div class="a4-alert-headline">{{ currentMmsAlert.headline }}</div>
-                <div class="a4-alert-body">{{ currentMmsAlert.description }}</div>
-              </div>
-
-              <div class="a4-card a4-travel-card" v-if="bestTravelWindow">
-                <div class="a4-card-title">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                  <span>RECOMMENDED TRAVEL WINDOW</span>
-                </div>
-                <div class="a4-travel-hours">{{ bestTravelWindow.optimal.startTime }} – {{
-                  bestTravelWindow.optimal.endTime }}</div>
-                <div class="a4-travel-metrics">
-                  <span>Wave: <strong>{{ bestTravelWindow.optimal.avgWave }}m</strong></span>
-                  <span>Wind: <strong>{{ bestTravelWindow.optimal.avgWind }} kn</strong></span>
-                  <span>Gusts: <strong>{{ bestTravelWindow.optimal.maxGusts }} kn</strong></span>
-                </div>
-                <div class="a4-travel-note">{{ bestTravelWindow.optimal.advice }}</div>
-              </div>
-            </div>
-
-            <!-- Grid 2: Astronomical Tide Extremes Showcase -->
-            <div class="a4-card a4-tide-card" v-if="tideData">
-              <div class="a4-card-title">
-                <i class="fa-solid fa-water"></i>
-                <span>ASTRONOMICAL TIDE EXTREMES & CHANNEL CURRENTS (20 HARMONICS)</span>
-                <span class="a4-card-sub">{{ departureLocation.atoll || 'Maldives' }} Spatially Interpolated
-                  Gauge</span>
-              </div>
-              <div class="a4-tide-twin-grid">
-                <div class="a4-tide-box a4-tide-high">
-                  <div class="a4-tide-lbl"><i class="fa-solid fa-angles-up" style="color: #00f0ff;"></i> NEXT HIGH TIDE
-                  </div>
-                  <div class="a4-tide-val">{{ tideData.nextHighTide.time }}</div>
-                  <div class="a4-tide-h">{{ tideData.nextHighTide.height }}m Chart Datum</div>
-                </div>
-                <div class="a4-tide-box a4-tide-low">
-                  <div class="a4-tide-lbl"><i class="fa-solid fa-angles-down" style="color: #ffb830;"></i> NEXT LOW TIDE
-                  </div>
-                  <div class="a4-tide-val">{{ tideData.nextLowTide.time }}</div>
-                  <div class="a4-tide-h">{{ tideData.nextLowTide.height }}m Chart Datum</div>
-                </div>
-                <div class="a4-tide-box a4-tide-now">
-                  <div class="a4-tide-lbl"><i class="fa-solid fa-gauge"></i> CURRENT WATER LEVEL</div>
-                  <div class="a4-tide-val">{{ tideData.currentHeight }}m</div>
-                  <div class="a4-tide-h"
-                    :style="{ color: parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '#00f0ff' : '#ffb830' }">
-                    {{ parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '+' : '' }}{{ tideData.rateOfChangeCmPerHour }}
-                    cm/h ({{ tideData.tideTrend }})
-                  </div>
-                </div>
-                <div class="a4-tide-box a4-tide-moon" v-if="moonPhase">
-                  <div class="a4-tide-lbl"><i :class="moonPhase.icon"></i> MOON PHASE & RANGE</div>
-                  <div class="a4-tide-val" style="font-size: 1.05rem;">{{ moonPhase.name }}</div>
-                  <div class="a4-tide-h">{{ moonPhase.illumination }}% lit • {{ moonPhase.tideType }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Grid 3: Comprehensive Oceanographic & Meteorological Telemetry -->
-            <div class="a4-card a4-telemetry-card" v-if="marineReport">
-              <div class="a4-card-title">
-                <i class="fa-solid fa-satellite"></i>
-                <span>OCEANOGRAPHIC & ATMOSPHERIC ENVIRONMENTAL TELEMETRY</span>
-              </div>
-              <div class="a4-telemetry-grid">
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-temperature-half" style="color: #f97316;"></i> Sea Temp
-                  </div>
-                  <div class="a4-tel-v">{{ formatSeaTemp(marineReport.current.seaTemperature) }}</div>
-                  <div class="a4-tel-s">Tropical Ocean Waters</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Waves (Hs)</div>
-                  <div class="a4-tel-v">{{ formatWave(marineReport.current.waveHeight) }}</div>
-                  <div class="a4-tel-s">{{ safetyEvaluation.seaState.name }}</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-stopwatch" style="color: #00f0ff;"></i> Swell & Period
-                  </div>
-                  <div class="a4-tel-v">{{ formatWave(marineReport.current.swellHeight) }}</div>
-                  <div class="a4-tel-s">{{ marineReport.current.swellPeriod || 8 }}s ({{
-                    marineReport.current.swellDirection ? getWindDirectionCardinal(marineReport.current.swellDirection)
-                    : 'SSE' }})</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-water-ladder" style="color: #a855f7;"></i> Wind Waves
-                  </div>
-                  <div class="a4-tel-v">{{ formatWave(marineReport.current.windWaveHeight) }}</div>
-                  <div class="a4-tel-s">{{ marineReport.current.windWavePeriod || 3 }}s Surface Chop</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Sea Current
-                  </div>
-                  <div class="a4-tel-v">{{ formatCurrentSpeed(marineReport.current.oceanCurrentSpeedKnots) }}</div>
-                  <div class="a4-tel-s">{{ marineReport.current.oceanCurrentSpeedKmh }} km/h @ {{
-                    marineReport.current.oceanCurrentDirection }}°</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-gauge" style="color: #eab308;"></i> Air Pressure</div>
-                  <div class="a4-tel-v">{{ formatPressure(marineReport.current.surfacePressure) }}</div>
-                  <div class="a4-tel-s">Trend: {{ marineReport.current.pressureTrend }}</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-droplet" style="color: #0284c7;"></i> Humidity</div>
-                  <div class="a4-tel-v">{{ formatHumidity(marineReport.current.humidity) }}</div>
-                  <div class="a4-tel-s">Maritime Air Mass</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-cloud-showers-heavy" style="color: #64748b;"></i>
-                    Precipitation</div>
-                  <div class="a4-tel-v">{{ formatPrecipitation(marineReport.current.precipitation) }}</div>
-                  <div class="a4-tel-s">{{ marineReport.current.precipitationProbability }}% Prob</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> UV Index</div>
-                  <div class="a4-tel-v">{{ formatUvIndex(marineReport.current.uvIndex) }}</div>
-                  <div class="a4-tel-s">{{ marineReport.current.uvCategory }}</div>
-                </div>
-                <div class="a4-tel-item">
-                  <div class="a4-tel-k"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Wind & Gusts</div>
-                  <div class="a4-tel-v">{{ formatWind(marineReport.current.windSpeed) }}</div>
-                  <div class="a4-tel-s">Gusts {{ formatWind(marineReport.current.windGusts) }} ({{ windCardinal }})
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Grid 4: 10-Day Voyage Planning & Marine Weather Predictions Outlook -->
-            <div class="a4-card a4-tenday-card" v-if="tenDayForecast && tenDayForecast.length > 0">
-              <div class="a4-card-title">
-                <i class="fa-solid fa-calendar-days"></i>
-                <span>10-DAY VOYAGE PLANNING & MARINE WEATHER PREDICTIONS (OPEN-METEO OPEN API)</span>
-                <span class="a4-card-sub">High-Resolution Multi-Day Projections: Waves, Wind, Gusts, Currents, Rain &
-                  Feasibility</span>
-              </div>
-              <div class="a4-tenday-table-wrap">
-                <table class="a4-tenday-table">
-                  <thead>
-                    <tr>
-                      <th>Day / Date</th>
-                      <th>Weather</th>
-                      <th>Waves (Hs)</th>
-                      <th>Wind & Peak Gusts</th>
-                      <th>Sea Current</th>
-                      <th>Precipitation</th>
-                      <th>Best Window</th>
-                      <th>Trip Verdict</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="d in tenDayForecast" :key="d.date">
-                      <td><strong>{{ d.dayLabel }}</strong> <small>({{ d.date.slice(5) }})</small></td>
-                      <td><i :class="d.weatherCondition.icon"></i> {{ d.weatherCondition.label }}</td>
-                      <td><strong>{{ formatWave(d.waveHeightMax) }}</strong> <small>({{ d.seaState.name.split(' ')[0]
-                          }})</small></td>
-                      <td>{{ formatWind(d.windSpeedMax) }} <small style="color: #f59e0b;">(G:{{
-                          formatWind(d.windGustsMax) }})</small> {{ d.windCardinal }}</td>
-                      <td style="color: #10b981;">{{ formatCurrentSpeed(d.oceanCurrentSpeedMaxKnots) }} {{
-                        d.oceanCurrentCardinal }}</td>
-                      <td>{{ formatPrecipitation(d.precipitationSum) }} <small>({{ d.precipitationProbabilityMax
-                          }}%)</small></td>
-                      <td><span v-if="d.bestWindow">{{ d.bestWindow.startTime }}–{{ d.bestWindow.endTime }}</span><span
-                          v-else>—</span></td>
-                      <td>
-                        <span class="a4-status-badge" :class="'a4-st-' + d.status">{{ d.status }} ({{ d.score
-                          }}%)</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Grid 5: Maldivian Sportfishing Intelligence (Jigging & Casting) -->
-            <div class="a4-card a4-fishing-card" v-if="fishingReport">
-              <div class="a4-card-title">
-                <i class="fa-solid fa-fish-fins"></i>
-                <span>MALDIVIAN SPORTFISHING INTELLIGENCE (SOLUNAR & TIDAL ALIGNMENT)</span>
-                <span class="a4-badge" style="background: rgba(0, 240, 255, 0.2); color: #00f0ff;">
-                  BITE INDEX: {{ fishingReport.overallBiteRating }}/100 • {{ fishingReport.biteLevel.toUpperCase() }}
-                </span>
-              </div>
-
-              <div class="a4-fishing-columns">
-                <!-- Deep Jigging Block -->
-                <div class="a4-fish-col a4-jig-col">
-                  <div class="a4-fish-head">
-                    <i class="fa-solid fa-anchor" style="color: #00f0ff;"></i>
-                    <span>DEEP JIGGING (CHANNELS & PASSES)</span>
-                    <strong style="color: #00f0ff;">{{ fishingReport.bestJiggingWindow.peakScore }}/100</strong>
-                  </div>
-                  <div class="a4-fish-win">Best Window: <strong>{{ fishingReport.bestJiggingWindow.startTime }} – {{
-                      fishingReport.bestJiggingWindow.endTime }}</strong></div>
-                  <div class="a4-fish-meta">
-                    <div><strong>Depths:</strong> {{ fishingReport.bestJiggingWindow.targetDepths }}</div>
-                    <div><strong>Tackle:</strong> {{ fishingReport.bestJiggingWindow.recommendedTackle }}</div>
-                    <div><strong>Species:</strong> {{ fishingReport.bestJiggingWindow.targetSpecies.join(', ') }}</div>
-                    <div><strong>Hotspots:</strong> {{ fishingReport.hotspots.jiggingSpots.map(s => s.name).join(' • ')
-                      }}</div>
-                  </div>
-                </div>
-
-                <!-- Topwater Casting Block -->
-                <div class="a4-fish-col a4-cast-col">
-                  <div class="a4-fish-head">
-                    <i class="fa-solid fa-burst" style="color: #ffb830;"></i>
-                    <span>TOPWATER CASTING (REEF CRESTS & FLATS)</span>
-                    <strong style="color: #ffb830;">{{ fishingReport.bestCastingWindow.peakScore }}/100</strong>
-                  </div>
-                  <div class="a4-fish-win">Best Window: <strong>{{ fishingReport.bestCastingWindow.startTime }} – {{
-                      fishingReport.bestCastingWindow.endTime }}</strong></div>
-                  <div class="a4-fish-meta">
-                    <div><strong>Zones:</strong> {{ fishingReport.bestCastingWindow.targetZones }}</div>
-                    <div><strong>Lures:</strong> {{ fishingReport.bestCastingWindow.recommendedTackle }}</div>
-                    <div><strong>Species:</strong> {{ fishingReport.bestCastingWindow.targetSpecies.join(', ') }}</div>
-                    <div><strong>Hotspots:</strong> {{ fishingReport.hotspots.castingSpots.map(s => s.name).join(' • ')
-                      }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Outlined Footer & Attribution -->
-            <div class="a4-footer">
-              <div class="a4-footer-left">
-                <i class="fa-solid fa-shield-halved" style="color: var(--cyan-primary);"></i>
-                <span>Safety First, Be Smart and Enjoy the Voyage!</span>
-              </div>
-              <div class="a4-footer-right">
-                <span class="a4-concept-tag">Brought to you by</span>
-                <span class="a4-concept-name">Ahmed Nimal</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-nakaiy"></script>
+  <script type="module" src="src/js/app.js?v=20260912-scrollclean"></script>
 </body>
 
 </html>
