@@ -7443,27 +7443,32 @@ button, a, input, select, textarea {
     display: inline !important;
   }
 
-  /* Floating Notification / Status Dot Badge Anchored to Icon */
-  .tab-badge {
+  /* Clean, Unobtrusive Status Indicators for Mobile & Tablet App Bar */
+  .main-tab-nav-wrapper .tab-badge-weather,
+  .main-tab-nav-wrapper .tab-badge-fishing,
+  .main-tab-nav-wrapper .tab-badge-all {
+    display: none !important;
+  }
+
+  .main-tab-nav-wrapper .tab-badge {
     position: absolute !important;
-    top: -2px !important;
-    right: calc(50% - 20px) !important;
-    font-size: 0.52rem !important;
-    font-weight: 800 !important;
-    padding: 0.08rem 0.28rem !important;
-    border-radius: 999px !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55) !important;
+    top: 5px !important;
+    right: calc(50% - 18px) !important;
+    width: 9px !important;
+    height: 9px !important;
+    min-width: 9px !important;
+    min-height: 9px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    box-shadow: 0 0 6px currentColor, 0 1px 3px rgba(0, 0, 0, 0.7) !important;
     z-index: 10 !important;
+    overflow: hidden !important;
   }
 
-  .tab-badge i {
-    font-size: 0.48rem !important;
-  }
-
-  .tab-badge span {
-    font-size: 0.52rem !important;
+  .main-tab-nav-wrapper .tab-badge * {
+    display: none !important;
   }
 }
 

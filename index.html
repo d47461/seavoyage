@@ -32,9 +32,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-singlescreen" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260912-v3" />
 
-  <!-- Instant Theme Script to avoid FOUC -->
+  <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
     (function () {
       try {
@@ -47,6 +47,15 @@
         document.documentElement.setAttribute('data-theme', effective);
         document.documentElement.setAttribute('data-theme-mode', mode);
       } catch (e) { }
+
+      // Safety guard against indefinite blank screens if mounting ever encounters a delay
+      setTimeout(function () {
+        var appEl = document.getElementById('app');
+        if (appEl && appEl.hasAttribute('v-cloak')) {
+          console.warn('[SeaVoyage] Safety fallback removing v-cloak');
+          appEl.removeAttribute('v-cloak');
+        }
+      }, 3500);
     })();
   </script>
 </head>
@@ -2609,7 +2618,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-singlescreen"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v3"></script>
 </body>
 
 </html>

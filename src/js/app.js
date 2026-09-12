@@ -979,6 +979,12 @@ const app = createApp({
 
       updateMapRoute();
 
+      setTimeout(() => {
+        if (leafletMap) {
+          leafletMap.invalidateSize();
+        }
+      }, 250);
+
       // Click on map to set Departure or Destination
       leafletMap.on('click', async (e) => {
         const clickedLat = e.latlng.lat;
