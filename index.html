@@ -32,7 +32,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-appbar" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260912-singlescreen" />
 
   <!-- Instant Theme Script to avoid FOUC -->
   <script>
@@ -53,6 +53,8 @@
 
 <body>
   <div id="app" v-cloak>
+    <!-- Single-Screen Viewport Architecture Shell -->
+    <div class="app-viewport-shell">
     <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="nav-brand">
@@ -121,6 +123,34 @@
         </button>
       </div>
     </nav>
+
+    <!-- Sticky Quick Route & Vessel Header Bar (Single-Screen Navigation) -->
+    <div class="sticky-route-bar" @click="showRoutePlannerModal = true" role="button" tabindex="0" title="Click to adjust departure, destination, or vessel profile">
+      <div class="route-bar-pill">
+        <span class="route-point dep">
+          <i class="fa-solid fa-anchor"></i>
+          <span>{{ departureLocation ? departureLocation.name : 'Select Departure' }}</span>
+        </span>
+        <i class="fa-solid fa-arrow-right-long route-arrow"></i>
+        <span class="route-point dest">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>{{ destinationLocation ? destinationLocation.name : 'Select Destination' }}</span>
+        </span>
+        <span class="route-vessel-badge" v-if="selectedVessel">
+          <i :class="selectedVessel.icon"></i>
+          <span>{{ selectedVessel.name.split('(')[0] }}</span>
+        </span>
+        <span class="route-meta-badge" v-if="routeData">
+          <i class="fa-solid fa-compass"></i>
+          <span>{{ routeData.distanceNm }} NM • {{ routeData.transitTimeStr }}</span>
+        </span>
+      </div>
+      <button class="route-modify-btn" @click.stop="showRoutePlannerModal = true" title="Configure Departure, Destination & Vessel Profile">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Change Route</span>
+      </button>
+    </div>
+
 
     <!-- Main Container -->
     <main class="app-container">
@@ -210,263 +240,27 @@
       </div>
 
       <!-- TAB PANE 1: TRAVEL & SAFETY ADVISORIES (MAIN / DEFAULT) -->
-      <div class="tab-content-pane tab-pane-advisories"
+      <div class="tab-content-pane single-screen-pane tab-pane-advisories"
         v-show="activeMainTab === 'advisories' || activeMainTab === 'all'">
-        <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION) -->
-        <section class="glass-panel route-planner-card">
-          <div class="route-planner-header">
-            <div class="section-label">
-              <span><i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i></span>
-              Voyage Passage Planner • Departure & Destination
-            </div>
+        <!-- Segmented Sub-Navigation for Advisories & Passage -->
+        <div class="segmented-sub-nav">
+          <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'chart' }" @click="setAdvisorySubTab('chart')">
+            <i class="fa-solid fa-map-location-dot"></i> <span>Live Nautical Chart</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'verdict' }" @click="setAdvisorySubTab('verdict')">
+            <i class="fa-solid fa-scale-balanced"></i> <span>Safety Verdict</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'briefing' }" @click="setAdvisorySubTab('briefing')">
+            <i class="fa-solid fa-robot"></i> <span>Trip Briefing</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'hazards' }" @click="setAdvisorySubTab('hazards')">
+            <i class="fa-solid fa-triangle-exclamation"></i> <span>Hazards & Clearances</span>
+          </button>
+        </div>
 
-            <div class="planner-header-actions">
-              <!-- Target Selector Switch -->
-              <div class="target-selector-tabs">
-                <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.3rem;">Active
-                  Selection:</span>
-                <button class="target-tab-btn"
-                  :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
-                  @click="setPickerTarget('departure')">
-                  <i class="fa-solid fa-anchor"></i> Departure Port
-                </button>
-                <button class="target-tab-btn"
-                  :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
-                  @click="setPickerTarget('destination')">
-                  <i class="fa-solid fa-flag-checkered"></i> Destination Port
-                </button>
-              </div>
-
-              <!-- GPS Device Location Button -->
-              <button class="btn-gps-locate" @click="detectDeviceLocation(true)" :disabled="isLocatingDevice"
-                :class="{ 'gps-active': departureLocation.isDeviceLocation }"
-                title="Detect and always show details for my current device GPS location">
-                <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
-                <i class="fa-solid fa-location-crosshairs" v-else></i>
-                <span>{{ isLocatingDevice ? 'Acquiring GPS...' : (departureLocation.isDeviceLocation ? 'Device GPS
-                  Active'
-                  : 'Use Device Location') }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Dual Ports Row with Reverse Course Button -->
-          <div class="route-ports-row">
-            <!-- Departure Port Card -->
-            <div class="route-port-card departure"
-              :class="{ active: activePickerTarget === 'departure', 'is-device-loc': departureLocation.isDeviceLocation }"
-              @click="setPickerTarget('departure')" title="Click to select or search Departure location">
-              <div class="port-type-badge dep" :class="{ 'device-badge': departureLocation.isDeviceLocation }">
-                <i class="fa-solid fa-location-crosshairs" v-if="departureLocation.isDeviceLocation"></i>
-                <i class="fa-solid fa-anchor" v-else></i>
-                <span>{{ departureLocation.isDeviceLocation ? 'Device Location (GPS Active)' : 'Departure Location'
-                  }}</span>
-                <span class="default-pill-tag" v-if="isMaafilaafushiDeparture">DEFAULT</span>
-              </div>
-              <div class="port-name-main">
-                {{ departureLocation.name }}
-                <span class="device-pulse-beacon" v-if="departureLocation.isDeviceLocation"
-                  title="Live GPS coordinates active">
-                  <span class="beacon-dot"></span>
-                  <span class="beacon-ring"></span>
-                </span>
-              </div>
-              <div class="port-atoll-sub">
-                {{ departureLocation.atoll ? departureLocation.atoll + ' • ' : '' }}{{
-                departureLocation.latitude.toFixed(3) }}°N, {{ departureLocation.longitude.toFixed(3) }}°E
-                <span v-if="departureLocation.accuracy"
-                  style="font-size: 0.72rem; color: #10b981; margin-left: 0.35rem; font-weight: 600;">
-                  (±{{ Math.round(departureLocation.accuracy) }}m)
-                </span>
-              </div>
-
-              <!-- Quick Action Options on Departure Card -->
-              <div class="port-card-actions" @click.stop>
-                <button class="port-action-btn gps-action-btn" :class="{ active: departureLocation.isDeviceLocation }"
-                  @click="detectDeviceLocation(true)" title="Detect and use current device GPS location for Departure">
-                  <i class="fa-solid fa-location-crosshairs"></i>
-                  <span>{{ departureLocation.isDeviceLocation ? 'Device GPS Active' : 'Use Device Location' }}</span>
-                </button>
-                <button class="port-action-btn maaf-action-btn" v-if="!isMaafilaafushiDeparture"
-                  @click="setDepartureToMaafilaafushi()" title="Reset Departure to default: Maafilaafushi">
-                  <i class="fa-solid fa-rotate-left"></i>
-                  <span>Reset to Maafilaafushi</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Swap / Reverse Course Button -->
-            <button class="route-swap-btn" @click="swapLocations" title="Reverse Course (Swap Departure & Destination)">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i>
-            </button>
-
-            <!-- Destination Port Card -->
-            <div class="route-port-card destination" :class="{ active: activePickerTarget === 'destination' }"
-              @click="setPickerTarget('destination')" title="Click to select or search Destination location">
-              <div class="port-type-badge dest">
-                <i class="fa-solid fa-flag-checkered"></i> Destination Port
-              </div>
-              <div class="port-name-main">{{ destinationLocation.name }}</div>
-              <div class="port-atoll-sub">
-                {{ destinationLocation.atoll ? destinationLocation.atoll + ' Atoll • ' : '' }}{{
-                destinationLocation.latitude.toFixed(3) }}°N, {{ destinationLocation.longitude.toFixed(3) }}°E
-              </div>
-            </div>
-          </div>
-
-          <!-- Port Search & Autocomplete Input -->
-          <div class="search-input-wrapper">
-            <span class="search-icon-inside"><i class="fa-solid fa-magnifying-glass"></i></span>
-            <input type="text" class="search-input"
-              :placeholder="activePickerTarget === 'departure' ? 'Search Departure island / atoll (e.g. Maafilaafushi, Malé, Maafushi, Rasdhoo, Baa)...' : 'Search Destination port / atoll (e.g. Rasdhoo, Ukulhas, Dharavandhoo)...'"
-              v-model="searchQuery" @input="onSearchInput" />
-            <!-- Autocomplete Dropdown -->
-            <div class="search-dropdown" v-if="searchResults.length > 0">
-              <div class="search-dropdown-item" v-for="loc in searchResults" :key="loc.latitude + '_' + loc.longitude"
-                @click="selectSearchResult(loc)">
-                <div>
-                  <strong>{{ loc.name }}</strong>
-                  <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">
-                    {{ loc.country }} {{ loc.atoll ? `(${loc.atoll} Atoll)` : (loc.admin1 ? `(${loc.admin1})` : '') }}
-                  </span>
-                </div>
-                <span style="font-size: 0.75rem; color: var(--cyan-primary);">{{ loc.latitude.toFixed(2) }}°, {{
-                  loc.longitude.toFixed(2) }}°</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Starting Island Selector & Quick Options Strip -->
-          <div class="island-selector-strip">
-            <div class="island-strip-header">
-              <div class="island-strip-title">
-                <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
-                <span>Choose Starting Island ({{ activePickerTarget === 'departure' ? 'Departure Location' :
-                  'Destination Location' }}):</span>
-              </div>
-              <span class="island-strip-hint">Click any island to change departure point or search above</span>
-            </div>
-
-            <div class="island-pills-row">
-              <!-- 1. Default Maafilaafushi -->
-              <button class="island-pill maaf-pill"
-                :class="{ active: isMaafilaafushiDeparture && activePickerTarget === 'departure' }"
-                @click="setDepartureToMaafilaafushi()"
-                title="Start trip from Maafilaafushi (Lhaviyani Atoll) - SeaVoyage Default">
-                <i class="fa-solid fa-anchor" style="color: #10b981;"></i>
-                <strong>Maafilaafushi</strong>
-                <small>(Default)</small>
-              </button>
-
-              <!-- 2. Device Location GPS -->
-              <button class="island-pill gps-pill" :class="{ active: departureLocation.isDeviceLocation }"
-                @click="detectDeviceLocation(true)" title="Use physical device GPS coordinates to start trip">
-                <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
-                <i class="fa-solid fa-location-crosshairs" style="color: #f59e0b;" v-else></i>
-                <strong>My Device Location</strong>
-                <small>(Live GPS)</small>
-              </button>
-
-              <!-- 3. Popular Islands to Start From -->
-              <button class="island-pill" v-for="port in maldivesPorts.slice(1)" :key="port.name"
-                :class="{ active: (activePickerTarget === 'departure' ? departureLocation.name : destinationLocation.name) === port.name }"
-                @click="selectIsland(port)"
-                :title="'Set ' + (activePickerTarget === 'departure' ? 'Departure' : 'Destination') + ' to ' + port.name">
-                <i class="fa-solid fa-map-pin" style="color: #38bdf8;"></i>
-                <span>{{ port.name.split('(')[0].trim() }}</span>
-                <small v-if="port.atoll">({{ port.atoll }})</small>
-              </button>
-            </div>
-          </div>
-
-          <!-- Popular Maldivian Passages Shortcuts -->
-          <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-            <div
-              style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-              <i class="fa-solid fa-compass" style="color: var(--cyan-primary); margin-right: 0.3rem;"></i> Popular
-              Maldivian Channel Passages:
-            </div>
-            <div class="quick-ports">
-              <button class="port-chip gps-chip" :class="{ active: departureLocation.isDeviceLocation }"
-                @click="detectDeviceLocation(true)" title="Always show conditions for my device GPS location">
-                <i class="fa-solid fa-location-crosshairs" style="color: #10b981; margin-right: 0.35rem;"></i>
-                My Device Location (GPS)
-              </button>
-              <button class="port-chip" v-for="route in popularRoutes" :key="route.id"
-                :class="{ active: departureLocation.name === route.departure.name && destinationLocation.name === route.destination.name }"
-                @click="selectPopularRoute(route)">
-                <i class="fa-solid fa-arrow-right-long" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i>
-                {{
-                route.title }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Route Passage Summary HUD Strip -->
-          <div class="route-hud-strip" v-if="routeData">
-            <div class="hud-item">
-              <div class="hud-label"><i class="fa-solid fa-compass"></i> Course Heading</div>
-              <div class="hud-value">{{ routeData.cardinal }} <span
-                  style="font-size: 0.85rem; color: var(--cyan-primary);">({{ routeData.bearing }}°)</span></div>
-              <div class="hud-sub">True Compass Bearing</div>
-            </div>
-
-            <div class="hud-item">
-              <div class="hud-label"><i class="fa-solid fa-arrows-left-right"></i> Passage Distance</div>
-              <div class="hud-value">{{ routeData.distanceNm }} <span
-                  style="font-size: 0.85rem; color: var(--text-muted);">NM</span></div>
-              <div class="hud-sub">{{ routeData.distanceKm }} km inter-atoll</div>
-            </div>
-
-            <div class="hud-item">
-              <div class="hud-label"><i class="fa-solid fa-stopwatch"></i> Estimated Transit</div>
-              <div class="hud-value" style="color: var(--cyan-primary);">{{ routeData.transitTimeStr }}</div>
-              <div class="hud-sub">at {{ routeData.cruisingSpeedKnots }} kn cruise</div>
-            </div>
-
-            <div class="hud-item">
-              <div class="hud-label"><i class="fa-solid fa-wind"></i> Relative Wind Aspect</div>
-              <div>
-                <span class="aspect-pill" :class="'aspect-' + routeData.windAspect.type">
-                  <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
-                </span>
-              </div>
-              <div class="hud-sub">{{ routeData.windAspect.angle }}° relative angle</div>
-            </div>
-
-            <div class="hud-item">
-              <div class="hud-label"><i class="fa-solid fa-water"></i> Swell Direction Aspect</div>
-              <div>
-                <span class="aspect-pill" :class="'aspect-' + routeData.swellAspect.type">
-                  <i :class="routeData.swellAspect.icon"></i> {{ routeData.swellAspect.label.split('/')[0] }}
-                </span>
-              </div>
-              <div class="hud-sub">{{ routeData.channelName }}</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Vessel Selection Row -->
-        <section class="vessel-selector-section">
-          <div class="section-label">
-            <span><i class="fa-solid fa-ship"></i></span> Select Your Vessel Profile
-            <span style="font-size: 0.75rem; color: var(--cyan-primary); text-transform: none; margin-left: 0.5rem;">
-              (Speedboat pounding vs Dhoni rolling limits tailor specifically to your craft)
-            </span>
-          </div>
-          <div class="vessel-grid">
-            <div class="vessel-card" v-for="(vessel, key) in vesselProfiles" :key="key"
-              :class="{ active: selectedVesselKey === key }" @click="selectVessel(key)">
-              <div class="vessel-icon"><i :class="vessel.icon"></i></div>
-              <div class="vessel-info">
-                <h4>{{ vessel.name }}</h4>
-                <p>{{ vessel.subtitle }} • {{ vessel.cruisingSpeedKnots }} kn cruise</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
+        <!-- SUB-VIEW: THE SAFETY VERDICT (MMS Banner, Score Radial Gauge, Best Departure Window) -->
+        <div v-show="activeAdvisorySubTab === 'verdict' || activeMainTab === 'all'" class="sub-view-group">
+          <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
         <section v-if="currentMmsAlert" class="glass-panel mms-center-card"
           :class="'mms-' + (currentMmsAlert.color || 'green')">
           <div class="mms-header-row">
@@ -770,8 +564,11 @@
             </div>
           </div>
         </section>
+        </div>
 
-        <!-- AI Chief Mate Passage Advisory -->
+        <!-- SUB-VIEW: TRIP PLANNERS BRIEFING -->
+        <div v-show="activeAdvisorySubTab === 'briefing' || activeMainTab === 'all'" class="sub-view-group">
+          <!-- AI Chief Mate Passage Advisory -->
         <section class="glass-panel ai-advisory-panel" v-if="aiBrief">
           <div class="ai-header">
             <div class="ai-title">
@@ -787,8 +584,11 @@
             <p>{{ aiBrief }}</p>
           </div>
         </section>
+        </div>
 
-        <!-- Hazard Breakdown & Positive Clearances -->
+        <!-- SUB-VIEW: HAZARDS & CLEARANCES -->
+        <div v-show="activeAdvisorySubTab === 'hazards' || activeMainTab === 'all'" class="sub-view-group">
+          <!-- Hazard Breakdown & Positive Clearances -->
         <section v-if="safetyEvaluation" class="analysis-split-grid">
           <!-- Identified Hazards -->
           <div class="glass-panel analysis-card">
@@ -826,11 +626,14 @@
             </div>
           </div>
         </section>
+        </div>
 
-        <!-- Visual Map & 24h Departure Forecast Timeline -->
+        <!-- SUB-VIEW: LIVE NAUTICAL CHART & TIMELINE -->
+        <div v-show="activeAdvisorySubTab === 'chart' || activeMainTab === 'all'" class="sub-view-group">
+          <!-- Visual Map & 24h Departure Forecast Timeline -->
         <section class="nav-visual-grid">
           <!-- Interactive Leaflet Map -->
-          <div class="glass-panel map-card">
+          <div class="glass-panel map-card single-screen-map-card">
             <div
               style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
               <div class="section-label">
@@ -881,10 +684,25 @@
             </div>
           </div>
         </section>
+        </div>
+
       </div> <!-- END TAB PANE 1: TRAVEL & SAFETY ADVISORIES -->
 
       <!-- TAB PANE 2: WEATHER & MARINE FORECASTS -->
-      <div class="tab-content-pane tab-pane-weather" v-show="activeMainTab === 'weather' || activeMainTab === 'all'">
+      <div class="tab-content-pane single-screen-pane tab-pane-weather" v-show="activeMainTab === 'weather' || activeMainTab === 'all'">
+      <!-- Segmented Sub-Navigation for Weather & Marine -->
+      <div class="segmented-sub-nav">
+        <button class="sub-nav-btn" :class="{ active: activeWeatherSubTab === 'forecast' }" @click="setWeatherSubTab('forecast')">
+          <i class="fa-solid fa-calendar-week"></i> <span>10-Day Forecast</span>
+        </button>
+        <button class="sub-nav-btn" :class="{ active: activeWeatherSubTab === 'telemetry' }" @click="setWeatherSubTab('telemetry')">
+          <i class="fa-solid fa-water"></i> <span>Marine Telemetry (12 Metrics)</span>
+        </button>
+        <button class="sub-nav-btn" :class="{ active: activeWeatherSubTab === 'tides' }" @click="setWeatherSubTab('tides')">
+          <i class="fa-solid fa-chart-line"></i> <span>Astronomical Tides</span>
+        </button>
+      </div>
+
         <!-- Sleek Compact Route & Location Context Strip for Weather -->
         <div class="compact-loc-strip">
           <div class="compact-loc-info">
@@ -911,6 +729,8 @@
           </div>
         </div>
 
+        <!-- SUB-VIEW: 10-DAY WEATHER PREDICTIONS -->
+      <div v-show="activeWeatherSubTab === 'forecast' || activeMainTab === 'all'" class="sub-view-group">
         <!-- 10-DAY WEATHER PREDICTIONS & VOYAGE TRIP PLANNER -->
         <section v-if="tenDayForecast && tenDayForecast.length > 0" class="glass-panel ten-day-section"
           id="ten-day-planner-section">
@@ -1256,7 +1076,10 @@
             </div>
           </div>
         </section>
+      </div>
 
+      <!-- SUB-VIEW: MARINE TELEMETRY GRID -->
+      <div v-show="activeWeatherSubTab === 'telemetry' || activeMainTab === 'all'" class="sub-view-group">
         <!-- Key Marine, Oceanographic & Meteorological Telemetry Grid -->
         <section v-if="marineReport" class="metrics-grid">
           <!-- Metric 1: Dedicated High & Low Tide Extremes Showcase -->
@@ -1502,7 +1325,10 @@
             </div>
           </div>
         </section>
+      </div>
 
+      <!-- SUB-VIEW: ASTRONOMICAL TIDE CURVE -->
+      <div v-show="activeWeatherSubTab === 'tides' || activeMainTab === 'all'" class="sub-view-group">
         <!-- 24-HOUR ASTRONOMICAL TIDE CURVE & HARMONIC ENGINE -->
         <section v-if="tideData && tideData.tideCurve" class="glass-panel tide-curve-section" id="tide-section">
           <div class="tide-section-header">
@@ -1689,10 +1515,25 @@
             </div>
           </div>
         </section>
-      </div> <!-- END TAB PANE 2: WEATHER & MARINE FORECASTS -->
+      </div>
+
+    </div> <!-- END TAB PANE 2: WEATHER & MARINE FORECASTS -->
 
       <!-- TAB PANE 3: SPORTFISHING INTELLIGENCE -->
-      <div class="tab-content-pane tab-pane-fishing" v-show="activeMainTab === 'fishing' || activeMainTab === 'all'">
+      <div class="tab-content-pane single-screen-pane tab-pane-fishing" v-show="activeMainTab === 'fishing' || activeMainTab === 'all'">
+      <!-- Segmented Sub-Navigation for Sportfishing -->
+      <div class="segmented-sub-nav">
+        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'solunar' }" @click="setFishingSubTab('solunar')">
+          <i class="fa-solid fa-bolt"></i> <span>Solunar Bite Dial</span>
+        </button>
+        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'jigging' }" @click="setFishingSubTab('jigging')">
+          <i class="fa-solid fa-anchor"></i> <span>Deep Jigging</span>
+        </button>
+        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'casting' }" @click="setFishingSubTab('casting')">
+          <i class="fa-solid fa-burst"></i> <span>Topwater Casting</span>
+        </button>
+      </div>
+
         <!-- Sleek Compact Route & Location Context Strip for Sportfishing -->
         <div class="compact-loc-strip">
           <div class="compact-loc-info">
@@ -1979,6 +1820,281 @@
       </div>
     </footer>
 
+    </div> <!-- END .app-viewport-shell -->
+
+    <!-- ROUTE PLANNER & VESSEL PROFILE MODAL / DRAWER -->
+    <div v-if="showRoutePlannerModal" class="route-modal-backdrop" @click.self="showRoutePlannerModal = false" role="dialog" aria-modal="true">
+      <div class="route-modal-container">
+        <div class="route-modal-header">
+          <div class="route-modal-title">
+            <i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i>
+            <span>Passage Route & Vessel Configuration</span>
+          </div>
+          <button class="route-modal-close-btn" @click="showRoutePlannerModal = false" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION) -->
+        <section class="glass-panel route-planner-card">
+          <div class="route-planner-header">
+            <div class="section-label">
+              <span><i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i></span>
+              Voyage Passage Planner • Departure & Destination
+            </div>
+
+            <div class="planner-header-actions">
+              <!-- Target Selector Switch -->
+              <div class="target-selector-tabs">
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.3rem;">Active
+                  Selection:</span>
+                <button class="target-tab-btn"
+                  :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
+                  @click="setPickerTarget('departure')">
+                  <i class="fa-solid fa-anchor"></i> Departure Port
+                </button>
+                <button class="target-tab-btn"
+                  :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
+                  @click="setPickerTarget('destination')">
+                  <i class="fa-solid fa-flag-checkered"></i> Destination Port
+                </button>
+              </div>
+
+              <!-- GPS Device Location Button -->
+              <button class="btn-gps-locate" @click="detectDeviceLocation(true)" :disabled="isLocatingDevice"
+                :class="{ 'gps-active': departureLocation.isDeviceLocation }"
+                title="Detect and always show details for my current device GPS location">
+                <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
+                <i class="fa-solid fa-location-crosshairs" v-else></i>
+                <span>{{ isLocatingDevice ? 'Acquiring GPS...' : (departureLocation.isDeviceLocation ? 'Device GPS
+                  Active'
+                  : 'Use Device Location') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dual Ports Row with Reverse Course Button -->
+          <div class="route-ports-row">
+            <!-- Departure Port Card -->
+            <div class="route-port-card departure"
+              :class="{ active: activePickerTarget === 'departure', 'is-device-loc': departureLocation.isDeviceLocation }"
+              @click="setPickerTarget('departure')" title="Click to select or search Departure location">
+              <div class="port-type-badge dep" :class="{ 'device-badge': departureLocation.isDeviceLocation }">
+                <i class="fa-solid fa-location-crosshairs" v-if="departureLocation.isDeviceLocation"></i>
+                <i class="fa-solid fa-anchor" v-else></i>
+                <span>{{ departureLocation.isDeviceLocation ? 'Device Location (GPS Active)' : 'Departure Location'
+                  }}</span>
+                <span class="default-pill-tag" v-if="isMaafilaafushiDeparture">DEFAULT</span>
+              </div>
+              <div class="port-name-main">
+                {{ departureLocation.name }}
+                <span class="device-pulse-beacon" v-if="departureLocation.isDeviceLocation"
+                  title="Live GPS coordinates active">
+                  <span class="beacon-dot"></span>
+                  <span class="beacon-ring"></span>
+                </span>
+              </div>
+              <div class="port-atoll-sub">
+                {{ departureLocation.atoll ? departureLocation.atoll + ' • ' : '' }}{{
+                departureLocation.latitude.toFixed(3) }}°N, {{ departureLocation.longitude.toFixed(3) }}°E
+                <span v-if="departureLocation.accuracy"
+                  style="font-size: 0.72rem; color: #10b981; margin-left: 0.35rem; font-weight: 600;">
+                  (±{{ Math.round(departureLocation.accuracy) }}m)
+                </span>
+              </div>
+
+              <!-- Quick Action Options on Departure Card -->
+              <div class="port-card-actions" @click.stop>
+                <button class="port-action-btn gps-action-btn" :class="{ active: departureLocation.isDeviceLocation }"
+                  @click="detectDeviceLocation(true)" title="Detect and use current device GPS location for Departure">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                  <span>{{ departureLocation.isDeviceLocation ? 'Device GPS Active' : 'Use Device Location' }}</span>
+                </button>
+                <button class="port-action-btn maaf-action-btn" v-if="!isMaafilaafushiDeparture"
+                  @click="setDepartureToMaafilaafushi()" title="Reset Departure to default: Maafilaafushi">
+                  <i class="fa-solid fa-rotate-left"></i>
+                  <span>Reset to Maafilaafushi</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Swap / Reverse Course Button -->
+            <button class="route-swap-btn" @click="swapLocations" title="Reverse Course (Swap Departure & Destination)">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </button>
+
+            <!-- Destination Port Card -->
+            <div class="route-port-card destination" :class="{ active: activePickerTarget === 'destination' }"
+              @click="setPickerTarget('destination')" title="Click to select or search Destination location">
+              <div class="port-type-badge dest">
+                <i class="fa-solid fa-flag-checkered"></i> Destination Port
+              </div>
+              <div class="port-name-main">{{ destinationLocation.name }}</div>
+              <div class="port-atoll-sub">
+                {{ destinationLocation.atoll ? destinationLocation.atoll + ' Atoll • ' : '' }}{{
+                destinationLocation.latitude.toFixed(3) }}°N, {{ destinationLocation.longitude.toFixed(3) }}°E
+              </div>
+            </div>
+          </div>
+
+          <!-- Port Search & Autocomplete Input -->
+          <div class="search-input-wrapper">
+            <span class="search-icon-inside"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" class="search-input"
+              :placeholder="activePickerTarget === 'departure' ? 'Search Departure island / atoll (e.g. Maafilaafushi, Malé, Maafushi, Rasdhoo, Baa)...' : 'Search Destination port / atoll (e.g. Rasdhoo, Ukulhas, Dharavandhoo)...'"
+              v-model="searchQuery" @input="onSearchInput" />
+            <!-- Autocomplete Dropdown -->
+            <div class="search-dropdown" v-if="searchResults.length > 0">
+              <div class="search-dropdown-item" v-for="loc in searchResults" :key="loc.latitude + '_' + loc.longitude"
+                @click="selectSearchResult(loc)">
+                <div>
+                  <strong>{{ loc.name }}</strong>
+                  <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">
+                    {{ loc.country }} {{ loc.atoll ? `(${loc.atoll} Atoll)` : (loc.admin1 ? `(${loc.admin1})` : '') }}
+                  </span>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--cyan-primary);">{{ loc.latitude.toFixed(2) }}°, {{
+                  loc.longitude.toFixed(2) }}°</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Starting Island Selector & Quick Options Strip -->
+          <div class="island-selector-strip">
+            <div class="island-strip-header">
+              <div class="island-strip-title">
+                <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+                <span>Choose Starting Island ({{ activePickerTarget === 'departure' ? 'Departure Location' :
+                  'Destination Location' }}):</span>
+              </div>
+              <span class="island-strip-hint">Click any island to change departure point or search above</span>
+            </div>
+
+            <div class="island-pills-row">
+              <!-- 1. Default Maafilaafushi -->
+              <button class="island-pill maaf-pill"
+                :class="{ active: isMaafilaafushiDeparture && activePickerTarget === 'departure' }"
+                @click="setDepartureToMaafilaafushi()"
+                title="Start trip from Maafilaafushi (Lhaviyani Atoll) - SeaVoyage Default">
+                <i class="fa-solid fa-anchor" style="color: #10b981;"></i>
+                <strong>Maafilaafushi</strong>
+                <small>(Default)</small>
+              </button>
+
+              <!-- 2. Device Location GPS -->
+              <button class="island-pill gps-pill" :class="{ active: departureLocation.isDeviceLocation }"
+                @click="detectDeviceLocation(true)" title="Use physical device GPS coordinates to start trip">
+                <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
+                <i class="fa-solid fa-location-crosshairs" style="color: #f59e0b;" v-else></i>
+                <strong>My Device Location</strong>
+                <small>(Live GPS)</small>
+              </button>
+
+              <!-- 3. Popular Islands to Start From -->
+              <button class="island-pill" v-for="port in maldivesPorts.slice(1)" :key="port.name"
+                :class="{ active: (activePickerTarget === 'departure' ? departureLocation.name : destinationLocation.name) === port.name }"
+                @click="selectIsland(port)"
+                :title="'Set ' + (activePickerTarget === 'departure' ? 'Departure' : 'Destination') + ' to ' + port.name">
+                <i class="fa-solid fa-map-pin" style="color: #38bdf8;"></i>
+                <span>{{ port.name.split('(')[0].trim() }}</span>
+                <small v-if="port.atoll">({{ port.atoll }})</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- Popular Maldivian Passages Shortcuts -->
+          <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+            <div
+              style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+              <i class="fa-solid fa-compass" style="color: var(--cyan-primary); margin-right: 0.3rem;"></i> Popular
+              Maldivian Channel Passages:
+            </div>
+            <div class="quick-ports">
+              <button class="port-chip gps-chip" :class="{ active: departureLocation.isDeviceLocation }"
+                @click="detectDeviceLocation(true)" title="Always show conditions for my device GPS location">
+                <i class="fa-solid fa-location-crosshairs" style="color: #10b981; margin-right: 0.35rem;"></i>
+                My Device Location (GPS)
+              </button>
+              <button class="port-chip" v-for="route in popularRoutes" :key="route.id"
+                :class="{ active: departureLocation.name === route.departure.name && destinationLocation.name === route.destination.name }"
+                @click="selectPopularRoute(route)">
+                <i class="fa-solid fa-arrow-right-long" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i>
+                {{
+                route.title }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Route Passage Summary HUD Strip -->
+          <div class="route-hud-strip" v-if="routeData">
+            <div class="hud-item">
+              <div class="hud-label"><i class="fa-solid fa-compass"></i> Course Heading</div>
+              <div class="hud-value">{{ routeData.cardinal }} <span
+                  style="font-size: 0.85rem; color: var(--cyan-primary);">({{ routeData.bearing }}°)</span></div>
+              <div class="hud-sub">True Compass Bearing</div>
+            </div>
+
+            <div class="hud-item">
+              <div class="hud-label"><i class="fa-solid fa-arrows-left-right"></i> Passage Distance</div>
+              <div class="hud-value">{{ routeData.distanceNm }} <span
+                  style="font-size: 0.85rem; color: var(--text-muted);">NM</span></div>
+              <div class="hud-sub">{{ routeData.distanceKm }} km inter-atoll</div>
+            </div>
+
+            <div class="hud-item">
+              <div class="hud-label"><i class="fa-solid fa-stopwatch"></i> Estimated Transit</div>
+              <div class="hud-value" style="color: var(--cyan-primary);">{{ routeData.transitTimeStr }}</div>
+              <div class="hud-sub">at {{ routeData.cruisingSpeedKnots }} kn cruise</div>
+            </div>
+
+            <div class="hud-item">
+              <div class="hud-label"><i class="fa-solid fa-wind"></i> Relative Wind Aspect</div>
+              <div>
+                <span class="aspect-pill" :class="'aspect-' + routeData.windAspect.type">
+                  <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
+                </span>
+              </div>
+              <div class="hud-sub">{{ routeData.windAspect.angle }}° relative angle</div>
+            </div>
+
+            <div class="hud-item">
+              <div class="hud-label"><i class="fa-solid fa-water"></i> Swell Direction Aspect</div>
+              <div>
+                <span class="aspect-pill" :class="'aspect-' + routeData.swellAspect.type">
+                  <i :class="routeData.swellAspect.icon"></i> {{ routeData.swellAspect.label.split('/')[0] }}
+                </span>
+              </div>
+              <div class="hud-sub">{{ routeData.channelName }}</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vessel Selection Row -->
+        <section class="vessel-selector-section">
+          <div class="section-label">
+            <span><i class="fa-solid fa-ship"></i></span> Select Your Vessel Profile
+            <span style="font-size: 0.75rem; color: var(--cyan-primary); text-transform: none; margin-left: 0.5rem;">
+              (Speedboat pounding vs Dhoni rolling limits tailor specifically to your craft)
+            </span>
+          </div>
+          <div class="vessel-grid">
+            <div class="vessel-card" v-for="(vessel, key) in vesselProfiles" :key="key"
+              :class="{ active: selectedVesselKey === key }" @click="selectVessel(key)">
+              <div class="vessel-icon"><i :class="vessel.icon"></i></div>
+              <div class="vessel-info">
+                <h4>{{ vessel.name }}</h4>
+                <p>{{ vessel.subtitle }} • {{ vessel.cruisingSpeedKnots }} kn cruise</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="route-modal-actions">
+          <button class="route-modal-apply-btn" @click="showRoutePlannerModal = false">
+            <i class="fa-solid fa-check"></i> <span>Apply Route & View Passage</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL: Firebase Auth Modal -->
     <div class="modal-overlay" v-if="showAuthModal" @click.self="showAuthModal = false">
       <div class="glass-panel modal-content">
@@ -2119,8 +2235,9 @@
               </tr>
             </tbody>
           </table>
-          <i class="fa-solid fa-check-double" style="color: var(--sea-green); margin-right: 0.3rem;"></i>
-          Compliant with IHO SP-32 & NOAA Tidal Harmonic Standards (20 Tidal Constituents)
+          <span style="font-size: 0.78rem; color: var(--text-muted); display: inline-flex; align-items: center; margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-check-double" style="color: var(--sea-green); margin-right: 0.3rem;"></i>
+            Compliant with IHO SP-32 & NOAA Tidal Harmonic Standards (20 Tidal Constituents)
           </span>
           <button class="btn-primary" @click="showHarmonicsModal = false"
             style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">
@@ -2500,7 +2617,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-appbar"></script>
+  <script type="module" src="src/js/app.js?v=20260912-singlescreen"></script>
 </body>
 
 </html>
