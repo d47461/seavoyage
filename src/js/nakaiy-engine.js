@@ -534,11 +534,55 @@ function formatNakaiyResult(nakaiy, currentDate) {
   const startStr = `${nakaiy.startDay} ${monthNames[nakaiy.startMonth - 1]}`;
   const endStr = `${nakaiy.endDay} ${monthNames[nakaiy.endMonth - 1]}`;
 
+  const calIndex = NAKAIY_CALENDAR.findIndex(n => n.id === nakaiy.id);
+  const nextNakaiyObj = NAKAIY_CALENDAR[(calIndex + 1) % NAKAIY_CALENDAR.length];
+
+  // Monsoon specific index
+  const isIruvai = nakaiy.monsoon === 'Iruvai';
+  const monsoonList = NAKAIY_CALENDAR.filter(n => n.monsoon === nakaiy.monsoon);
+  const monsoonIdx = monsoonList.findIndex(n => n.id === nakaiy.id) + 1;
+
+  // Squall risk assessment based on centuries of Maldivian seafaring lore
+  let squallRisk = 'Moderate';
+  let squallRiskColor = '#ffb830';
+  if (['assidha', 'burunu', 'kethi', 'roanu', 'miyahelia', 'alha'].includes(nakaiy.id)) {
+    squallRisk = 'High (Frequent Squall Spells)';
+    squallRiskColor = '#ff3366';
+  } else if (['huvan', 'dhinasha', 'hiyagala', 'reyva', 'bandaha', 'viha', 'nora'].includes(nakaiy.id)) {
+    squallRisk = 'Low (Fair Weather & Glassy Seas)';
+    squallRiskColor = '#10b981';
+  } else {
+    squallRisk = 'Moderate (Manageable Ocean Swells)';
+    squallRiskColor = '#00f0ff';
+  }
+
+  // Prevailing wind tendency
+  const prevailingWind = isIruvai
+    ? 'North-East Trade Winds (NE to E • 8–18 kts) — Dry continuous breeze'
+    : 'South-West Monsoon Flow (W to SW • 10–22 kts) — Moist oceanic maritime winds';
+
+  const channelCrossingAdvisory = isIruvai
+    ? 'Eastern atoll passes encounter oceanic chop; western atoll channels remain sheltered with calm water.'
+    : 'Western atoll barrier reefs face primary Indian Ocean swell energy. Exercise caution in deep open channels (Kandu) during active cloud bursts.';
+
   return {
     ...nakaiy,
+    calendarIndex: calIndex + 1,
+    monsoonIndex: monsoonIdx,
+    monsoonTotal: monsoonList.length,
+    monsoonIndexStr: `${monsoonIdx} of ${monsoonList.length} (${nakaiy.monsoonFull})`,
     dateRangeStr: `${startStr} – ${endStr}`,
     isCurrent: true,
-    monsoonColor: nakaiy.monsoon === 'Iruvai' ? '#00f0ff' : '#00e5a3',
-    monsoonIcon: nakaiy.monsoon === 'Iruvai' ? 'fa-sun' : 'fa-cloud-rain'
+    monsoonColor: isIruvai ? '#00f0ff' : '#00e5a3',
+    monsoonIcon: isIruvai ? 'fa-sun' : 'fa-cloud-rain',
+    squallRisk,
+    squallRiskColor,
+    prevailingWind,
+    channelCrossingAdvisory,
+    nextNakaiy: {
+      name: nextNakaiyObj.name,
+      thaana: nextNakaiyObj.thaana,
+      startDate: `${nextNakaiyObj.startDay} ${monthNames[nextNakaiyObj.startMonth - 1]}`
+    }
   };
 }

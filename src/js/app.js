@@ -17,7 +17,11 @@ import {
   calculateDistance,
   calculateBearing,
   calculateMidpoint,
-  getRelativeSeaAspect
+  getRelativeSeaAspect,
+  MALDIVES_ISLANDS_DATABASE,
+  MALDIVES_ATOLLS,
+  searchMaldivesDirectory,
+  getIslandsByAtoll
 } from './marine-api.js';
 import { 
   VESSEL_PROFILES, 
@@ -66,6 +70,43 @@ const app = createApp({
     const activePickerTarget = ref('departure'); // 'departure' or 'destination'
     const popularRoutes = ref(POPULAR_ROUTES);
 
+    // Dedicated Atoll & Island Directory Filtering for Departure & Destination
+    const maldivesAtolls = ref(MALDIVES_ATOLLS);
+    const departureAtollFilter = ref('Lhaviyani');
+    const destinationAtollFilter = ref('Kaafu');
+    const departureSearchQuery = ref('');
+    const destinationSearchQuery = ref('');
+
+    const departureFilteredIslands = computed(() => {
+      const q = departureSearchQuery.value?.trim();
+      if (q && q.length > 0) {
+        return searchMaldivesDirectory(q, 35);
+      }
+      return getIslandsByAtoll(departureAtollFilter.value);
+    });
+
+    const destinationFilteredIslands = computed(() => {
+      const q = destinationSearchQuery.value?.trim();
+      if (q && q.length > 0) {
+        return searchMaldivesDirectory(q, 35);
+      }
+      return getIslandsByAtoll(destinationAtollFilter.value);
+    });
+
+    function setDepartureIsland(island) {
+      if (!island) return;
+      departureLocation.value = { ...island, isDeviceLocation: false };
+      departureSearchQuery.value = '';
+      loadDataForRoute();
+    }
+
+    function setDestinationIsland(island) {
+      if (!island) return;
+      destinationLocation.value = { ...island };
+      destinationSearchQuery.value = '';
+      loadDataForRoute();
+    }
+
     // Check if Departure is currently set to the default Maafilaafushi
     const isMaafilaafushiDeparture = computed(() => {
       if (!departureLocation.value) return false;
@@ -82,12 +123,13 @@ const app = createApp({
     const deviceLocationError = ref(null);
     const isUsingDeviceLocation = computed(() => departureLocation.value?.isDeviceLocation === true);
 
-    // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'fishing' | 'all')
+    // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'planning' | 'fishing')
     const activeMainTab = ref('advisories');
 
     // Single-Screen Sub-Navigation States
-    const activeAdvisorySubTab = ref('chart'); // 'chart', 'verdict', 'briefing', 'hazards'
-    const activeWeatherSubTab = ref('forecast'); // 'forecast', 'telemetry', 'tides'
+    const activeAdvisorySubTab = ref('chart'); // 'chart', 'verdict', 'hazards'
+    const activeWeatherSubTab = ref('nakaiy'); // 'nakaiy', 'telemetry', 'forecast', 'tides'
+    const activePlanningSubTab = ref('best-window'); // 'best-window', 'hourly', 'briefing', 'corridor'
     const activeFishingSubTab = ref('intel'); // 'intel', 'jigging', 'casting', 'trolling', 'spots'
     const showRoutePlannerModal = ref(false);
 
@@ -106,6 +148,10 @@ const app = createApp({
       activeWeatherSubTab.value = subKey;
     }
 
+    function setPlanningSubTab(subKey) {
+      activePlanningSubTab.value = subKey;
+    }
+
     function setFishingSubTab(subKey) {
       activeFishingSubTab.value = subKey;
       if (['jigging', 'casting', 'trolling', 'night'].includes(subKey)) {
@@ -118,7 +164,7 @@ const app = createApp({
       if (typeof window !== 'undefined' && window.innerWidth <= 1200) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      if (tabKey === 'advisories' || tabKey === 'all') {
+      if (tabKey === 'advisories') {
         nextTick(() => {
           if (typeof leafletMap !== 'undefined' && leafletMap) {
             leafletMap.invalidateSize();
@@ -535,6 +581,13 @@ const app = createApp({
         return `${fishingReport.value.overallBiteRating}/100`;
       }
       return 'Solunar';
+    });
+
+    const planningTabBadge = computed(() => {
+      if (bestTravelWindow.value?.optimal?.startTime) {
+        return `${bestTravelWindow.value.optimal.startTime}`;
+      }
+      return '24h Rec';
     });
 
     // 1-Click apply window or hourly departure to route planner
@@ -1260,6 +1313,9 @@ const app = createApp({
       formatHumidity,
       formatUvIndex,
       selectVessel,
+      selectedVesselKey,
+      vesselProfiles,
+      selectedVessel,
       swapLocations,
       selectPopularRoute,
       selectDeparture,
@@ -1294,7 +1350,19 @@ const app = createApp({
       showRoutePlannerModal,
       advisoriesTabBadge,
       weatherTabBadge,
+      planningTabBadge,
       fishingTabBadge,
+      activePlanningSubTab,
+      setPlanningSubTab,
+      maldivesAtolls,
+      departureAtollFilter,
+      destinationAtollFilter,
+      departureSearchQuery,
+      destinationSearchQuery,
+      departureFilteredIslands,
+      destinationFilteredIslands,
+      setDepartureIsland,
+      setDestinationIsland,
       themeMode,
       currentEffectiveTheme,
       setTheme

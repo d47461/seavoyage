@@ -1,21 +1,25 @@
 // Marine & Atmospheric Weather API Client (Open-Meteo & Maldives Meteorological Service)
+import {
+  MALDIVES_ISLANDS_DATABASE,
+  MALDIVES_ATOLLS,
+  searchMaldivesDirectory,
+  getIslandsByAtoll
+} from './locations.js';
 
-export const MAAFILAAFUSHI_PORT = {
-  name: 'Maafilaafushi (Lhaviyani Atoll)',
-  country: 'Maldives',
-  latitude: 5.3625,
-  longitude: 73.4197,
-  atoll: 'Lhaviyani',
-  region: 'Northern Atolls / Faadhippolhu',
-  isMaldives: true,
-  isDeviceLocation: false
+export {
+  MALDIVES_ISLANDS_DATABASE,
+  MALDIVES_ATOLLS,
+  searchMaldivesDirectory,
+  getIslandsByAtoll
 };
+
+export const MAAFILAAFUSHI_PORT = MALDIVES_ISLANDS_DATABASE[0]; // Maafilaafushi (Lhaviyani Atoll)
 
 export const MAAFILAAFUSHI_DEVICE_LOCATION = {
   ...MAAFILAAFUSHI_PORT
 };
 
-export const HANIMAADHOO_PORT = {
+export const HANIMAADHOO_PORT = MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Hanimaadhoo') || {
   name: 'Hanimaadhoo (Haa Dhaalu Atoll)',
   country: 'Maldives',
   latitude: 6.7464,
@@ -25,19 +29,7 @@ export const HANIMAADHOO_PORT = {
   isMaldives: true
 };
 
-export const MALDIVES_PORTS = [
-  MAAFILAAFUSHI_PORT,
-  HANIMAADHOO_PORT,
-  { name: 'Malé & Velana Airport (Kaafu Atoll)', country: 'Maldives', latitude: 4.1755, longitude: 73.5093, atoll: 'Kaafu', region: 'Central Atolls', isMaldives: true },
-  { name: 'Maafushi & Gulhi (South Malé)', country: 'Maldives', latitude: 3.9400, longitude: 73.4900, atoll: 'Kaafu', region: 'Central Atolls', isMaldives: true },
-  { name: 'Rasdhoo & Ukulhas (North Ari Atoll)', country: 'Maldives', latitude: 4.2625, longitude: 72.9900, atoll: 'Alif Alif', region: 'Ari Atoll Channel', isMaldives: true },
-  { name: 'Dharavandhoo & Hanifaru Bay (Baa Atoll)', country: 'Maldives', latitude: 5.1583, longitude: 73.1311, atoll: 'Baa', region: 'Northern Atolls', isMaldives: true },
-  { name: 'Thinadhoo (Gaafu Dhaalu Atoll)', country: 'Maldives', latitude: 0.5317, longitude: 72.9972, atoll: 'Gaafu Dhaalu', region: 'Southern Huvadhoo Atoll', isMaldives: true },
-  { name: 'Fuvahmulah Island (Gnaviyani Atoll)', country: 'Maldives', latitude: -0.2988, longitude: 73.4241, atoll: 'Gnaviyani', region: 'Equatorial Ocean Channel', isMaldives: true },
-  { name: 'Addu City & Gan (Seenu Atoll)', country: 'Maldives', latitude: -0.6936, longitude: 73.1558, atoll: 'Seenu', region: 'Southernmost Atoll', isMaldives: true },
-  { name: 'Kulhudhuffushi City (Haa Dhaalu)', country: 'Maldives', latitude: 6.6222, longitude: 73.0700, atoll: 'Haa Dhaalu', region: 'Far Northern Atolls', isMaldives: true },
-  { name: 'Dhigurah & Maamigili (South Ari)', country: 'Maldives', latitude: 3.5350, longitude: 72.9270, atoll: 'Alif Dhaalu', region: 'Ari Atoll', isMaldives: true }
-];
+export const MALDIVES_PORTS = MALDIVES_ISLANDS_DATABASE;
 
 export const FAMOUS_PORTS = [
   ...MALDIVES_PORTS.slice(0, 5),
@@ -266,27 +258,28 @@ export function matchMMSAlert(lat, lon, locationName, alerts = []) {
 export async function searchLocations(query) {
   if (!query || query.trim().length < 2) return [];
   try {
-    // 1. First check matching Maldivian ports
-    const qLower = query.toLowerCase().trim();
-    const localMaldivesMatches = MALDIVES_PORTS.filter(p => 
-      p.name.toLowerCase().includes(qLower) || 
-      p.atoll?.toLowerCase().includes(qLower) || 
-      p.region?.toLowerCase().includes(qLower)
-    );
+    // 1. First check matching Maldivian islands from comprehensive in-memory database
+    const localMaldivesMatches = searchMaldivesDirectory(query, 12);
 
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=8&language=en&format=json`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Geocoding error ${res.status}`);
-    const data = await res.json();
-    const apiResults = (data.results || []).map(r => ({
-      name: r.name,
-      country: r.country || '',
-      admin1: r.admin1 || '',
-      latitude: r.latitude,
-      longitude: r.longitude,
-      timezone: r.timezone,
-      isMaldives: r.country === 'Maldives' || isCoordinateInMaldives(r.latitude, r.longitude)
-    }));
+    let apiResults = [];
+    try {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=6&language=en&format=json`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        apiResults = (data.results || []).map(r => ({
+          name: r.name,
+          country: r.country || '',
+          admin1: r.admin1 || '',
+          latitude: r.latitude,
+          longitude: r.longitude,
+          timezone: r.timezone,
+          isMaldives: r.country === 'Maldives' || isCoordinateInMaldives(r.latitude, r.longitude)
+        }));
+      }
+    } catch (e) {
+      // Ignore geocoding network fail, localMaldivesMatches will serve results
+    }
 
     // Merge without duplicates
     const combined = [...localMaldivesMatches];
@@ -299,7 +292,7 @@ export async function searchLocations(query) {
     return combined;
   } catch (err) {
     console.error("Location search error:", err);
-    return [];
+    return searchMaldivesDirectory(query, 10);
   }
 }
 

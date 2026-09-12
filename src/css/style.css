@@ -1908,7 +1908,8 @@ button, a, input, select, textarea {
   gap: 1rem;
   padding: 1.25rem 1.4rem;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
   border: 1px solid var(--border-glow);
 }
 
@@ -8601,6 +8602,10 @@ button, a, input, select, textarea {
   position: relative;
 }
 
+.route-modal-container > * {
+  flex-shrink: 0;
+}
+
 .route-modal-header {
   display: flex;
   align-items: center;
@@ -8724,4 +8729,524 @@ button, a, input, select, textarea {
   background: rgba(15, 15, 24, 0.98);
   border-color: rgba(255, 255, 255, 0.15);
 }
+
+/* ==========================================================================
+   NAKAIY & MONSOON WEATHER INTELLIGENCE HERO CARD
+   ========================================================================== */
+.nakaiy-weather-hero-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg, 16px);
+  background: linear-gradient(135deg, rgba(10, 25, 47, 0.85) 0%, rgba(6, 16, 32, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  margin-bottom: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.nakaiy-weather-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.nakaiy-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nakaiy-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nakaiy-calendar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--cyan-primary);
+  background: rgba(0, 240, 255, 0.1);
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+.nakaiy-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.nakaiy-name-en {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.nakaiy-name-thaana {
+  font-family: 'Noto Sans Thaana', 'MV Boli', sans-serif;
+  font-size: 1.6rem;
+  color: var(--cyan-primary);
+  direction: rtl;
+}
+
+.nakaiy-dates-pill {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nakaiy-monsoon-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 0.3rem 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  width: fit-content;
+}
+
+.nakaiy-squall-badge {
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.35);
+  text-align: right;
+  min-width: 170px;
+}
+
+.squall-badge-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.squall-badge-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.nakaiy-weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .nakaiy-weather-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nakaiy-info-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.weather-pattern-box {
+  border-left: 4px solid var(--cyan-primary);
+}
+
+.lore-box {
+  border-left: 4px solid #10b981;
+}
+
+.nakaiy-box-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f1f5f9;
+}
+
+.nakaiy-box-desc {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.nakaiy-metric-tag {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nakaiy-transition-strip {
+  margin-top: 1.15rem;
+  padding: 0.65rem 1rem;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+
+.transition-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.transition-date {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+/* ==========================================================================
+   ROUTE PLANNER MODAL: DUAL INDEPENDENT SELECTORS
+   ========================================================================== */
+.quick-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.route-swap-top-btn {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--cyan-primary);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s ease;
+}
+
+.route-swap-top-btn:hover {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: var(--cyan-primary);
+  transform: scale(1.02);
+}
+
+.route-dual-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .route-dual-columns-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.route-column-card {
+  background: rgba(13, 20, 36, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.departure-col {
+  border-top: 3px solid #10b981;
+}
+
+.destination-col {
+  border-top: 3px solid #00f0ff;
+}
+
+.col-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.col-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.dep-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.dest-badge {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+}
+
+.col-current-name {
+  font-size: 1.1rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.col-coords-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.col-quick-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.col-quick-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.col-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.col-quick-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.col-filters-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (max-width: 500px) {
+  .col-filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.filter-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.col-atoll-select,
+.col-search-input {
+  width: 100%;
+  background: rgba(5, 12, 24, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.col-atoll-select:focus,
+.col-search-input:focus {
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.col-atoll-select option {
+  background: #061124;
+  color: #ffffff;
+}
+
+.col-island-scroll-box {
+  background: rgba(5, 10, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.col-island-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.island-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-height: 190px;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.island-select-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.island-select-pill:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+}
+
+.island-select-pill.selected {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--cyan-primary);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+}
+
+.departure-col .island-select-pill.selected {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+}
+
+.isl-name {
+  font-weight: 600;
+}
+
+.isl-atoll-badge {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+.popular-routes-tray {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  background: rgba(10, 16, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.popular-routes-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Ensure 4 main tabs distribute evenly across desktop & mobile navs */
+.main-tab-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+}
+
+@media (max-width: 600px) {
+  .main-tab-nav .tab-btn span {
+    font-size: 0.72rem;
+  }
+}
+
 
