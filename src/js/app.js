@@ -1,0 +1,1292 @@
+// Vue 3 Maritime Voyage Application with Maldives Meteorological Service (MMS) Integration & Route Optimization
+import { createApp, ref, computed, watch, onMounted, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+import { 
+  fetchMarineAndWeatherData, 
+  searchLocations, 
+  fetchMMSAlerts, 
+  matchMMSAlert, 
+  MALDIVES_PORTS, 
+  FAMOUS_PORTS, 
+  POPULAR_ROUTES,
+  MAAFILAAFUSHI_PORT,
+  MAAFILAAFUSHI_DEVICE_LOCATION,
+  HANIMAADHOO_PORT,
+  WMO_CODES, 
+  getWindDirectionCardinal,
+  isCoordinateInMaldives,
+  calculateDistance,
+  calculateBearing,
+  calculateMidpoint,
+  getRelativeSeaAspect
+} from './marine-api.js';
+import { 
+  VESSEL_PROFILES, 
+  evaluateSeaSafety, 
+  getBeaufortScale, 
+  getDouglasSeaState,
+  evaluateDayTripPlanning,
+  generateTenDayTripSummary
+} from './safety-engine.js';
+import { 
+  generateCaptainAdvisory 
+} from './ai-advisory.js';
+import { 
+  initAuthListener, 
+  loginAnonymously, 
+  loginWithEmail, 
+  registerWithEmail, 
+  logoutUser, 
+  saveFavoriteLocation, 
+  fetchFavoriteLocations, 
+  removeFavoriteLocation 
+} from './firebase-config.js';
+import {
+  getMoonPhaseInfo,
+  getTidePrediction,
+  getVisibilityAnalysis,
+  findBestTravelWindow
+} from './tide-lunar.js';
+import {
+  evaluateFishingConditions
+} from './fishing-engine.js';
+
+const app = createApp({
+  setup() {
+    // 1. Dual Location Route Planning State
+    // Default departure location is ALWAYS Maafilaafushi (Lhaviyani Atoll: 5.3625°N, 73.4197°E)
+    // unless the user explicitly wants to change it to their device GPS or another island.
+    const departureLocation = ref({ ...MAAFILAAFUSHI_PORT });
+    const destinationLocation = ref({ ...HANIMAADHOO_PORT }); // Hanimaadhoo (Haa Dhaalu Atoll) by default
+    const activePickerTarget = ref('departure'); // 'departure' or 'destination'
+    const popularRoutes = ref(POPULAR_ROUTES);
+
+    // Check if Departure is currently set to the default Maafilaafushi
+    const isMaafilaafushiDeparture = computed(() => {
+      if (!departureLocation.value) return false;
+      return (
+        Math.abs(departureLocation.value.latitude - 5.3625) < 0.005 &&
+        Math.abs(departureLocation.value.longitude - 73.4197) < 0.005 &&
+        !departureLocation.value.isDeviceLocation
+      );
+    });
+
+    // Device Geolocation State
+    const isLocatingDevice = ref(false);
+    const deviceLocation = ref({ ...MAAFILAAFUSHI_PORT });
+    const deviceLocationError = ref(null);
+    const isUsingDeviceLocation = computed(() => departureLocation.value?.isDeviceLocation === true);
+
+    // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'fishing' | 'all')
+    const activeMainTab = ref('advisories');
+
+    function setMainTab(tabKey) {
+      activeMainTab.value = tabKey;
+      if (tabKey === 'advisories' || tabKey === 'all') {
+        nextTick(() => {
+          if (typeof leafletMap !== 'undefined' && leafletMap) {
+            leafletMap.invalidateSize();
+          }
+        });
+      }
+    }
+
+    // Maldivian Sportfishing Advisory State (Jigging vs Casting)
+    const activeFishingTab = ref('jigging'); // 'jigging' or 'casting'
+
+    // Search & Autocomplete
+    const searchQuery = ref('');
+    const searchResults = ref([]);
+    const isSearching = ref(false);
+    
+    const maldivesPorts = ref(MALDIVES_PORTS);
+    const famousPorts = ref(FAMOUS_PORTS);
+    const activeRegionTab = ref('maldives'); // 'maldives' or 'global'
+
+    // Vessel Profile & Units (Default: Maldivian Speedboat)
+    const selectedVesselKey = ref('maldives_speedboat');
+    const vesselProfiles = ref(VESSEL_PROFILES);
+    const unitSystem = ref('nautical'); // 'nautical' (knots/m), 'metric' (km/h/m), 'imperial' (mph/ft)
+
+    // Maldives Meteorological Service (MMS) Alerts State
+    const mmsAlerts = ref([]);
+    const isLoadingMmsAlerts = ref(false);
+
+    // Marine State & Safety Evaluation
+    const marineReport = ref(null);
+    const safetyEvaluation = ref(null);
+    const isLoadingData = ref(false);
+    const errorMessage = ref(null);
+
+    // 10-Day Weather Predictions & Trip Planning State
+    const tenDayForecast = ref([]);
+    const selectedDayIndex = ref(0);
+    const tenDayFilter = ref('all'); // 'all', 'go', 'next3', 'weekend'
+    const tenDaySummary = ref(null);
+
+    const selectedDayForecast = computed(() => {
+      if (!tenDayForecast.value || tenDayForecast.value.length === 0) return null;
+      return tenDayForecast.value[selectedDayIndex.value] || tenDayForecast.value[0];
+    });
+
+    const filteredTenDays = computed(() => {
+      if (!tenDayForecast.value) return [];
+      if (tenDayFilter.value === 'go') {
+        return tenDayForecast.value.filter(d => d.status === 'GO');
+      }
+      if (tenDayFilter.value === 'next3') {
+        return tenDayForecast.value.filter(d => d.dayIndex < 3);
+      }
+      if (tenDayFilter.value === 'weekend') {
+        return tenDayForecast.value.filter(d => d.weekdayName === 'Friday' || d.weekdayName === 'Saturday' || d.weekdayName === 'Sunday');
+      }
+      return tenDayForecast.value;
+    });
+
+    function selectForecastDay(idx) {
+      selectedDayIndex.value = idx;
+    }
+
+    function setTenDayFilter(filter) {
+      tenDayFilter.value = filter;
+    }
+
+    function planVoyageForDay(day) {
+      if (!day) return;
+      selectedDayIndex.value = day.dayIndex;
+      const el = document.getElementById('ten-day-detail-panel');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // AI Chief Mate Advisory
+    const aiBrief = ref('');
+    const isAiLoading = ref(false);
+
+    // User & Firebase
+    const currentUser = ref(null);
+    const favoriteLocations = ref([]);
+    const showAuthModal = ref(false);
+    const showHarmonicsModal = ref(false);
+    const selectedConstituent = ref(null);
+    const authEmail = ref('');
+    const authPassword = ref('');
+    const authError = ref('');
+    const isRegisterMode = ref(false);
+
+    // Theme Management: System, Dark, Light
+    const themeMode = ref(localStorage.getItem('seavoyage_theme') || 'system');
+    const systemPrefersDark = ref(
+      typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : true
+    );
+
+    const currentEffectiveTheme = computed(() => {
+      if (themeMode.value === 'system') {
+        return systemPrefersDark.value ? 'ocean' : 'light';
+      }
+      return themeMode.value;
+    });
+
+    function applyTheme(mode) {
+      const target = mode || themeMode.value;
+      const effective = target === 'system'
+        ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'ocean' : 'light')
+        : target;
+
+      document.documentElement.setAttribute('data-theme', effective);
+      document.documentElement.setAttribute('data-theme-mode', target);
+    }
+
+    function setTheme(mode) {
+      themeMode.value = mode;
+      localStorage.setItem('seavoyage_theme', mode);
+      applyTheme(mode);
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemThemeChange = (e) => {
+        systemPrefersDark.value = e.matches;
+        if (themeMode.value === 'system') {
+          applyTheme('system');
+        }
+      };
+
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(handleSystemThemeChange);
+      }
+    }
+
+    // A4 Bulletin Modal & Export State
+    const showA4BulletinModal = ref(false);
+    const isGeneratingJpeg = ref(false);
+    const jpegDownloadSuccess = ref(false);
+
+    // Live Date & Time Display Ticker
+    const currentClockTime = ref(new Date());
+    let clockTimer = null;
+
+    const liveClock = computed(() => {
+      const d = currentClockTime.value;
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const dayName = days[d.getDay()];
+      const dateNum = d.getDate();
+      const monthName = months[d.getMonth()];
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      const secs = String(d.getSeconds()).padStart(2, '0');
+      return {
+        dateStr: `${dayName}, ${dateNum} ${monthName} ${year}`,
+        timeStr: `${hours}:${mins}:${secs}`,
+        fullStamp: `${dateNum} ${monthName} ${year} • ${hours}:${mins}:${secs} MVT`
+      };
+    });
+
+    // New Voyage Plan Form
+    const voyageForm = ref({
+      title: '',
+      departureDate: new Date().toISOString().slice(0, 16),
+      notes: ''
+    });
+
+    // Leaflet Map References
+    let leafletMap = null;
+    let departureMarker = null;
+    let destinationMarker = null;
+    let routePolyline = null;
+
+    // SVG Score Gauge Circumference
+    const gaugeRadius = 60;
+    const gaugeCircumference = 2 * Math.PI * gaugeRadius;
+
+    const gaugeOffset = computed(() => {
+      if (!safetyEvaluation.value) return gaugeCircumference;
+      const score = safetyEvaluation.value.score;
+      return gaugeCircumference - (score / 100) * gaugeCircumference;
+    });
+
+    // Weather Condition Display
+    const weatherCondition = computed(() => {
+      if (!marineReport.value) return { label: 'Clear Sky', icon: 'fa-solid fa-sun' };
+      const code = marineReport.value.current.weatherCode;
+      return WMO_CODES[code] || { label: 'Clear Sky', icon: 'fa-solid fa-sun' };
+    });
+
+    // Wind Cardinal Direction
+    const windCardinal = computed(() => {
+      if (!marineReport.value) return 'N';
+      return getWindDirectionCardinal(marineReport.value.current.windDirection);
+    });
+
+    // Check if route is in Maldives
+    const isMaldives = computed(() => {
+      return (
+        isCoordinateInMaldives(departureLocation.value.latitude, departureLocation.value.longitude) ||
+        isCoordinateInMaldives(destinationLocation.value.latitude, destinationLocation.value.longitude) ||
+        departureLocation.value.country === 'Maldives' ||
+        destinationLocation.value.country === 'Maldives'
+      );
+    });
+
+    // Active MMS Alert for this voyage route (checks departure, destination, or corridor)
+    const currentMmsAlert = computed(() => {
+      const depAlert = matchMMSAlert(
+        departureLocation.value.latitude, 
+        departureLocation.value.longitude, 
+        departureLocation.value.name, 
+        mmsAlerts.value
+      );
+      if (depAlert && depAlert.active) return depAlert;
+
+      const destAlert = matchMMSAlert(
+        destinationLocation.value.latitude, 
+        destinationLocation.value.longitude, 
+        destinationLocation.value.name, 
+        mmsAlerts.value
+      );
+      if (destAlert && destAlert.active) return destAlert;
+
+      return depAlert || {
+        active: false,
+        color: 'green',
+        headline: 'No Active Severe Weather Warning',
+        description: 'Normal sea conditions prevailing according to Maldives Meteorological Service.',
+        areaDesc: 'From Haa Alif Atoll to Addu City (All Atolls Clear - Normal Weather)',
+        startAtoll: 'Haa Alif Atoll',
+        endAtoll: 'Addu City',
+        inEffect: false
+      };
+    });
+
+    // Astronomical Moon Phase ("Moon Face") & Illumination
+    const moonPhase = computed(() => {
+      return getMoonPhaseInfo(new Date());
+    });
+
+    // Astronomical Tide Prediction & Channel Water Velocity
+    const tideData = computed(() => {
+      return getTidePrediction(
+        departureLocation.value.latitude,
+        departureLocation.value.longitude,
+        new Date()
+      );
+    });
+
+    // Detailed Maritime Visibility
+    const visibilityData = computed(() => {
+      const vis = marineReport.value?.current?.visibility ?? 10000;
+      const code = marineReport.value?.current?.weatherCode ?? 0;
+      return getVisibilityAnalysis(vis, code);
+    });
+
+    // 2. Spherical Passage Route Calculation (Distance, Course Heading, Transit Time, Sea Aspect)
+    const routeData = computed(() => {
+      const dep = departureLocation.value;
+      const dest = destinationLocation.value;
+      if (!dep || !dest) return null;
+
+      const dist = calculateDistance(dep.latitude, dep.longitude, dest.latitude, dest.longitude);
+      const bearingObj = calculateBearing(dep.latitude, dep.longitude, dest.latitude, dest.longitude);
+      const mid = calculateMidpoint(dep.latitude, dep.longitude, dest.latitude, dest.longitude);
+
+      const vessel = vesselProfiles.value[selectedVesselKey.value] || vesselProfiles.value.maldives_speedboat;
+      const distNm = dist.nauticalMiles ?? dist.nm ?? 0;
+      const distKm = dist.kilometers ?? dist.km ?? 0;
+      const speedKn = vessel.cruisingSpeedKnots || 20;
+      const transitHours = distNm / speedKn;
+      const totalMins = Math.round(transitHours * 60);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      const transitTimeStr = hrs > 0 ? (mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`) : `${mins}m`;
+
+      // Match famous passage channel
+      const matchedRoute = POPULAR_ROUTES.find(r => 
+        (r.departure.name === dep.name && r.destination.name === dest.name) ||
+        (r.departure.name === dest.name && r.destination.name === dep.name)
+      );
+      const channelName = matchedRoute ? matchedRoute.channelName : `${dep.atoll || 'Atoll'} ➔ ${dest.atoll || 'Channel Pass'}`;
+
+      const windDir = marineReport.value?.current?.windDirection;
+      const swellDir = marineReport.value?.current?.swellDirection ?? marineReport.value?.current?.waveDirection ?? windDir;
+      const windAspect = getRelativeSeaAspect(bearingObj.bearing, windDir);
+      const swellAspect = getRelativeSeaAspect(bearingObj.bearing, swellDir);
+
+      return {
+        departure: dep,
+        destination: dest,
+        distanceNm: distNm,
+        distanceKm: distKm,
+        bearing: bearingObj.bearing,
+        cardinal: bearingObj.cardinal,
+        label: bearingObj.label,
+        midpoint: mid,
+        channelName,
+        cruisingSpeedKnots: speedKn,
+        transitTimeStr,
+        transitMinutes: totalMins,
+        windAspect,
+        swellAspect
+      };
+    });
+
+    // Refined Best Window to Travel factoring in Met alert, wind direction, waves, swells & gusts
+    const bestTravelWindow = computed(() => {
+      if (!marineReport.value || !marineReport.value.timeline) return null;
+      const vessel = vesselProfiles.value[selectedVesselKey.value];
+      return findBestTravelWindow(
+        marineReport.value.timeline,
+        vessel,
+        currentMmsAlert.value,
+        tideData.value,
+        routeData.value
+      );
+    });
+
+    // Maldivian Sportfishing Intelligence Advisory (Jigging vs Casting)
+    const fishingReport = computed(() => {
+      if (!marineReport.value) return null;
+      return evaluateFishingConditions(
+        marineReport.value,
+        tideData.value,
+        moonPhase.value,
+        departureLocation.value
+      );
+    });
+
+    // Check if current departure is bookmarked
+    const isFavorite = computed(() => {
+      return favoriteLocations.value.some(l => 
+        Math.abs(l.latitude - departureLocation.value.latitude) < 0.01 && 
+        Math.abs(l.longitude - departureLocation.value.longitude) < 0.01
+      );
+    });
+
+    // Backwards-compatible alias for single location references
+    const activeLocation = computed(() => departureLocation.value);
+
+    // Dynamic Badges for Main Navigation Tabs
+    const advisoriesTabBadge = computed(() => {
+      if (currentMmsAlert.value?.active && currentMmsAlert.value.color && currentMmsAlert.value.color !== 'green') {
+        return {
+          type: 'alert-' + currentMmsAlert.value.color,
+          label: (currentMmsAlert.value.color || 'ALERT').toUpperCase() + ' ALERT',
+          isAlert: true
+        };
+      }
+      if (safetyEvaluation.value) {
+        return {
+          type: 'status-' + (safetyEvaluation.value.status || 'caution').toLowerCase(),
+          label: `${safetyEvaluation.value.status} (${safetyEvaluation.value.tripScore || safetyEvaluation.value.safetyScore || 0}%)`,
+          isAlert: false
+        };
+      }
+      return null;
+    });
+
+    const weatherTabBadge = computed(() => {
+      if (marineReport.value?.current) {
+        const wave = marineReport.value.current.waveHeight != null ? `${marineReport.value.current.waveHeight.toFixed(1)}m` : '';
+        const wind = marineReport.value.current.windSpeed != null ? `${Math.round(marineReport.value.current.windSpeed)}kn` : '';
+        if (wave && wind) return `${wave} • ${wind}`;
+      }
+      return '10-Day Live';
+    });
+
+    const fishingTabBadge = computed(() => {
+      if (fishingReport.value?.overallBiteRating != null) {
+        return `${fishingReport.value.overallBiteRating}/100`;
+      }
+      return 'Solunar';
+    });
+
+    // 1-Click export A4 bulletin for optimal window
+    function applyBestWindowToVoyage(win) {
+      if (!win) return;
+      openA4BulletinModal();
+    }
+
+    // 1-Click export A4 bulletin for specific hourly departure slot
+    function applyHourToVoyage(slot) {
+      if (!slot) return;
+      openA4BulletinModal();
+    }
+
+    // Formatters
+    function formatWave(meters) {
+      if (meters === null || meters === undefined) return '0.5 m';
+      const m = typeof meters === 'number' ? meters : parseFloat(meters);
+      if (isNaN(m)) return `${meters}`;
+      if (unitSystem.value === 'imperial') {
+        const feet = m * 3.28084;
+        return `${feet.toFixed(1)} ft`;
+      }
+      return `${m.toFixed(1)} m`;
+    }
+
+    function formatWind(knots) {
+      if (knots === null || knots === undefined) return '0 kn';
+      const k = typeof knots === 'number' ? knots : parseFloat(knots);
+      if (isNaN(k)) return `${knots}`;
+      if (unitSystem.value === 'metric') {
+        const kmh = k * 1.852;
+        return `${Math.round(kmh)} km/h`;
+      } else if (unitSystem.value === 'imperial') {
+        const mph = k * 1.15078;
+        return `${Math.round(mph)} mph`;
+      }
+      return `${Math.round(k)} kn`;
+    }
+
+    function formatTemp(celsius) {
+      if (celsius === null || celsius === undefined) return '28°C';
+      const c = typeof celsius === 'number' ? celsius : parseFloat(celsius);
+      if (isNaN(c)) return `${celsius}`;
+      if (unitSystem.value === 'imperial') {
+        const f = (c * 9/5) + 32;
+        return `${Math.round(f)}°F`;
+      }
+      return `${Math.round(c)}°C`;
+    }
+
+    function formatSeaTemp(celsius) {
+      if (celsius === null || celsius === undefined) return '29.5°C';
+      const c = typeof celsius === 'number' ? celsius : parseFloat(celsius);
+      if (isNaN(c)) return `${celsius}°C`;
+      if (unitSystem.value === 'imperial') {
+        const f = (c * 9/5) + 32;
+        return `${f.toFixed(1)}°F`;
+      }
+      return `${c.toFixed(1)}°C`;
+    }
+
+    function formatCurrentSpeed(speedKnots) {
+      if (speedKnots === null || speedKnots === undefined) return '0.8 kn';
+      const kn = typeof speedKnots === 'number' ? speedKnots : parseFloat(speedKnots);
+      if (isNaN(kn)) return `${speedKnots} kn`;
+      if (unitSystem.value === 'metric') {
+        const kmh = kn * 1.852;
+        return `${kmh.toFixed(1)} km/h`;
+      }
+      return `${kn.toFixed(1)} kn`;
+    }
+
+    function formatPressure(hPa) {
+      if (hPa === null || hPa === undefined) return '1011.5 hPa';
+      const p = typeof hPa === 'number' ? hPa : parseFloat(hPa);
+      if (isNaN(p)) return `${hPa} hPa`;
+      if (unitSystem.value === 'imperial') {
+        const inHg = p * 0.02953;
+        return `${inHg.toFixed(2)} inHg`;
+      }
+      return `${p.toFixed(1)} hPa`;
+    }
+
+    function formatPrecipitation(mm) {
+      if (mm === null || mm === undefined) return '0.0 mm';
+      const m = typeof mm === 'number' ? mm : parseFloat(mm);
+      if (isNaN(m)) return `${mm} mm`;
+      if (unitSystem.value === 'imperial') {
+        const inches = m * 0.03937;
+        return `${inches.toFixed(2)} in`;
+      }
+      return `${m.toFixed(1)} mm`;
+    }
+
+    function formatHumidity(pct) {
+      if (pct === null || pct === undefined) return '80%';
+      return `${Math.round(pct)}%`;
+    }
+
+    function formatUvIndex(uv) {
+      if (uv === null || uv === undefined) return '0.0';
+      return Number(uv).toFixed(1);
+    }
+
+    // Load Live Maldives Meteorological Service Alerts
+    async function loadMmsAlerts() {
+      isLoadingMmsAlerts.value = true;
+      try {
+        const alerts = await fetchMMSAlerts();
+        mmsAlerts.value = alerts;
+        recalculateSafety();
+      } catch (err) {
+        console.warn("Could not load MMS alerts:", err);
+      } finally {
+        isLoadingMmsAlerts.value = false;
+      }
+    }
+
+    // Load Marine Data for Passage Route Corridor (evaluated at channel midpoint)
+    async function loadDataForRoute() {
+      isLoadingData.value = true;
+      errorMessage.value = null;
+      try {
+        const dep = departureLocation.value;
+        const dest = destinationLocation.value;
+
+        // Query live marine and atmospheric observations at Departure (device location by default)
+        const data = await fetchMarineAndWeatherData(dep.latitude, dep.longitude);
+        marineReport.value = data;
+
+        recalculateSafety();
+        updateMapRoute();
+        fetchAiBrief();
+      } catch (err) {
+        console.error("Error loading route marine data:", err);
+        errorMessage.value = "Unable to fetch live marine observations for this route. Please verify coordinates or network connection.";
+      } finally {
+        isLoadingData.value = false;
+      }
+    }
+
+    function recalculateSafety() {
+      if (!marineReport.value) return;
+      safetyEvaluation.value = evaluateSeaSafety(
+        marineReport.value, 
+        selectedVesselKey.value,
+        currentMmsAlert.value,
+        routeData.value,
+        tideData.value
+      );
+
+      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning
+      if (marineReport.value.tenDays && marineReport.value.tenDays.length > 0) {
+        tenDayForecast.value = marineReport.value.tenDays.map(d => 
+          evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value)
+        );
+        tenDaySummary.value = generateTenDayTripSummary(
+          tenDayForecast.value, 
+          vesselProfiles.value[selectedVesselKey.value], 
+          routeData.value
+        );
+      } else {
+        tenDayForecast.value = [];
+        tenDaySummary.value = null;
+      }
+    }
+
+    async function fetchAiBrief() {
+      if (!marineReport.value || !safetyEvaluation.value) return;
+      isAiLoading.value = true;
+      try {
+        let locationContext = `Passage: ${departureLocation.value.name} ➔ ${destinationLocation.value.name} (${routeData.value?.distanceNm} NM, heading ${routeData.value?.cardinal}, Est Transit: ${routeData.value?.transitTimeStr})`;
+        if (currentMmsAlert.value && currentMmsAlert.value.active) {
+          locationContext += ` [MMS Alert: ${currentMmsAlert.value.headline} - ${currentMmsAlert.value.areaDesc}]`;
+        }
+        const brief = await generateCaptainAdvisory(
+          locationContext, 
+          safetyEvaluation.value, 
+          marineReport.value
+        );
+        aiBrief.value = brief;
+      } catch (err) {
+        console.warn("AI brief error:", err);
+      } finally {
+        isAiLoading.value = false;
+      }
+    }
+
+    function selectVessel(key) {
+      selectedVesselKey.value = key;
+      recalculateSafety();
+    }
+
+    // Route Switching Actions
+    function swapLocations() {
+      const temp = departureLocation.value;
+      departureLocation.value = destinationLocation.value;
+      destinationLocation.value = temp;
+      loadDataForRoute();
+    }
+
+    function selectPopularRoute(pRoute) {
+      departureLocation.value = pRoute.departure;
+      destinationLocation.value = pRoute.destination;
+      loadDataForRoute();
+    }
+
+    function selectDeparture(port) {
+      departureLocation.value = port;
+      loadDataForRoute();
+    }
+
+    function selectDestination(port) {
+      destinationLocation.value = port;
+      loadDataForRoute();
+    }
+
+    function setPickerTarget(target) {
+      activePickerTarget.value = target;
+    }
+
+    function selectSearchResult(loc) {
+      if (activePickerTarget.value === 'destination') {
+        destinationLocation.value = loc;
+      } else {
+        departureLocation.value = loc;
+      }
+      searchQuery.value = '';
+      searchResults.value = [];
+      loadDataForRoute();
+    }
+
+    function setDepartureToMaafilaafushi() {
+      departureLocation.value = { ...MAAFILAAFUSHI_PORT };
+      searchQuery.value = '';
+      searchResults.value = [];
+      loadDataForRoute();
+    }
+
+    function selectIsland(island, target = null) {
+      const which = target || activePickerTarget.value;
+      if (which === 'destination') {
+        destinationLocation.value = island;
+      } else {
+        departureLocation.value = island;
+      }
+      searchQuery.value = '';
+      searchResults.value = [];
+      loadDataForRoute();
+    }
+
+    // Build standard Location Object for GPS Device Coordinates
+    function buildDeviceLocationObject(lat, lon, accuracy) {
+      const parsedLat = parseFloat(lat);
+      const parsedLon = parseFloat(lon);
+
+      // Proximity check for Maafilaafushi (within 15km)
+      const dMaaf = calculateDistance(parsedLat, parsedLon, 5.3625, 73.4197);
+      const distMaafKm = dMaaf.kilometers ?? dMaaf.km ?? 9999;
+      if (distMaafKm < 15) {
+        return {
+          name: 'Device Location (Maafilaafushi • Lhaviyani Atoll)',
+          atoll: 'Lhaviyani',
+          region: 'Northern Atolls / Faadhippolhu',
+          country: 'Maldives',
+          latitude: parsedLat,
+          longitude: parsedLon,
+          accuracy: accuracy || 12,
+          isDeviceLocation: true,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      let closestPort = null;
+      let minDistance = Infinity;
+      maldivesPorts.value.forEach(port => {
+        const d = calculateDistance(parsedLat, parsedLon, port.latitude, port.longitude);
+        const distKm = d.kilometers ?? d.km ?? 9999;
+        if (distKm < minDistance) {
+          minDistance = distKm;
+          closestPort = port;
+        }
+      });
+
+      const inMaldives = isCoordinateInMaldives(parsedLat, parsedLon) || (minDistance < 60);
+      let name, atoll, country;
+
+      if (closestPort && minDistance < 15) {
+        name = `Device Location (${closestPort.name})`;
+        atoll = closestPort.atoll;
+        country = 'Maldives';
+      } else if (closestPort && inMaldives) {
+        name = `Device Location (${closestPort.atoll} Atoll)`;
+        atoll = closestPort.atoll;
+        country = 'Maldives';
+      } else {
+        const latStr = Math.abs(parsedLat).toFixed(3) + (parsedLat >= 0 ? '°N' : '°S');
+        const lonStr = Math.abs(parsedLon).toFixed(3) + (parsedLon >= 0 ? '°E' : '°W');
+        name = `Device Location (${latStr}, ${lonStr})`;
+        atoll = inMaldives ? (closestPort?.atoll || 'Maldives') : 'Current GPS';
+        country = inMaldives ? 'Maldives' : 'Local Waters';
+      }
+
+      return {
+        name,
+        atoll,
+        country,
+        latitude: parsedLat,
+        longitude: parsedLon,
+        accuracy: accuracy || null,
+        isDeviceLocation: true,
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    // Automatically Detect & Set Device Location via HTML5 Geolocation API
+    async function detectDeviceLocation(forceUserPrompt = false) {
+      if (window.__customDevicePosition) {
+        isLocatingDevice.value = false;
+        const { latitude, longitude, accuracy } = window.__customDevicePosition;
+        const devLoc = buildDeviceLocationObject(latitude, longitude, accuracy);
+        deviceLocation.value = devLoc;
+        departureLocation.value = devLoc;
+        try {
+          localStorage.setItem('seavoyage_device_location_v2', JSON.stringify(devLoc));
+        } catch (e) {}
+        if (destinationLocation.value && 
+            Math.abs(destinationLocation.value.latitude - latitude) < 0.02 && 
+            Math.abs(destinationLocation.value.longitude - longitude) < 0.02) {
+          const altDest = maldivesPorts.value.find(p => Math.abs(p.latitude - latitude) > 0.1) || HANIMAADHOO_PORT;
+          destinationLocation.value = altDest;
+        }
+        await loadDataForRoute();
+        return devLoc;
+      }
+
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        if (!deviceLocation.value || !deviceLocation.value.isDeviceLocation) {
+          deviceLocation.value = MAAFILAAFUSHI_DEVICE_LOCATION;
+          departureLocation.value = MAAFILAAFUSHI_DEVICE_LOCATION;
+        }
+        deviceLocationError.value = "Geolocation is not supported by your browser. Default device location is Maafilaafushi.";
+        console.warn(deviceLocationError.value);
+        return MAAFILAAFUSHI_DEVICE_LOCATION;
+      }
+
+      isLocatingDevice.value = true;
+      deviceLocationError.value = null;
+
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            isLocatingDevice.value = false;
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            const devLoc = buildDeviceLocationObject(lat, lon, accuracy);
+            deviceLocation.value = devLoc;
+            departureLocation.value = devLoc;
+
+            // Cache device location for instant restoration on subsequent visits
+            try {
+              localStorage.setItem('seavoyage_device_location_v2', JSON.stringify(devLoc));
+            } catch (e) {}
+
+            // Ensure destination is not identical to device location
+            if (destinationLocation.value && 
+                Math.abs(destinationLocation.value.latitude - lat) < 0.02 && 
+                Math.abs(destinationLocation.value.longitude - lon) < 0.02) {
+              const altDest = maldivesPorts.value.find(p => Math.abs(p.latitude - lat) > 0.1) || HANIMAADHOO_PORT;
+              destinationLocation.value = altDest;
+            }
+
+            // Reload all telemetry, weather, tides, and fishing reports for device location
+            await loadDataForRoute();
+            resolve(devLoc);
+          },
+          (err) => {
+            isLocatingDevice.value = false;
+            console.warn("Device geolocation notice:", err.message);
+            if (!deviceLocation.value || !deviceLocation.value.isDeviceLocation) {
+              deviceLocation.value = MAAFILAAFUSHI_DEVICE_LOCATION;
+              departureLocation.value = MAAFILAAFUSHI_DEVICE_LOCATION;
+            }
+            if (forceUserPrompt) {
+              deviceLocationError.value = `Unable to acquire live GPS hardware signal (${err.message}). Showing default device location: Maafilaafushi.`;
+            }
+            resolve(deviceLocation.value || MAAFILAAFUSHI_DEVICE_LOCATION);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
+      });
+    }
+
+    let searchDebounce = null;
+    function onSearchInput() {
+      clearTimeout(searchDebounce);
+      if (!searchQuery.value || searchQuery.value.trim().length < 2) {
+        searchResults.value = [];
+        return;
+      }
+      searchDebounce = setTimeout(async () => {
+        isSearching.value = true;
+        try {
+          searchResults.value = await searchLocations(searchQuery.value);
+        } catch (e) {
+          searchResults.value = [];
+        } finally {
+          isSearching.value = false;
+        }
+      }, 350);
+    }
+
+    async function toggleFavorite() {
+      const loc = departureLocation.value;
+      if (isFavorite.value) {
+        const existing = favoriteLocations.value.find(l => 
+          Math.abs(l.latitude - loc.latitude) < 0.01 && 
+          Math.abs(l.longitude - loc.longitude) < 0.01
+        );
+        if (existing) {
+          favoriteLocations.value = await removeFavoriteLocation(currentUser.value, existing.id);
+        }
+      } else {
+        favoriteLocations.value = await saveFavoriteLocation(currentUser.value, loc);
+      }
+    }
+
+    async function refreshUserData() {
+      if (currentUser.value) {
+        favoriteLocations.value = await fetchFavoriteLocations(currentUser.value);
+      }
+    }
+
+    async function handleAuthSubmit() {
+      authError.value = '';
+      try {
+        if (isRegisterMode.value) {
+          currentUser.value = await registerWithEmail(authEmail.value, authPassword.value);
+        } else {
+          currentUser.value = await loginWithEmail(authEmail.value, authPassword.value);
+        }
+        showAuthModal.value = false;
+        authEmail.value = '';
+        authPassword.value = '';
+        await refreshUserData();
+      } catch (err) {
+        authError.value = err.message || 'Authentication error';
+      }
+    }
+
+    async function handleLogout() {
+      await logoutUser();
+      currentUser.value = null;
+      await loginAnonymously();
+    }
+
+    async function continueAsGuest() {
+      currentUser.value = { uid: 'local-guest', isAnonymous: true, displayName: 'Skipper (Local Session)' };
+      showAuthModal.value = false;
+      authError.value = '';
+      await refreshUserData();
+    }
+
+    // Leaflet Interactive Nautical Chart Initialization
+    function initMap() {
+      if (typeof L === 'undefined') return;
+
+      const dep = departureLocation.value;
+      leafletMap = L.map('sea-map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([dep.latitude, dep.longitude], 9);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18
+      }).addTo(leafletMap);
+
+      updateMapRoute();
+
+      // Click on map to set Departure or Destination
+      leafletMap.on('click', async (e) => {
+        const clickedLat = e.latlng.lat;
+        const clickedLng = e.latlng.lng;
+        const inMv = isCoordinateInMaldives(clickedLat, clickedLng);
+
+        const newLoc = {
+          name: inMv ? `Maldives Atoll Waters (${clickedLat.toFixed(3)}°N, ${clickedLng.toFixed(3)}°E)` : `Nautical Waypoint (${clickedLat.toFixed(3)}°, ${clickedLng.toFixed(3)}°)`,
+          country: inMv ? 'Maldives' : 'Open Waters / Offshore',
+          latitude: clickedLat,
+          longitude: clickedLng,
+          region: inMv ? 'Maldives Archipelago Channel' : 'Ocean Sector',
+          isMaldives: inMv
+        };
+
+        if (activePickerTarget.value === 'destination') {
+          destinationLocation.value = newLoc;
+        } else {
+          departureLocation.value = newLoc;
+        }
+        loadDataForRoute();
+      });
+    }
+
+    // Draw route markers and animated polyline
+    function updateMapRoute() {
+      if (!leafletMap) return;
+      const dep = departureLocation.value;
+      const dest = destinationLocation.value;
+
+      const depLatLng = [dep.latitude, dep.longitude];
+      const destLatLng = [dest.latitude, dest.longitude];
+
+      // 1. Departure Marker (Anchor or GPS Crosshairs)
+      const isDevice = dep.isDeviceLocation === true;
+      const depIcon = L.divIcon({
+        className: 'custom-dep-pin',
+        html: `
+          <div style="
+            background: #10b981;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px #10b981, 0 0 30px rgba(16, 185, 129, 0.5);
+            border: 2px solid #ffffff;
+            font-size: 15px;
+            cursor: pointer;
+          " title="${isDevice ? 'Device Location (GPS): ' : 'Departure: '}${dep.name}"><i class="${isDevice ? 'fa-solid fa-location-crosshairs' : 'fa-solid fa-anchor'}" style="color: #060c18;"></i></div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      if (departureMarker) {
+        departureMarker.setLatLng(depLatLng);
+        departureMarker.setIcon(depIcon);
+      } else {
+        departureMarker = L.marker(depLatLng, { icon: depIcon }).addTo(leafletMap);
+      }
+      departureMarker.bindTooltip(isDevice ? `<b>Device Location (GPS)</b>: ${dep.name}` : `<b>Departure</b>: ${dep.name}`, { direction: 'top' });
+
+      // 2. Destination Marker (Cyan Flag / Target)
+      const destIcon = L.divIcon({
+        className: 'custom-dest-pin',
+        html: `
+          <div style="
+            background: #00f0ff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px #00f0ff, 0 0 30px rgba(0, 240, 255, 0.5);
+            border: 2px solid #ffffff;
+            font-size: 15px;
+            cursor: pointer;
+          " title="Destination: ${dest.name}"><i class="fa-solid fa-flag-checkered" style="color: #060c18;"></i></div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      if (destinationMarker) {
+        destinationMarker.setLatLng(destLatLng);
+        destinationMarker.setIcon(destIcon);
+      } else {
+        destinationMarker = L.marker(destLatLng, { icon: destIcon }).addTo(leafletMap);
+      }
+      destinationMarker.bindTooltip(`<b>Destination</b>: ${dest.name}`, { direction: 'top' });
+
+      // 3. Passage Polyline
+      const distInfo = routeData.value ? `${routeData.value.distanceNm} NM • Course ${routeData.value.cardinal} • Est ${routeData.value.transitTimeStr}` : '';
+      if (routePolyline) {
+        routePolyline.setLatLngs([depLatLng, destLatLng]);
+      } else {
+        routePolyline = L.polyline([depLatLng, destLatLng], {
+          color: '#00f0ff',
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '8, 8'
+        }).addTo(leafletMap);
+      }
+      routePolyline.bindTooltip(`<b>Voyage Route</b><br>${dep.name} ➔ ${dest.name}<br>${distInfo}`, { sticky: true });
+
+      // Fit map bounds to show full route passage
+      const bounds = L.latLngBounds([depLatLng, destLatLng]);
+      leafletMap.fitBounds(bounds, { padding: [55, 55], maxZoom: 12 });
+    }
+
+    onMounted(async () => {
+      applyTheme();
+
+      initAuthListener(async (user) => {
+        currentUser.value = user;
+        if (user) {
+          await refreshUserData();
+        } else {
+          const guest = await loginAnonymously();
+          currentUser.value = guest;
+          await refreshUserData();
+        }
+      });
+
+      // 1. Ensure default departure location (Maafilaafushi) is set
+      if (!departureLocation.value || !departureLocation.value.latitude) {
+        departureLocation.value = { ...MAAFILAAFUSHI_PORT };
+        deviceLocation.value = { ...MAAFILAAFUSHI_PORT };
+      }
+
+      // 2. Fetch official MMS alerts first
+      await loadMmsAlerts();
+
+      // 3. Fetch marine conditions for route passage
+      await loadDataForRoute();
+
+      // 3. Initialize interactive nautical map
+      nextTick(() => {
+        initMap();
+      });
+
+      // 4. Start live clock ticker
+      clockTimer = setInterval(() => {
+        currentClockTime.value = new Date();
+      }, 1000);
+    });
+
+    // A4 Bulletin Print & JPEG Export Handlers
+    function openA4BulletinModal() {
+      showA4BulletinModal.value = true;
+    }
+
+    async function downloadA4BulletinJpeg() {
+      const sheet = document.getElementById('a4-bulletin-sheet');
+      if (!sheet) return;
+      isGeneratingJpeg.value = true;
+      jpegDownloadSuccess.value = false;
+
+      try {
+        if (window.html2canvas) {
+          const canvas = await window.html2canvas(sheet, {
+            scale: 2, // High-resolution output for crisp reading in WhatsApp / Viber
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#040d1a',
+            logging: false
+          });
+
+          const jpegUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const link = document.createElement('a');
+          const depName = (departureLocation.value.name || 'Maldives').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 18);
+          const dateStr = new Date().toISOString().slice(0, 10);
+          link.download = `SeaVoyage_Safety_First_Travel_with_Confidence_${depName}_${dateStr}.jpg`;
+          link.href = jpegUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          jpegDownloadSuccess.value = true;
+          setTimeout(() => { jpegDownloadSuccess.value = false; }, 4000);
+        } else {
+          printA4Bulletin();
+        }
+      } catch (err) {
+        console.error("A4 Bulletin JPEG export error:", err);
+        printA4Bulletin();
+      } finally {
+        isGeneratingJpeg.value = false;
+      }
+    }
+
+    async function copyA4BulletinImage() {
+      const sheet = document.getElementById('a4-bulletin-sheet');
+      if (!sheet || !window.html2canvas) return;
+      try {
+        const canvas = await window.html2canvas(sheet, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#040d1a'
+        });
+        canvas.toBlob(async (blob) => {
+          if (blob && navigator.clipboard && navigator.clipboard.write) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            alert("Bulletin copied to clipboard! You can now paste directly into WhatsApp, Viber, or Telegram.");
+          } else {
+            downloadA4BulletinJpeg();
+          }
+        }, 'image/png');
+      } catch (e) {
+        console.warn("Clipboard copy fallback:", e);
+        downloadA4BulletinJpeg();
+      }
+    }
+
+    function printA4Bulletin() {
+      const origTitle = document.title;
+      document.title = 'SeaVoyage • Safety First, Travel with Confidence';
+      window.print();
+      setTimeout(() => { document.title = origTitle; }, 1000);
+    }
+
+    return {
+      departureLocation,
+      destinationLocation,
+      activePickerTarget,
+      popularRoutes,
+      routeData,
+      activeLocation,
+      searchQuery,
+      searchResults,
+      isSearching,
+      maldivesPorts,
+      famousPorts,
+      activeRegionTab,
+      selectedVesselKey,
+      vesselProfiles,
+      unitSystem,
+      mmsAlerts,
+      currentMmsAlert,
+      isMaldives,
+      isLoadingMmsAlerts,
+      marineReport,
+      safetyEvaluation,
+      isLoadingData,
+      errorMessage,
+      tenDayForecast,
+      selectedDayIndex,
+      selectedDayForecast,
+      tenDayFilter,
+      filteredTenDays,
+      tenDaySummary,
+      selectForecastDay,
+      setTenDayFilter,
+      planVoyageForDay,
+      aiBrief,
+      isAiLoading,
+      currentUser,
+      favoriteLocations,
+      showAuthModal,
+      showHarmonicsModal,
+      selectedConstituent,
+      authEmail,
+      authPassword,
+      authError,
+      isRegisterMode,
+      gaugeRadius,
+      gaugeCircumference,
+      gaugeOffset,
+      weatherCondition,
+      windCardinal,
+      getWindDirectionCardinal,
+      isFavorite,
+      moonPhase,
+      tideData,
+      visibilityData,
+      bestTravelWindow,
+      activeFishingTab,
+      fishingReport,
+      applyBestWindowToVoyage,
+      applyHourToVoyage,
+      formatWave,
+      formatWind,
+      formatTemp,
+      formatSeaTemp,
+      formatCurrentSpeed,
+      formatPressure,
+      formatPrecipitation,
+      formatHumidity,
+      formatUvIndex,
+      selectVessel,
+      swapLocations,
+      selectPopularRoute,
+      selectDeparture,
+      selectDestination,
+      setPickerTarget,
+      selectSearchResult,
+      onSearchInput,
+      toggleFavorite,
+      handleAuthSubmit,
+      handleLogout,
+      continueAsGuest,
+      fetchAiBrief,
+      loadMmsAlerts,
+      isLocatingDevice,
+      deviceLocation,
+      deviceLocationError,
+      isUsingDeviceLocation,
+      detectDeviceLocation,
+      isMaafilaafushiDeparture,
+      setDepartureToMaafilaafushi,
+      selectIsland,
+      MAAFILAAFUSHI_PORT,
+      MAAFILAAFUSHI_DEVICE_LOCATION,
+      showA4BulletinModal,
+      isGeneratingJpeg,
+      jpegDownloadSuccess,
+      liveClock,
+      openA4BulletinModal,
+      downloadA4BulletinJpeg,
+      copyA4BulletinImage,
+      printA4Bulletin,
+      activeMainTab,
+      setMainTab,
+      advisoriesTabBadge,
+      weatherTabBadge,
+      fishingTabBadge,
+      themeMode,
+      currentEffectiveTheme,
+      setTheme
+    };
+  }
+});
+
+app.config.errorHandler = (err, instance, info) => {
+  console.error("VUE ERROR:", err, info);
+  window.__vueError = { message: err?.message, stack: err?.stack, info };
+};
+
+app.mount('#app');

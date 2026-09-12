@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#060c18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SeaVoyage • Safety First, Travel with Confidence</title>
+  <meta name="description"
+    content="Intelligent sea travel safety advisories and marine weather analysis integrated with Maldives Meteorological Service (MMS) alerts.">
+
+  <!-- High-Legibility Modern Typography (Plus Jakarta Sans, Inter, Outfit, JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- html2canvas for High-Resolution JPEG Print/Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="src/css/style.css" />
+
+  <!-- Instant Theme Script to avoid FOUC -->
+  <script>
+    (function () {
+      try {
+        var mode = localStorage.getItem('seavoyage_theme') || 'system';
+        var effective = mode;
+        if (mode === 'system') {
+          var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          effective = isDark ? 'ocean' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', effective);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+      } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="app" v-cloak>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <span class="brand-icon"><i class="fa-solid fa-compass"></i></span>
+        <div>
+          <div class="brand-title">SEAVOYAGE</div>
+          <div class="brand-subtitle">Sea Travel Advisory for Your Safety</div>
+        </div>
+      </div>
+
+      <!-- Live Top Date & Time Display Ticker -->
+      <div class="nav-clock-widget" v-if="liveClock">
+        <div class="clock-date">
+          <i class="fa-regular fa-calendar-days"></i>
+          <span>{{ liveClock.dateStr }}</span>
+        </div>
+        <div class="clock-time">
+          <i class="fa-regular fa-clock"></i>
+          <span class="clock-digits">{{ liveClock.timeStr }}</span>
+          <span class="clock-tz">MVT</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- A4 Print / JPEG Bulletin Service -->
+        <button class="btn-primary a4-bulletin-nav-btn" @click="openA4BulletinModal()"
+          title="Print / Save A4 JPEG Marine Bulletin for WhatsApp/Viber Groups">
+          <i class="fa-solid fa-file-image"></i>
+          <span class="btn-label">A4 Bulletin (JPEG)</span>
+        </button>
+
+        <!-- Units Toggle -->
+        <button class="btn-icon"
+          @click="unitSystem = unitSystem === 'nautical' ? 'metric' : (unitSystem === 'metric' ? 'imperial' : 'nautical')"
+          title="Toggle Units">
+          <i class="fa-solid fa-ruler-combined"></i>
+          <span class="btn-label">{{ unitSystem.toUpperCase() }}</span>
+        </button>
+
+        <!-- Theme Mode Switcher (System, Dark, Light) -->
+        <div class="theme-switcher-pill" role="group" aria-label="Theme mode selector">
+          <button type="button" class="theme-pill-btn" :class="{ active: themeMode === 'system' }"
+            @click="setTheme('system')" title="System Theme (Maldivian Oceanic Navy)">
+            <i class="fa-solid fa-desktop"></i>
+            <span class="theme-pill-label">System</span>
+          </button>
+          <button type="button" class="theme-pill-btn" :class="{ active: themeMode === 'dark' }"
+            @click="setTheme('dark')" title="Dark Theme (Pitch Black & Crisp White)">
+            <i class="fa-solid fa-moon"></i>
+            <span class="theme-pill-label">Dark</span>
+          </button>
+          <button type="button" class="theme-pill-btn" :class="{ active: themeMode === 'light' }"
+            @click="setTheme('light')" title="Light Theme (Daylight Slate)">
+            <i class="fa-solid fa-sun"></i>
+            <span class="theme-pill-label">Light</span>
+          </button>
+        </div>
+
+        <!-- User / Auth -->
+        <button class="btn-icon"
+          @click="currentUser && !currentUser.isAnonymous ? handleLogout() : (showAuthModal = true)"
+          title="Account / Sign In">
+          <i class="fa-solid fa-user"></i>
+          <span class="btn-label">{{ currentUser && !currentUser.isAnonymous ? (currentUser.email ?
+            currentUser.email.split('@')[0] : 'Captain') : 'Sign In' }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="app-container">
+      <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION) -->
+      <section class="glass-panel route-planner-card">
+        <div class="route-planner-header">
+          <div class="section-label">
+            <span><i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i></span>
+            Voyage Passage Planner • Departure & Destination
+          </div>
+
+          <div class="planner-header-actions">
+            <!-- Target Selector Switch -->
+            <div class="target-selector-tabs">
+              <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.3rem;">Active Selection:</span>
+              <button class="target-tab-btn"
+                :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
+                @click="setPickerTarget('departure')">
+                <i class="fa-solid fa-anchor"></i> Departure Port
+              </button>
+              <button class="target-tab-btn"
+                :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
+                @click="setPickerTarget('destination')">
+                <i class="fa-solid fa-flag-checkered"></i> Destination Port
+              </button>
+            </div>
+
+            <!-- GPS Device Location Button -->
+            <button class="btn-gps-locate" @click="detectDeviceLocation(true)" :disabled="isLocatingDevice"
+              :class="{ 'gps-active': departureLocation.isDeviceLocation }"
+              title="Detect and always show details for my current device GPS location">
+              <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
+              <i class="fa-solid fa-location-crosshairs" v-else></i>
+              <span>{{ isLocatingDevice ? 'Acquiring GPS...' : (departureLocation.isDeviceLocation ? 'Device GPS Active'
+                : 'Use Device Location') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dual Ports Row with Reverse Course Button -->
+        <div class="route-ports-row">
+          <!-- Departure Port Card -->
+          <div class="route-port-card departure"
+            :class="{ active: activePickerTarget === 'departure', 'is-device-loc': departureLocation.isDeviceLocation }"
+            @click="setPickerTarget('departure')" title="Click to select or search Departure location">
+            <div class="port-type-badge dep" :class="{ 'device-badge': departureLocation.isDeviceLocation }">
+              <i class="fa-solid fa-location-crosshairs" v-if="departureLocation.isDeviceLocation"></i>
+              <i class="fa-solid fa-anchor" v-else></i>
+              <span>{{ departureLocation.isDeviceLocation ? 'Device Location (GPS Active)' : 'Departure Location' }}</span>
+              <span class="default-pill-tag" v-if="isMaafilaafushiDeparture">DEFAULT</span>
+            </div>
+            <div class="port-name-main">
+              {{ departureLocation.name }}
+              <span class="device-pulse-beacon" v-if="departureLocation.isDeviceLocation"
+                title="Live GPS coordinates active">
+                <span class="beacon-dot"></span>
+                <span class="beacon-ring"></span>
+              </span>
+            </div>
+            <div class="port-atoll-sub">
+              {{ departureLocation.atoll ? departureLocation.atoll + ' • ' : '' }}{{
+              departureLocation.latitude.toFixed(3) }}°N, {{ departureLocation.longitude.toFixed(3) }}°E
+              <span v-if="departureLocation.accuracy"
+                style="font-size: 0.72rem; color: #10b981; margin-left: 0.35rem; font-weight: 600;">
+                (±{{ Math.round(departureLocation.accuracy) }}m)
+              </span>
+            </div>
+
+            <!-- Quick Action Options on Departure Card -->
+            <div class="port-card-actions" @click.stop>
+              <button class="port-action-btn gps-action-btn"
+                :class="{ active: departureLocation.isDeviceLocation }"
+                @click="detectDeviceLocation(true)"
+                title="Detect and use current device GPS location for Departure">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>{{ departureLocation.isDeviceLocation ? 'Device GPS Active' : 'Use Device Location' }}</span>
+              </button>
+              <button class="port-action-btn maaf-action-btn"
+                v-if="!isMaafilaafushiDeparture"
+                @click="setDepartureToMaafilaafushi()"
+                title="Reset Departure to default: Maafilaafushi">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset to Maafilaafushi</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Swap / Reverse Course Button -->
+          <button class="route-swap-btn" @click="swapLocations" title="Reverse Course (Swap Departure & Destination)">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+          </button>
+
+          <!-- Destination Port Card -->
+          <div class="route-port-card destination" :class="{ active: activePickerTarget === 'destination' }"
+            @click="setPickerTarget('destination')" title="Click to select or search Destination location">
+            <div class="port-type-badge dest">
+              <i class="fa-solid fa-flag-checkered"></i> Destination Port
+            </div>
+            <div class="port-name-main">{{ destinationLocation.name }}</div>
+            <div class="port-atoll-sub">
+              {{ destinationLocation.atoll ? destinationLocation.atoll + ' Atoll • ' : '' }}{{
+              destinationLocation.latitude.toFixed(3) }}°N, {{ destinationLocation.longitude.toFixed(3) }}°E
+            </div>
+          </div>
+        </div>
+
+        <!-- Port Search & Autocomplete Input -->
+        <div class="search-input-wrapper">
+          <span class="search-icon-inside"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" class="search-input"
+            :placeholder="activePickerTarget === 'departure' ? 'Search Departure island / atoll (e.g. Maafilaafushi, Malé, Maafushi, Rasdhoo, Baa)...' : 'Search Destination port / atoll (e.g. Rasdhoo, Ukulhas, Dharavandhoo)...'"
+            v-model="searchQuery" @input="onSearchInput" />
+          <!-- Autocomplete Dropdown -->
+          <div class="search-dropdown" v-if="searchResults.length > 0">
+            <div class="search-dropdown-item" v-for="loc in searchResults" :key="loc.latitude + '_' + loc.longitude"
+              @click="selectSearchResult(loc)">
+              <div>
+                <strong>{{ loc.name }}</strong>
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">
+                  {{ loc.country }} {{ loc.atoll ? `(${loc.atoll} Atoll)` : (loc.admin1 ? `(${loc.admin1})` : '') }}
+                </span>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--cyan-primary);">{{ loc.latitude.toFixed(2) }}°, {{
+                loc.longitude.toFixed(2) }}°</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starting Island Selector & Quick Options Strip -->
+        <div class="island-selector-strip">
+          <div class="island-strip-header">
+            <div class="island-strip-title">
+              <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+              <span>Choose Starting Island ({{ activePickerTarget === 'departure' ? 'Departure Location' : 'Destination Location' }}):</span>
+            </div>
+            <span class="island-strip-hint">Click any island to change departure point or search above</span>
+          </div>
+
+          <div class="island-pills-row">
+            <!-- 1. Default Maafilaafushi -->
+            <button class="island-pill maaf-pill"
+              :class="{ active: isMaafilaafushiDeparture && activePickerTarget === 'departure' }"
+              @click="setDepartureToMaafilaafushi()"
+              title="Start trip from Maafilaafushi (Lhaviyani Atoll) - SeaVoyage Default">
+              <i class="fa-solid fa-anchor" style="color: #10b981;"></i>
+              <strong>Maafilaafushi</strong>
+              <small>(Default)</small>
+            </button>
+
+            <!-- 2. Device Location GPS -->
+            <button class="island-pill gps-pill"
+              :class="{ active: departureLocation.isDeviceLocation }"
+              @click="detectDeviceLocation(true)"
+              title="Use physical device GPS coordinates to start trip">
+              <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
+              <i class="fa-solid fa-location-crosshairs" style="color: #f59e0b;" v-else></i>
+              <strong>My Device Location</strong>
+              <small>(Live GPS)</small>
+            </button>
+
+            <!-- 3. Popular Islands to Start From -->
+            <button class="island-pill" v-for="port in maldivesPorts.slice(1)" :key="port.name"
+              :class="{ active: (activePickerTarget === 'departure' ? departureLocation.name : destinationLocation.name) === port.name }"
+              @click="selectIsland(port)"
+              :title="'Set ' + (activePickerTarget === 'departure' ? 'Departure' : 'Destination') + ' to ' + port.name">
+              <i class="fa-solid fa-map-pin" style="color: #38bdf8;"></i>
+              <span>{{ port.name.split('(')[0].trim() }}</span>
+              <small v-if="port.atoll">({{ port.atoll }})</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Popular Maldivian Passages Shortcuts -->
+        <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+          <div
+            style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+            <i class="fa-solid fa-compass" style="color: var(--cyan-primary); margin-right: 0.3rem;"></i> Popular
+            Maldivian Channel Passages:
+          </div>
+          <div class="quick-ports">
+            <button class="port-chip gps-chip" :class="{ active: departureLocation.isDeviceLocation }"
+              @click="detectDeviceLocation(true)" title="Always show conditions for my device GPS location">
+              <i class="fa-solid fa-location-crosshairs" style="color: #10b981; margin-right: 0.35rem;"></i>
+              My Device Location (GPS)
+            </button>
+            <button class="port-chip" v-for="route in popularRoutes" :key="route.id"
+              :class="{ active: departureLocation.name === route.departure.name && destinationLocation.name === route.destination.name }"
+              @click="selectPopularRoute(route)">
+              <i class="fa-solid fa-arrow-right-long" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i> {{
+              route.title }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Route Passage Summary HUD Strip -->
+        <div class="route-hud-strip" v-if="routeData">
+          <div class="hud-item">
+            <div class="hud-label"><i class="fa-solid fa-compass"></i> Course Heading</div>
+            <div class="hud-value">{{ routeData.cardinal }} <span
+                style="font-size: 0.85rem; color: var(--cyan-primary);">({{ routeData.bearing }}°)</span></div>
+            <div class="hud-sub">True Compass Bearing</div>
+          </div>
+
+          <div class="hud-item">
+            <div class="hud-label"><i class="fa-solid fa-arrows-left-right"></i> Passage Distance</div>
+            <div class="hud-value">{{ routeData.distanceNm }} <span
+                style="font-size: 0.85rem; color: var(--text-muted);">NM</span></div>
+            <div class="hud-sub">{{ routeData.distanceKm }} km inter-atoll</div>
+          </div>
+
+          <div class="hud-item">
+            <div class="hud-label"><i class="fa-solid fa-stopwatch"></i> Estimated Transit</div>
+            <div class="hud-value" style="color: var(--cyan-primary);">{{ routeData.transitTimeStr }}</div>
+            <div class="hud-sub">at {{ routeData.cruisingSpeedKnots }} kn cruise</div>
+          </div>
+
+          <div class="hud-item">
+            <div class="hud-label"><i class="fa-solid fa-wind"></i> Relative Wind Aspect</div>
+            <div>
+              <span class="aspect-pill" :class="'aspect-' + routeData.windAspect.type">
+                <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
+              </span>
+            </div>
+            <div class="hud-sub">{{ routeData.windAspect.angle }}° relative angle</div>
+          </div>
+
+          <div class="hud-item">
+            <div class="hud-label"><i class="fa-solid fa-water"></i> Swell Direction Aspect</div>
+            <div>
+              <span class="aspect-pill" :class="'aspect-' + routeData.swellAspect.type">
+                <i :class="routeData.swellAspect.icon"></i> {{ routeData.swellAspect.label.split('/')[0] }}
+              </span>
+            </div>
+            <div class="hud-sub">{{ routeData.channelName }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vessel Selection Row -->
+      <section class="vessel-selector-section">
+        <div class="section-label">
+          <span><i class="fa-solid fa-ship"></i></span> Select Your Vessel Profile
+          <span style="font-size: 0.75rem; color: var(--cyan-primary); text-transform: none; margin-left: 0.5rem;">
+            (Speedboat pounding vs Dhoni rolling limits tailor specifically to your craft)
+          </span>
+        </div>
+        <div class="vessel-grid">
+          <div class="vessel-card" v-for="(vessel, key) in vesselProfiles" :key="key"
+            :class="{ active: selectedVesselKey === key }" @click="selectVessel(key)">
+            <div class="vessel-icon"><i :class="vessel.icon"></i></div>
+            <div class="vessel-info">
+              <h4>{{ vessel.name }}</h4>
+              <p>{{ vessel.subtitle }} • {{ vessel.cruisingSpeedKnots }} kn cruise</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Error State if any -->
+      <div v-if="errorMessage" class="glass-panel"
+        style="padding: 1.5rem; border-color: var(--storm-red); color: #ff99aa; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+      </div>
+
+      <!-- MAIN NAVIGATION TABS BAR (Advisories • Weather • Fishing • All) -->
+      <nav class="main-tab-nav-wrapper">
+        <div class="main-tab-nav">
+          <!-- Tab 1: Travel Advisories (Main) -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'advisories' }"
+            @click="setMainTab('advisories')">
+            <span class="tab-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <span class="tab-label">Travel Advisories</span>
+            <span class="tab-badge" v-if="advisoriesTabBadge" :class="advisoriesTabBadge.type">
+              <i class="fa-solid fa-triangle-exclamation" v-if="advisoriesTabBadge.isAlert"></i>
+              {{ advisoriesTabBadge.label }}
+            </span>
+          </button>
+
+          <!-- Tab 2: Weather & Marine -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'weather' }"
+            @click="setMainTab('weather')">
+            <span class="tab-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span>
+            <span class="tab-label">Weather & Marine</span>
+            <span class="tab-badge tab-badge-weather" v-if="weatherTabBadge">
+              <i class="fa-solid fa-water"></i> {{ weatherTabBadge }}
+            </span>
+          </button>
+
+          <!-- Tab 3: Sportfishing Intelligence -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'fishing' }"
+            @click="setMainTab('fishing')">
+            <span class="tab-icon"><i class="fa-solid fa-fish-fins"></i></span>
+            <span class="tab-label">Sportfishing</span>
+            <span class="tab-badge tab-badge-fishing" v-if="fishingTabBadge">
+              <i class="fa-solid fa-bolt"></i> {{ fishingTabBadge }}
+            </span>
+          </button>
+
+          <!-- Tab 4: All Intelligence (Unified) -->
+          <button class="main-tab-btn tab-btn-all"
+            :class="{ active: activeMainTab === 'all' }"
+            @click="setMainTab('all')"
+            title="Display all advisories, weather telemetry and fishing intel together">
+            <span class="tab-icon"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="tab-label">All Intel</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- TAB PANE 1: TRAVEL & SAFETY ADVISORIES (MAIN) -->
+      <div class="tab-content-pane tab-pane-advisories" v-show="activeMainTab === 'advisories' || activeMainTab === 'all'">
+        <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
+        <section v-if="currentMmsAlert" class="glass-panel mms-center-card"
+          :class="'mms-' + (currentMmsAlert.color || 'green')">
+          <div class="mms-header-row">
+            <div class="mms-title-group">
+              <span style="font-size: 1.5rem; display: flex; align-items: center;"><i class="fa-solid fa-tower-broadcast"
+                  style="color: var(--cyan-primary);"></i></span>
+              <div>
+                <div
+                  style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); font-weight: 700;">
+                  Maldives Meteorological Service • Live Weather Alert
+                </div>
+                <div
+                  style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem;">
+                  <span>{{ currentMmsAlert.headline || 'Normal Weather' }}</span>
+                  <span class="mms-badge">
+                    <span v-if="currentMmsAlert.color === 'white'"><i class="fa-solid fa-circle"
+                        style="font-size: 0.75rem; color: var(--text-main); margin-right: 0.3rem;"></i>ALERT WHITE</span>
+                    <span v-else-if="currentMmsAlert.color === 'yellow'"><i class="fa-solid fa-triangle-exclamation"
+                        style="font-size: 0.75rem; color: #ffb830; margin-right: 0.3rem;"></i>YELLOW WARNING</span>
+                    <span v-else-if="currentMmsAlert.color === 'red'"><i class="fa-solid fa-circle-exclamation"
+                        style="font-size: 0.75rem; color: #ff3366; margin-right: 0.3rem;"></i>ALERT RED</span>
+                    <span v-else><i class="fa-solid fa-circle-check"
+                        style="font-size: 0.75rem; color: #00ffaa; margin-right: 0.3rem;"></i>ALL CLEAR</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mms-meta-info">
+              <div class="mms-meta-item" v-if="currentMmsAlert.areaDesc">
+                <span><i class="fa-solid fa-location-dot"></i> Area:</span>
+                <strong style="color: var(--text-main);">{{ currentMmsAlert.areaDesc }}</strong>
+              </div>
+              <div class="mms-meta-item" v-if="currentMmsAlert.effective">
+                <span><i class="fa-solid fa-clock"></i> Effective:</span>
+                <strong style="color: var(--cyan-primary);">{{ currentMmsAlert.effective.slice(11, 16) ||
+                  currentMmsAlert.effective }}</strong>
+              </div>
+              <div class="mms-meta-item" v-if="currentMmsAlert.expires">
+                <span><i class="fa-solid fa-hourglass-half"></i> Expires:</span>
+                <strong style="color: #ffb830;">{{ currentMmsAlert.expires.slice(11, 16) || currentMmsAlert.expires
+                  }}</strong>
+              </div>
+              <button @click="loadMmsAlerts"
+                style="background: none; border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;"
+                title="Refresh MMS live alerts">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh MMS
+              </button>
+            </div>
+          </div>
+
+          <p class="mms-description-text" style="font-size: 0.95rem; color: var(--text-primary); line-height: 1.5;">
+            {{ currentMmsAlert.description }}
+          </p>
+
+          <!-- Official Maldives Coast Guard / Speedboat Warning Rule -->
+          <div class="mms-coastguard-notice">
+            <span style="font-size: 1.2rem; display: flex; align-items: center;"><i class="fa-solid fa-shield-halved"
+                style="color: var(--cyan-primary);"></i></span>
+            <div>
+              <span v-if="currentMmsAlert.color === 'yellow'">
+                <strong>MALDIVES COAST GUARD RESTRICTION:</strong> Speedboats & small passenger craft strictly advised
+                against open channel crossings (kandu) during Yellow Warning! Delay transit until alert clears.
+              </span>
+              <span v-else-if="currentMmsAlert.color === 'white'">
+                <strong>MMS MARITIME ADVISORY:</strong> Heavy rain squalls and gusts up to 40 mph expected. Speedboat
+                passengers must wear life jackets; avoid deep channel crossings during active squall cells.
+              </span>
+              <span v-else-if="currentMmsAlert.color === 'red'">
+                <strong>CRITICAL HALT:</strong> All maritime operations in affected atolls halted by National Emergency
+                Operations.
+              </span>
+              <span v-else>
+                <strong>COAST GUARD ADVISORY:</strong> Normal sea navigation permitted across atolls. Always maintain
+                bridge watch and monitor VHF Ch 16.
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- MAIN HERO ADVISORY CARD (THE VERDICT) -->
+        <section v-if="safetyEvaluation && marineReport" class="glass-panel hero-advisory-card"
+          :class="'status-' + safetyEvaluation.status">
+        <!-- Animated Wave Canvas Background -->
+        <div class="wave-canvas-bg">
+          <svg class="wave-svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,0 C150,90 350,-40 500,60 C650,130 900,10 1200,50 L1200,120 L0,120 Z" fill="currentColor"></path>
+          </svg>
+        </div>
+
+        <div class="advisory-main-content">
+          <div class="advisory-location-tag">
+            <span><i class="fa-solid fa-anchor" style="color: #10b981; margin-right: 0.35rem;"></i>{{
+              departureLocation.name }}</span>
+            <span style="color: var(--cyan-primary); font-weight: 700; margin: 0 0.35rem;"><i
+                class="fa-solid fa-arrow-right-long"></i></span>
+            <span><i class="fa-solid fa-flag-checkered" style="color: #00f0ff; margin-right: 0.35rem;"></i>{{
+              destinationLocation.name }}</span>
+            <span v-if="routeData" style="color: var(--text-muted);">({{ routeData.distanceNm }} NM • Heading {{
+              routeData.cardinal }})</span>
+            <button @click="toggleFavorite"
+              style="background: none; border: none; cursor: pointer; font-size: 0.95rem; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 0.3rem;"
+              :title="isFavorite ? 'Remove from favorites' : 'Bookmark this route'">
+              <span v-if="isFavorite" style="color: #ffb830;"><i class="fa-solid fa-star"></i> Bookmarked</span>
+              <span v-else style="color: var(--text-muted);"><i class="fa-regular fa-star"></i> Bookmark</span>
+            </button>
+          </div>
+
+          <div class="advisory-badge-row">
+            <div class="advisory-status-badge">
+              <span v-if="safetyEvaluation.status === 'GO'"><i class="fa-solid fa-circle-check"
+                  style="margin-right: 0.35rem;"></i>CLEAR TO SAIL</span>
+              <span v-else-if="safetyEvaluation.status === 'CAUTION'"><i class="fa-solid fa-triangle-exclamation"
+                  style="margin-right: 0.35rem;"></i>EXERCISE CAUTION</span>
+              <span v-else><i class="fa-solid fa-circle-xmark" style="margin-right: 0.35rem;"></i>DO NOT TRAVEL BY
+                SEA</span>
+            </div>
+            <div class="weather-condition-pill" v-if="weatherCondition"
+              style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.8rem; background: rgba(0, 240, 255, 0.1); border: 1px solid var(--border-glow); border-radius: var(--radius-sm); font-size: 0.85rem; color: #fff;">
+              <i :class="weatherCondition.icon" style="color: var(--cyan-primary);"></i> {{ weatherCondition.label }}
+            </div>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">for {{ safetyEvaluation.vessel.name }}</span>
+          </div>
+
+          <p class="advisory-summary-text">
+            {{ safetyEvaluation.verdictSummary }}
+          </p>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap;">
+            <button class="btn-primary" @click="openA4BulletinModal()"
+              style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-file-image"></i> Export A4 Bulletin
+            </button>
+            <button class="btn-secondary" @click="fetchAiBrief" :disabled="isAiLoading"
+              style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <span v-if="isAiLoading"><i class="fa-solid fa-spinner fa-spin"></i> Chief Mate Analyzing...</span>
+              <span v-else><i class="fa-solid fa-arrows-rotate"></i> Refresh Captain Brief</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Score Gauge Radial Meter -->
+        <div class="safety-gauge-wrapper">
+          <div class="gauge-svg-container">
+            <svg class="gauge-svg" viewBox="0 0 140 140">
+              <circle class="gauge-bg-circle" cx="70" cy="70" :r="gaugeRadius" />
+              <circle class="gauge-progress-circle" cx="70" cy="70" :r="gaugeRadius"
+                :stroke-dasharray="gaugeCircumference" :stroke-dashoffset="gaugeOffset" />
+            </svg>
+            <div class="gauge-number-center">
+              <div class="gauge-score-val">{{ safetyEvaluation.score }}</div>
+              <div class="gauge-score-label">Safety Index</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. THE BEST TIME OF THE DAY TO TRAVEL (REFINED 24-HOUR ENGINE) -->
+      <section v-if="bestTravelWindow && bestTravelWindow.optimal" class="best-window-card">
+        <div class="window-header-row">
+          <div class="window-title-group">
+            <div class="window-badge">
+              <span><i class="fa-solid fa-star" style="color: #ffb830;"></i></span> The Best Time of the Day to Travel
+            </div>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">
+              Refined for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0]
+                }}</strong> across Met alerts, wind direction, wave height, swells & gust spikes
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <span class="slot-tag"
+              :class="'slot-' + (bestTravelWindow.optimal.score >= 75 ? 'GO' : (bestTravelWindow.optimal.score >= 50 ? 'CAUTION' : 'NO-GO'))"
+              style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+              {{ bestTravelWindow.optimal.qualityRating }} ({{ bestTravelWindow.optimal.score }}% Safety Score)
+            </span>
+            <button class="btn-primary"
+              style="padding: 0.45rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;"
+              @click="openA4BulletinModal()">
+              <i class="fa-solid fa-file-image"></i> A4 Bulletin for Window
+            </button>
+          </div>
+        </div>
+
+        <!-- Window Timing & Passage Aspect -->
+        <div class="window-time-slot">
+          <span><i class="fa-solid fa-clock" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i>{{
+            bestTravelWindow.optimal.startTime }} — {{ bestTravelWindow.optimal.endTime }}</span>
+          <span
+            style="font-size: 0.95rem; color: var(--cyan-primary); font-family: 'Outfit', sans-serif; display: inline-flex; align-items: center; gap: 0.35rem;">
+            (<span v-if="bestTravelWindow.optimal.isDaylight"><i class="fa-solid fa-sun" style="color: #ffb830;"></i>
+              Daylight Passage</span>
+            <span v-else><i class="fa-solid fa-moon" style="color: var(--cyan-primary);"></i> Night Passage</span>)
+          </span>
+          <span v-if="bestTravelWindow.optimal.aspectSummary" class="aspect-pill aspect-following"
+            style="margin-left: 0.5rem; font-size: 0.8rem;">
+            <i :class="bestTravelWindow.optimal.aspectIcon"></i> {{ bestTravelWindow.optimal.aspectSummary }}
+          </span>
+        </div>
+
+        <p class="window-advice-text" style="font-size: 0.95rem; color: var(--text-primary); line-height: 1.5;">
+          {{ bestTravelWindow.optimal.adviceSummary }}
+        </p>
+
+        <!-- Window Environmental Metrics -->
+        <div class="window-stats-grid">
+          <div class="window-stat-item">
+            <div class="window-stat-label">Predicted Waves</div>
+            <div class="window-stat-val">{{ formatWave(bestTravelWindow.optimal.avgWave) }} <span
+                style="font-size: 0.75rem; color: var(--cyan-primary);">(Max {{
+                formatWave(bestTravelWindow.optimal.maxWave) }})</span></div>
+          </div>
+          <div class="window-stat-item">
+            <div class="window-stat-label">Predicted Winds & Gusts</div>
+            <div class="window-stat-val">{{ formatWind(bestTravelWindow.optimal.avgWind) }} <span
+                style="font-size: 0.75rem; color: #ffb830;">(Gusts {{ formatWind(bestTravelWindow.optimal.maxGusts)
+                }})</span></div>
+          </div>
+          <div class="window-stat-item">
+            <div class="window-stat-label">Min Visibility</div>
+            <div class="window-stat-val">{{ bestTravelWindow.optimal.minVisibility }} km</div>
+          </div>
+          <div class="window-stat-item">
+            <div class="window-stat-label">Tidal Current in Passes</div>
+            <div class="window-stat-val" style="font-size: 0.95rem; color: var(--sea-green);">{{ tideData ?
+              tideData.tideTrend : 'Normal Flow' }}</div>
+          </div>
+        </div>
+
+        <!-- Times to Strictly Avoid (if adverse) -->
+        <div v-if="bestTravelWindow.avoidWindow" class="window-avoid-box" style="margin-top: 0.85rem;">
+          <span><i class="fa-solid fa-triangle-exclamation" style="color: var(--storm-red);"></i></span>
+          <div>
+            <strong>HOURS TO STRICTLY AVOID:</strong> {{ bestTravelWindow.avoidWindow.startTime }} — {{
+            bestTravelWindow.avoidWindow.endTime }}
+            <span v-if="bestTravelWindow.avoidWindow.reason">({{ bestTravelWindow.avoidWindow.reason }})</span>.
+            Wave crests reach {{ formatWave(bestTravelWindow.avoidWindow.maxWave) }} with wind gusts to {{
+            formatWind(bestTravelWindow.avoidWindow.maxGusts) }}.
+          </div>
+        </div>
+
+        <!-- 3. INTERACTIVE 24-HOUR DEPARTURE HOURLY SCHEDULE SLIDER -->
+        <div class="hourly-schedule-container"
+          v-if="bestTravelWindow.hourlySchedule && bestTravelWindow.hourlySchedule.length > 0">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div
+              style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: var(--cyan-primary); margin-right: 0.35rem;"></i>
+              24-Hour Departure Schedule • Select Exact Travel Hour:
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Scroll right for next 24 hours ➔</span>
+          </div>
+
+          <div class="hourly-scroll-track">
+            <div class="hourly-slot-card" v-for="slot in bestTravelWindow.hourlySchedule" :key="slot.rawTime"
+              :class="'slot-' + slot.status">
+              <div class="hourly-slot-header">
+                <div class="hourly-slot-time">
+                  <i :class="slot.isDaylight ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"
+                    :style="{ color: slot.isDaylight ? '#ffb830' : 'var(--cyan-primary)' }"></i>
+                  {{ slot.time }}
+                </div>
+                <span class="hourly-slot-status" :class="slot.status">{{ slot.status }}</span>
+              </div>
+
+              <div class="hourly-slot-metrics">
+                <div class="hourly-slot-metric-item">
+                  <span>Waves:</span>
+                  <strong>{{ formatWave(slot.waveHeight) }}</strong>
+                </div>
+                <div class="hourly-slot-metric-item">
+                  <span>Winds:</span>
+                  <strong>{{ formatWind(slot.windSpeed) }}</strong>
+                </div>
+                <div class="hourly-slot-metric-item" v-if="slot.gustSpike">
+                  <span style="color: #ffb830;"><i class="fa-solid fa-bolt"></i> Gusts:</span>
+                  <strong style="color: #ffb830;">{{ formatWind(slot.windGusts) }}</strong>
+                </div>
+                <div class="hourly-slot-metric-item" v-else>
+                  <span>Gusts:</span>
+                  <span>{{ formatWind(slot.windGusts) }}</span>
+                </div>
+              </div>
+
+              <div class="hourly-slot-aspect" v-if="slot.windAspect">
+                <i :class="slot.windAspect.icon" style="color: var(--cyan-primary);"></i>
+                <span>{{ slot.windAspect.label.split('/')[0] }}</span>
+              </div>
+
+              <div style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.2;">
+                {{ slot.note }}
+              </div>
+
+              <button class="hourly-slot-plan-btn" @click="applyHourToVoyage(slot)">
+                Plan at {{ slot.time }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Chief Mate Passage Advisory -->
+      <section class="glass-panel ai-advisory-panel" v-if="aiBrief">
+        <div class="ai-header">
+          <div class="ai-title">
+            <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div>
+              <h3>AI Chief Mate Briefing</h3>
+              <p>MMS Alert Analysis & Route Safety Recommendations</p>
+            </div>
+          </div>
+          <span class="ai-badge">Live Advisory</span>
+        </div>
+        <div class="ai-content">
+          <p>{{ aiBrief }}</p>
+        </div>
+      </section>
+
+      <!-- Hazard Breakdown & Positive Clearances -->
+      <section v-if="safetyEvaluation" class="analysis-split-grid">
+        <!-- Identified Hazards -->
+        <div class="glass-panel analysis-card">
+          <div class="section-label" style="color: var(--amber-caution);">
+            <span><i class="fa-solid fa-triangle-exclamation"></i></span> Active Operational Hazards & Passage Alerts
+            ({{ safetyEvaluation.hazards.length }})
+          </div>
+          <ul class="hazard-list" v-if="safetyEvaluation.hazards.length > 0">
+            <li v-for="(hazard, idx) in safetyEvaluation.hazards" :key="idx" class="hazard-item"
+              :class="'level-' + hazard.level">
+              <i :class="hazard.level === 'danger' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-triangle-exclamation'"
+                :style="{ color: hazard.level === 'danger' ? '#ff3366' : '#ffb830', marginTop: '0.2rem' }"></i>
+              <span>{{ hazard.text }}</span>
+            </li>
+          </ul>
+          <div v-else style="color: var(--text-muted); font-size: 0.88rem; padding: 0.5rem 0;">
+            No critical hazards or storm advisories detected for this passage.
+          </div>
+        </div>
+
+        <!-- Positive Navigational Clearances -->
+        <div class="glass-panel analysis-card">
+          <div class="section-label" style="color: var(--sea-green);">
+            <span><i class="fa-solid fa-circle-check"></i></span> Navigational Clearances ({{
+            safetyEvaluation.positiveFactors.length }})
+          </div>
+          <ul class="positive-list" v-if="safetyEvaluation.positiveFactors.length > 0">
+            <li v-for="(pos, idx) in safetyEvaluation.positiveFactors" :key="idx" class="positive-item">
+              <i class="fa-solid fa-circle-check" style="color: var(--sea-green); margin-top: 0.2rem;"></i>
+              <span>{{ pos }}</span>
+            </li>
+          </ul>
+          <div v-else style="color: var(--text-muted); font-size: 0.88rem; padding: 0.5rem 0;">
+            Adverse conditions dominant across primary navigational indices.
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Map & 24h Departure Forecast Timeline -->
+      <section class="nav-visual-grid">
+        <!-- Interactive Leaflet Map -->
+        <div class="glass-panel map-card">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="section-label">
+              <span><i class="fa-solid fa-map-location-dot"></i></span> Interactive Nautical Route Chart
+            </div>
+            <!-- Map Target Click Mode Toggle -->
+            <div class="target-selector-tabs" style="font-size: 0.75rem;">
+              <span style="color: var(--text-muted); margin-right: 0.2rem;">Map click sets:</span>
+              <button class="target-tab-btn"
+                :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
+                @click="setPickerTarget('departure')">
+                <i class="fa-solid fa-anchor"></i> Departure
+              </button>
+              <button class="target-tab-btn"
+                :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
+                @click="setPickerTarget('destination')">
+                <i class="fa-solid fa-flag-checkered"></i> Destination
+              </button>
+            </div>
+          </div>
+          <div id="sea-map" class="map-container"></div>
+        </div>
+
+        <!-- 24-Hour Departure Window Timeline -->
+        <div class="glass-panel timeline-card">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="section-label">
+              <span><i class="fa-solid fa-clock-rotate-left"></i></span> Passage Timeline (Next 24 Hours)
+            </div>
+            <span
+              style="font-size: 0.75rem; color: var(--cyan-primary); display: inline-flex; align-items: center; gap: 0.35rem;">
+              <i class="fa-solid fa-arrow-right-long"></i> Scroll right for 24h
+            </span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            Directional wave & wind evolution along the {{ departureLocation.name.split(' ')[0] }} ➔ {{
+            destinationLocation.name.split(' ')[0] }} corridor.
+          </p>
+          <div class="timeline-scroller" v-if="safetyEvaluation && safetyEvaluation.timelineWindows">
+            <div v-for="slot in safetyEvaluation.timelineWindows" :key="slot.rawTime" class="timeline-slot"
+              :class="'slot-' + slot.status">
+              <div class="slot-time">{{ slot.time }}</div>
+              <div class="slot-wave">{{ formatWave(slot.waveHeight) }}</div>
+              <div class="slot-wind">{{ formatWind(slot.windSpeed) }}</div>
+              <div class="slot-tag">{{ slot.status }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div> <!-- END TAB PANE 1: TRAVEL & SAFETY ADVISORIES -->
+
+    <!-- TAB PANE 2: WEATHER & MARINE FORECASTS -->
+    <div class="tab-content-pane tab-pane-weather" v-show="activeMainTab === 'weather' || activeMainTab === 'all'">
+      <!-- 10-DAY WEATHER PREDICTIONS & VOYAGE TRIP PLANNER -->
+      <section v-if="tenDayForecast && tenDayForecast.length > 0" class="glass-panel ten-day-section" id="ten-day-planner-section">
+        <div class="ten-day-header">
+          <div class="ten-day-title-box">
+            <div class="section-label" style="margin-bottom: 0.25rem;">
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--cyan-primary);"></i></span>
+              10-Day Weather Predictions & Voyage Trip Planner
+            </div>
+            <div class="ten-day-subtitle">
+              Comprehensive 10-day environmental & marine forecast for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> • Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Passage Feasibility
+            </div>
+          </div>
+
+          <!-- Open API Attribution Badge -->
+          <div class="ten-day-api-badge" title="Powered by Open-Meteo Open Data API (ECMWF, DWD ICON, Copernicus Marine)">
+            <span class="api-pill-icon"><i class="fa-solid fa-cloud-bolt"></i></span>
+            <div>
+              <div class="api-pill-title">OPEN-METEO API</div>
+              <div class="api-pill-sub">ECMWF & Copernicus Marine</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategic Findings & Passage Summary Strip -->
+        <div class="ten-day-summary-banner" v-if="tenDaySummary">
+          <div class="summary-stat-box top-days-box">
+            <div class="sum-box-label"><i class="fa-solid fa-circle-check" style="color: var(--sea-green);"></i> Top Trip Windows</div>
+            <div class="sum-box-val" v-if="tenDaySummary.topDays.length > 0">
+              <span v-for="td in tenDaySummary.topDays" :key="td.dayIndex" class="top-day-tag" @click="selectForecastDay(td.dayIndex)">
+                {{ td.dayLabel }} ({{ td.score }}%)
+              </span>
+            </div>
+            <div class="sum-box-val" v-else style="font-size: 0.85rem; color: #ffb830;">
+              No clear GO windows in next 10 days
+            </div>
+            <div class="sum-box-sub">{{ tenDaySummary.goDaysCount }} of 10 days Clear to Sail</div>
+          </div>
+
+          <div class="summary-stat-box avoid-days-box" v-if="tenDaySummary.avoidDays.length > 0">
+            <div class="sum-box-label"><i class="fa-solid fa-triangle-exclamation" style="color: var(--storm-red);"></i> Days to Strictly Avoid</div>
+            <div class="sum-box-val">
+              <span v-for="ad in tenDaySummary.avoidDays" :key="ad.dayIndex" class="avoid-day-tag" @click="selectForecastDay(ad.dayIndex)">
+                {{ ad.dayLabel }} ({{ ad.waveHeightMax }}m)
+              </span>
+            </div>
+            <div class="sum-box-sub">High squalls or heavy sea chop</div>
+          </div>
+
+          <div class="summary-stat-box calm-days-box" v-if="tenDaySummary.calmestDay">
+            <div class="sum-box-label"><i class="fa-solid fa-water" style="color: #00f0ff;"></i> Calmest Water Day</div>
+            <div class="sum-box-val" style="color: #00f0ff; cursor: pointer;" @click="selectForecastDay(tenDaySummary.calmestDay.dayIndex)">
+              {{ tenDaySummary.calmestDay.dayLabel }} • {{ formatWave(tenDaySummary.calmestDay.waveHeightAvg) }}
+            </div>
+            <div class="sum-box-sub">Light {{ formatWind(tenDaySummary.calmestDay.windSpeedAvg) }} winds</div>
+          </div>
+
+          <div class="summary-advice-box">
+            <div class="sum-box-label"><i class="fa-solid fa-compass"></i> Captain's 10-Day Strategic Advice</div>
+            <p class="summary-advice-text">{{ tenDaySummary.strategicPassageAdvice }}</p>
+          </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="ten-day-filter-bar">
+          <div class="filter-group">
+            <button class="filter-pill-btn" :class="{ active: tenDayFilter === 'all' }" @click="setTenDayFilter('all')">
+              <i class="fa-solid fa-calendar-week"></i> All 10 Days ({{ tenDayForecast.length }})
+            </button>
+            <button class="filter-pill-btn" :class="{ active: tenDayFilter === 'go' }" @click="setTenDayFilter('go')">
+              <i class="fa-solid fa-circle-check" style="color: var(--sea-green);"></i> Clear to Sail Days ({{ tenDayForecast.filter(d => d.status === 'GO').length }})
+            </button>
+            <button class="filter-pill-btn" :class="{ active: tenDayFilter === 'next3' }" @click="setTenDayFilter('next3')">
+              <i class="fa-solid fa-forward-step"></i> Next 3 Days
+            </button>
+            <button class="filter-pill-btn" :class="{ active: tenDayFilter === 'weekend' }" @click="setTenDayFilter('weekend')">
+              <i class="fa-solid fa-umbrella-beach"></i> Weekend Passes
+            </button>
+          </div>
+          <div class="filter-hint">
+            Click any day card below to inspect all environmental metrics & 24h hourly curve
+          </div>
+        </div>
+
+        <!-- 10-Day Cards Carousel / Grid -->
+        <div class="ten-day-scroll-track">
+          <div 
+            v-for="day in filteredTenDays" 
+            :key="day.date" 
+            class="ten-day-card"
+            :class="['status-' + day.status, { selected: selectedDayIndex === day.dayIndex }]"
+            @click="selectForecastDay(day.dayIndex)"
+          >
+            <div class="day-card-header">
+              <div>
+                <div class="day-label">{{ day.dayLabel }}</div>
+                <div class="day-date-str">{{ day.weekdayName.slice(0,3) }}, {{ day.date.slice(5) }}</div>
+              </div>
+              <span class="day-status-badge" :class="day.status">
+                {{ day.status }} ({{ day.score }}%)
+              </span>
+            </div>
+
+            <!-- Weather Icon & Condition -->
+            <div class="day-weather-row">
+              <div class="day-weather-icon"><i :class="day.weatherCondition.icon"></i></div>
+              <div class="day-weather-info">
+                <div class="day-cond-label">{{ day.weatherCondition.label }}</div>
+                <div class="day-temp-span">{{ formatTemp(day.tempMax) }} / <small>{{ formatTemp(day.tempMin) }}</small></div>
+              </div>
+            </div>
+
+            <!-- Key Metric Rows: Waves, Wind, Current, Rain -->
+            <div class="day-metrics-list">
+              <div class="day-metric-row" title="Significant Wave Height (Hs)">
+                <span class="metric-k"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Waves:</span>
+                <span class="metric-v"><strong>{{ formatWave(day.waveHeightMax) }}</strong> <small>max</small></span>
+              </div>
+              <div class="day-metric-row" title="Sustained Winds & Peak Squall Gusts">
+                <span class="metric-k"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Wind:</span>
+                <span class="metric-v">
+                  {{ formatWind(day.windSpeedMax) }}
+                  <small style="color: #ffb830;" v-if="day.windGustsMax > day.windSpeedMax">G:{{ formatWind(day.windGustsMax) }}</small>
+                  <small style="margin-left: 2px;">{{ day.windCardinal }}</small>
+                </span>
+              </div>
+              <div class="day-metric-row" title="Oceanic Surface Current">
+                <span class="metric-k"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Current:</span>
+                <span class="metric-v">{{ formatCurrentSpeed(day.oceanCurrentSpeedMaxKnots) }} <small>{{ day.oceanCurrentCardinal }}</small></span>
+              </div>
+              <div class="day-metric-row" title="Precipitation Sum & Probability">
+                <span class="metric-k"><i class="fa-solid fa-cloud-rain" style="color: #60a5fa;"></i> Rain:</span>
+                <span class="metric-v">{{ formatPrecipitation(day.precipitationSum) }} <small>({{ day.precipitationProbabilityMax }}%)</small></span>
+              </div>
+            </div>
+
+            <!-- Best Departure Window Tag -->
+            <div class="day-best-window-pill" v-if="day.bestWindow">
+              <i class="fa-solid fa-clock"></i> Best: <strong>{{ day.bestWindow.startTime }} – {{ day.bestWindow.endTime }}</strong>
+            </div>
+
+            <div class="day-select-hint">
+              <span>{{ selectedDayIndex === day.dayIndex ? '● Active Inspection' : 'Click to inspect' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETAILED DAY INSPECTION PANEL (Expanded for Selected Day) -->
+        <div class="ten-day-detail-panel" id="ten-day-detail-panel" v-if="selectedDayForecast">
+          <div class="detail-header-row">
+            <div class="detail-title-group">
+              <span class="detail-day-badge">{{ selectedDayForecast.dayLabel }}</span>
+              <div>
+                <div class="detail-main-title">{{ selectedDayForecast.fullDate }}</div>
+                <div class="detail-sub-title">
+                  Corridor: <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> • {{ selectedDayForecast.qualityRating }}
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+              <span class="slot-tag" :class="'slot-' + selectedDayForecast.status" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+                {{ selectedDayForecast.status }} • {{ selectedDayForecast.score }}% Safety Score
+              </span>
+              <button class="btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem;" @click="openA4BulletinModal()">
+                <i class="fa-solid fa-file-image"></i> A4 Bulletin
+              </button>
+            </div>
+          </div>
+
+          <!-- Verdict Text & Best Window Banner -->
+          <div class="detail-verdict-banner" :class="'verdict-' + selectedDayForecast.status">
+            <div class="verdict-icon-col">
+              <i v-if="selectedDayForecast.status === 'GO'" class="fa-solid fa-circle-check" style="color: #10b981;"></i>
+              <i v-else-if="selectedDayForecast.status === 'CAUTION'" class="fa-solid fa-triangle-exclamation" style="color: #ffb830;"></i>
+              <i v-else class="fa-solid fa-circle-xmark" style="color: #ff3366;"></i>
+            </div>
+            <div class="verdict-text-col">
+              <div class="verdict-headline">{{ selectedDayForecast.verdictSummary }}</div>
+              <div class="verdict-window-tag" v-if="selectedDayForecast.bestWindow">
+                <i class="fa-solid fa-star" style="color: #ffb830;"></i>
+                Recommended departure window: <strong>{{ selectedDayForecast.bestWindow.startTime }} – {{ selectedDayForecast.bestWindow.endTime }}</strong>
+                (Avg wave: {{ formatWave(selectedDayForecast.bestWindow.avgWave) }}, Wind: {{ formatWind(selectedDayForecast.bestWindow.avgWind) }})
+              </div>
+            </div>
+          </div>
+
+          <!-- 8-Metric Comprehensive Telemetry Strip for Selected Day -->
+          <div class="detail-telemetry-grid">
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-water"></i> Significant Wave Height</div>
+              <div class="d-tel-val">{{ formatWave(selectedDayForecast.waveHeightMax) }} <span class="d-tel-sub">peak</span></div>
+              <div class="d-tel-note">Avg {{ formatWave(selectedDayForecast.waveHeightAvg) }} • {{ selectedDayForecast.seaState.name }}</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-stopwatch"></i> Swell Dynamics</div>
+              <div class="d-tel-val">{{ formatWave(selectedDayForecast.swellHeightMax) }} <span class="d-tel-sub">{{ selectedDayForecast.wavePeriodMax }}s period</span></div>
+              <div class="d-tel-note">Direction {{ selectedDayForecast.waveCardinal }} ({{ selectedDayForecast.waveDirectionDominant }}°)</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-wind"></i> Wind & Peak Gusts</div>
+              <div class="d-tel-val">{{ formatWind(selectedDayForecast.windSpeedMax) }} <span class="d-tel-sub">gusts {{ formatWind(selectedDayForecast.windGustsMax) }}</span></div>
+              <div class="d-tel-note">From {{ selectedDayForecast.windCardinal }} • Beaufort Force {{ selectedDayForecast.beaufort.force }}</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Ocean Sea Current</div>
+              <div class="d-tel-val" style="color: #10b981;">{{ formatCurrentSpeed(selectedDayForecast.oceanCurrentSpeedMaxKnots) }}</div>
+              <div class="d-tel-note">{{ selectedDayForecast.oceanCurrentSpeedKmh }} km/h toward {{ selectedDayForecast.oceanCurrentCardinal }}</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-cloud-showers-heavy" style="color: #60a5fa;"></i> Precipitation & Rain Risk</div>
+              <div class="d-tel-val">{{ formatPrecipitation(selectedDayForecast.precipitationSum) }}</div>
+              <div class="d-tel-note">{{ selectedDayForecast.precipitationProbabilityMax }}% rain probability</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-eye"></i> Navigational Visibility</div>
+              <div class="d-tel-val">{{ selectedDayForecast.visibilityMinKm }} <span class="d-tel-sub">km</span></div>
+              <div class="d-tel-note">{{ selectedDayForecast.visibilityMinNm }} Nautical Miles</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> Solar UV & Sea Temp</div>
+              <div class="d-tel-val" :style="{ color: selectedDayForecast.uvColor }">{{ formatUvIndex(selectedDayForecast.uvIndexMax) }} <span class="d-tel-sub">{{ selectedDayForecast.uvCategory }}</span></div>
+              <div class="d-tel-note">SST: {{ formatSeaTemp(selectedDayForecast.seaTemperature) }}</div>
+            </div>
+
+            <div class="detail-tel-box">
+              <div class="d-tel-label"><i class="fa-solid fa-gauge" style="color: #eab308;"></i> Surface Air Pressure</div>
+              <div class="d-tel-val">{{ formatPressure(selectedDayForecast.surfacePressureAvg) }}</div>
+              <div class="d-tel-note">Tropical maritime gradient</div>
+            </div>
+          </div>
+
+          <!-- Hazards & Positive Clearances for Selected Day -->
+          <div class="detail-split-row" v-if="selectedDayForecast.hazards.length > 0 || selectedDayForecast.positiveFactors.length > 0">
+            <div class="detail-hazards-card" v-if="selectedDayForecast.hazards.length > 0">
+              <div class="detail-section-lbl"><i class="fa-solid fa-triangle-exclamation" style="color: var(--storm-red);"></i> Operational Hazards ({{ selectedDayForecast.hazards.length }})</div>
+              <ul class="detail-hazard-list">
+                <li v-for="(h, idx) in selectedDayForecast.hazards" :key="idx" :class="'h-level-' + h.level">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>{{ h.text }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="detail-clearances-card" v-if="selectedDayForecast.positiveFactors.length > 0">
+              <div class="detail-section-lbl"><i class="fa-solid fa-circle-check" style="color: var(--sea-green);"></i> Navigational Clearances</div>
+              <ul class="detail-clearance-list">
+                <li v-for="(p, idx) in selectedDayForecast.positiveFactors" :key="idx">
+                  <i class="fa-solid fa-check"></i>
+                  <span>{{ p }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 24-Hour Hour-by-Hour Timeline for Selected Day -->
+          <div class="detail-hourly-track-wrap" v-if="selectedDayForecast.hours && selectedDayForecast.hours.length > 0">
+            <div class="detail-hourly-hdr">
+              <span><i class="fa-solid fa-clock-rotate-left"></i> 24-Hour Hour-by-Hour Departure Forecast for {{ selectedDayForecast.dayLabel }} ({{ selectedDayForecast.date }}):</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Scroll horizontally to inspect full day ➔</span>
+            </div>
+
+            <div class="detail-hourly-scroller">
+              <div v-for="h in selectedDayForecast.hours" :key="h.time" class="detail-hour-cell" :class="{ daylight: h.isDaylight }">
+                <div class="d-hour-time">
+                  <i :class="h.isDaylight ? 'fa-solid fa-sun' : 'fa-solid fa-moon'" :style="{ color: h.isDaylight ? '#ffb830' : 'var(--cyan-primary)' }"></i>
+                  {{ h.displayTime }}
+                </div>
+                <div class="d-hour-wave" title="Wave height">
+                  <i class="fa-solid fa-water"></i> {{ formatWave(h.waveHeight) }}
+                </div>
+                <div class="d-hour-wind" title="Wind speed">
+                  <i class="fa-solid fa-wind"></i> {{ formatWind(h.windSpeed) }}
+                </div>
+                <div class="d-hour-gust" v-if="h.windGusts > h.windSpeed" title="Gusts">
+                  <small style="color: #ffb830;">G: {{ formatWind(h.windGusts) }}</small>
+                </div>
+                <div class="d-hour-current" title="Ocean current">
+                  <i class="fa-solid fa-compass-drafting"></i> {{ formatCurrentSpeed(h.oceanCurrentSpeedKnots) }}
+                </div>
+                <div class="d-hour-rain" v-if="h.precipitationProbability > 0 || h.precipitation > 0">
+                  <i class="fa-solid fa-droplet"></i> {{ h.precipitationProbability }}%
+                </div>
+                <div class="d-hour-aspect">
+                  {{ h.windCardinal }}
+                </div>
+                <button class="d-hour-btn" @click="applyHourToVoyage(h)">
+                  Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Key Marine, Oceanographic & Meteorological Telemetry Grid -->
+      <section v-if="marineReport" class="metrics-grid">
+        <!-- Metric 1: Dedicated High & Low Tide Extremes Showcase -->
+        <div class="glass-panel metric-card tide-extremes-card" v-if="tideData">
+          <div class="metric-header">
+            <span>Astronomical Tide Extremes</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-water"></i></div>
+          </div>
+          <div class="tide-extremes-twin-row">
+            <!-- Next High Tide -->
+            <div class="tide-extreme-block high-block">
+              <div class="tide-extreme-header">
+                <i class="fa-solid fa-angles-up" style="color: #00f0ff;"></i>
+                <span>High Tide</span>
+              </div>
+              <div class="tide-extreme-time">{{ tideData.nextHighTide.time }}</div>
+              <div class="tide-extreme-height">{{ tideData.nextHighTide.height }}m CD</div>
+            </div>
+            <!-- Next Low Tide -->
+            <div class="tide-extreme-block low-block">
+              <div class="tide-extreme-header">
+                <i class="fa-solid fa-angles-down" style="color: #ffb830;"></i>
+                <span>Low Tide</span>
+              </div>
+              <div class="tide-extreme-time">{{ tideData.nextLowTide.time }}</div>
+              <div class="tide-extreme-height">{{ tideData.nextLowTide.height }}m CD</div>
+            </div>
+          </div>
+          <div class="metric-sub" style="margin-top: 0.6rem;">
+            <span>Water Level: <strong>{{ tideData.currentHeight }}m CD</strong></span>
+            <span class="tide-trend-badge"
+              :class="tideData.tideTrend.includes('Rising') ? 'tide-rising' : (tideData.tideTrend.includes('Falling') ? 'tide-falling' : 'tide-slack')">
+              <i :class="tideData.trendIcon"></i> {{ parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '+' : '' }}{{
+              tideData.rateOfChangeCmPerHour }} cm/h
+            </span>
+          </div>
+        </div>
+
+        <!-- Metric 2: Sea Temperature -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Sea Surface Temperature</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-temperature-half" style="color: #f97316;"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatSeaTemp(marineReport.current.seaTemperature) }}</span>
+            <span class="metric-unit">SST</span>
+          </div>
+          <div class="metric-sub">
+            <span>Tropical Ocean Waters</span>
+            <span style="color: var(--sea-green);"><i class="fa-solid fa-circle-check"></i> Optimal for Pelagics</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Significant Wave Height (Hs) -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Significant Wave Height</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-water"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatWave(marineReport.current.waveHeight) }}</span>
+            <span class="metric-unit">H<sub>s</sub></span>
+          </div>
+          <div class="metric-sub">
+            <span>Sea State: {{ safetyEvaluation.seaState.name }}</span>
+            <span>Max Today: {{ formatWave(marineReport.daily.maxWaveHeight) }}</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Swell Height & Dynamics -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Swell Height & Period</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-stopwatch"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatWave(marineReport.current.swellHeight) }}</span>
+            <span class="metric-unit">{{ marineReport.current.swellPeriod || 8 }}s period</span>
+          </div>
+          <div class="metric-sub">
+            <span>Heading: {{ marineReport.current.swellDirection ?
+              getWindDirectionCardinal(marineReport.current.swellDirection) : 'SSE' }} ({{
+              Math.round(marineReport.current.swellDirection || 160) }}°)</span>
+            <span v-if="(marineReport.current.swellPeriod || 0) > 12" style="color: #ffb830;"><i
+                class="fa-solid fa-triangle-exclamation"></i> Heavy Shoaling Risk</span>
+            <span v-else style="color: var(--sea-green);"><i class="fa-solid fa-check"></i> Low Shoal Risk</span>
+          </div>
+        </div>
+
+        <!-- Metric 5: Wind Waves Height -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Wind Waves (Surface Chop)</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-water-ladder"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatWave(marineReport.current.windWaveHeight) }}</span>
+            <span class="metric-unit">{{ marineReport.current.windWavePeriod || 3 }}s chop</span>
+          </div>
+          <div class="metric-sub">
+            <span>Wind-induced surface chop</span>
+            <span :style="{ color: marineReport.current.windWaveHeight > 1.1 ? '#ffb830' : 'var(--sea-green)' }">
+              {{ marineReport.current.windWaveHeight > 1.1 ? 'Moderate Chop' : 'Light Ripple' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Metric 6: Oceanic Sea Current -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Sea Current (Oceanic Flow)</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-compass-drafting"
+                style="color: var(--cyan-primary);"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatCurrentSpeed(marineReport.current.oceanCurrentSpeedKnots) }}</span>
+            <span class="metric-unit">{{ marineReport.current.oceanCurrentSpeedKmh }} km/h</span>
+          </div>
+          <div class="metric-sub">
+            <span>Course {{ marineReport.current.oceanCurrentDirection }}° ({{
+              getWindDirectionCardinal(marineReport.current.oceanCurrentDirection) }})</span>
+            <span style="color: var(--cyan-primary);"><i class="fa-solid fa-arrow-trend-up"></i> Channel Drift</span>
+          </div>
+        </div>
+
+        <!-- Metric 7: Air Pressure & Barometric Tendency -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Barometric Air Pressure</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-gauge"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatPressure(marineReport.current.surfacePressure) }}</span>
+            <span class="metric-unit">{{ marineReport.current.pressureTrend }}</span>
+          </div>
+          <div class="metric-sub">
+            <span>MSL: {{ marineReport.current.pressureMsl.toFixed(1) }} hPa</span>
+            <span
+              :style="{ color: marineReport.current.surfacePressure < 1008 ? 'var(--storm-red)' : 'var(--sea-green)' }">
+              {{ marineReport.current.surfacePressure < 1008 ? 'Low Trough' : 'Stable Gradient' }} </span>
+          </div>
+        </div>
+
+        <!-- Metric 8: Relative Humidity -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Relative Humidity</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-droplet" style="color: #38bdf8;"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatHumidity(marineReport.current.humidity) }}</span>
+            <span class="metric-unit">RH</span>
+          </div>
+          <div class="metric-sub">
+            <span>Maritime Boundary Layer</span>
+            <span>Dewpoint ~25°C</span>
+          </div>
+        </div>
+
+        <!-- Metric 9: Precipitation & Rain Risk -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Precipitation & Rain</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatPrecipitation(marineReport.current.precipitation) }}</span>
+            <span class="metric-unit">{{ marineReport.current.precipitationProbability }}% chance</span>
+          </div>
+          <div class="metric-sub">
+            <span>Status: {{ marineReport.current.precipitation > 1.5 ? 'Active Showers' : 'Low Rain Chance' }}</span>
+            <span v-if="marineReport.current.precipitation > 0" style="color: #ffb830;"><i
+                class="fa-solid fa-cloud-rain"></i> Showers</span>
+            <span v-else style="color: var(--sea-green);"><i class="fa-solid fa-sun"></i> Dry Deck</span>
+          </div>
+        </div>
+
+        <!-- Metric 10: Solar UV Index -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Solar UV Index</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-sun" style="color: #eab308;"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ formatUvIndex(marineReport.current.uvIndex) }}</span>
+            <span class="metric-unit" :style="{ color: marineReport.current.uvColor, fontWeight: 'bold' }">
+              {{ marineReport.current.uvCategory }}
+            </span>
+          </div>
+          <div class="metric-sub">
+            <span>Peak Today: {{ marineReport.daily.maxUvIndex }}</span>
+            <span :style="{ color: marineReport.current.uvColor }">
+              {{ marineReport.current.uvIndex >= 8 ? 'Eye & Skin Protection Req.' : 'Moderate Sunlight' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Metric 11: Wind Speed & Direction -->
+        <div class="glass-panel metric-card">
+          <div class="metric-header">
+            <span>Wind Speed & Direction</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-wind"></i></div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div class="metric-value-row">
+              <span class="metric-value">{{ formatWind(marineReport.current.windSpeed) }}</span>
+              <span class="metric-unit">Gusts: {{ formatWind(marineReport.current.windGusts) }}</span>
+            </div>
+            <!-- Compass Needle -->
+            <div class="compass-widget"
+              :title="'Direction: ' + marineReport.current.windDirection + '° (' + windCardinal + ')'">
+              <div class="compass-ring">
+                <div class="compass-needle"
+                  :style="{ transform: 'rotate(' + marineReport.current.windDirection + 'deg)' }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="metric-sub">
+            <span>Beaufort Force {{ safetyEvaluation.beaufort.force }} ({{ safetyEvaluation.beaufort.desc }})</span>
+            <span>From {{ windCardinal }}</span>
+          </div>
+        </div>
+
+        <!-- Metric 12: Navigational Visibility -->
+        <div class="glass-panel metric-card" v-if="visibilityData">
+          <div class="metric-header">
+            <span>Navigational Visibility</span>
+            <div class="metric-icon-box"><i class="fa-solid fa-eye"></i></div>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-value">{{ visibilityData.km }}</span>
+            <span class="metric-unit">km ({{ visibilityData.nauticalMiles }} NM)</span>
+          </div>
+          <div class="metric-sub">
+            <span>Rating: <strong>{{ visibilityData.rating }}</strong></span>
+            <span
+              :style="{ color: visibilityData.badgeColor === 'emerald' ? 'var(--sea-green)' : (visibilityData.badgeColor === 'amber' ? '#ffb830' : 'var(--storm-red)') }">
+              <i class="fa-solid fa-circle" style="font-size: 0.6rem; margin-right: 0.25rem;"></i>{{
+              visibilityData.badgeColor.toUpperCase() }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 24-HOUR ASTRONOMICAL TIDE CURVE & HARMONIC ENGINE -->
+      <section v-if="tideData && tideData.tideCurve" class="glass-panel tide-curve-section" id="tide-section">
+        <div class="tide-section-header">
+          <div class="tide-header-left">
+            <div class="section-label" style="margin-bottom: 0.2rem;">
+              <span><i class="fa-solid fa-water"></i></span> 24-Hour Astronomical Tide Curve (Harmonic Prediction
+              Engine)
+            </div>
+            <div class="tide-station-sub">
+              Spatially interpolated for <strong>{{ departureLocation.name }}</strong> ({{
+              departureLocation.latitude.toFixed(3) }}°N, {{ departureLocation.longitude.toFixed(3) }}°E)
+            </div>
+          </div>
+          <div class="tide-header-right">
+            <span class="tide-weights-badge" :title="'Gauge Weights: ' + tideData.stationWeightingDesc">
+              <i class="fa-solid fa-satellite-dish" style="color: var(--cyan-primary);"></i>
+              {{ tideData.stationWeightingDesc }}
+            </span>
+            <button class="btn-secondary tide-harmonics-open-btn" @click="showHarmonicsModal = true">
+              <i class="fa-solid fa-calculator"></i> 20 Harmonic Constituents
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-Time Tidal Telemetry HUD -->
+        <div class="tide-telemetry-hud">
+          <div class="tide-telemetry-item">
+            <div class="tide-tel-label"><i class="fa-solid fa-water"></i> Water Level (Chart Datum)</div>
+            <div class="tide-tel-val">
+              {{ tideData.currentHeight }} <span class="tide-tel-unit">meters</span>
+            </div>
+            <div class="tide-tel-sub">
+              {{ parseFloat(tideData.heightMsl) >= 0 ? '+' : '' }}{{ tideData.heightMsl }}m relative to MSL
+            </div>
+          </div>
+
+          <div class="tide-telemetry-item">
+            <div class="tide-tel-label"><i class="fa-solid fa-gauge-high"></i> Flow Rate (dh/dt)</div>
+            <div class="tide-tel-val"
+              :style="{ color: parseFloat(tideData.rateOfChangeCmPerHour) > 3 ? '#00f0ff' : (parseFloat(tideData.rateOfChangeCmPerHour) < -3 ? '#ffb830' : '#10b981') }">
+              {{ parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '+' : '' }}{{ tideData.rateOfChangeCmPerHour }}
+              <span class="tide-tel-unit">cm/hr</span>
+            </div>
+            <div class="tide-tel-sub">
+              <i :class="tideData.trendIcon"></i> {{ tideData.tideTrend }}
+            </div>
+          </div>
+
+          <div class="tide-telemetry-item">
+            <div class="tide-tel-label"><i class="fa-solid fa-angles-up" style="color: #00f0ff;"></i> Next High Tide
+            </div>
+            <div class="tide-tel-val" style="color: #00f0ff;">
+              {{ tideData.nextHighTide.time }}
+            </div>
+            <div class="tide-tel-sub">
+              Predicted {{ tideData.nextHighTide.height }}m CD
+            </div>
+          </div>
+
+          <div class="tide-telemetry-item">
+            <div class="tide-tel-label"><i class="fa-solid fa-angles-down" style="color: #ffb830;"></i> Next Low Tide
+            </div>
+            <div class="tide-tel-val" style="color: #ffb830;">
+              {{ tideData.nextLowTide.time }}
+            </div>
+            <div class="tide-tel-sub">
+              Predicted {{ tideData.nextLowTide.height }}m CD
+            </div>
+          </div>
+
+          <div class="tide-telemetry-item">
+            <div class="tide-tel-label"><i class="fa-solid fa-arrows-up-down"></i> 24h Tidal Range</div>
+            <div class="tide-tel-val">
+              {{ tideData.tideCurve.tidalRange }} <span class="tide-tel-unit">meters</span>
+            </div>
+            <div class="tide-tel-sub">
+              {{ moonPhase ? moonPhase.tideType.split('(')[0] : 'Maldives Astronomical' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Continuous SVG Tide Curve Canvas -->
+        <div class="tide-chart-wrapper">
+          <svg class="tide-curve-svg" viewBox="0 0 800 200" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="tideAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.38" />
+                <stop offset="65%" stop-color="#0066cc" stop-opacity="0.12" />
+                <stop offset="100%" stop-color="#041224" stop-opacity="0.0" />
+              </linearGradient>
+              <linearGradient id="tideLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00d2ff" />
+                <stop offset="50%" stop-color="#00f0ff" />
+                <stop offset="100%" stop-color="#38bdf8" />
+              </linearGradient>
+            </defs>
+
+            <!-- Background Grid & Time Divisions -->
+            <g class="tide-grid-lines">
+              <!-- Mean Sea Level Reference Line (0.75m Chart Datum) -->
+              <line x1="45" :y1="tideData.tideCurve.mslLine.y" x2="775" :y2="tideData.tideCurve.mslLine.y"
+                stroke="rgba(255, 255, 255, 0.16)" stroke-dasharray="5,5" stroke-width="1" />
+              <text x="50" :y="tideData.tideCurve.mslLine.y - 6" fill="rgba(200, 225, 255, 0.45)" font-size="10"
+                letter-spacing="0.5">
+                Mean Sea Level (0.75m CD)
+              </text>
+
+              <!-- 3-Hour Time Axis Vertical Grids -->
+              <g v-for="tick in tideData.tideCurve.timeTicks" :key="tick.time">
+                <line :x1="tick.svgX" y1="25" :x2="tick.svgX" y2="165" stroke="rgba(255, 255, 255, 0.05)"
+                  stroke-width="1" />
+                <text :x="tick.svgX" y="185" text-anchor="middle" fill="rgba(200, 225, 255, 0.6)" font-size="11"
+                  font-family="'Space Grotesk', sans-serif">
+                  {{ tick.time }}
+                </text>
+              </g>
+            </g>
+
+            <!-- Gradient Area Fill Under Tide Curve -->
+            <path :d="tideData.tideCurve.svgAreaPath" fill="url(#tideAreaGrad)" />
+
+            <!-- Continuous Harmonic Tide Stroke Line -->
+            <path :d="tideData.tideCurve.svgPath" fill="none" stroke="url(#tideLineGrad)" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- High Tide Peak Crest Badges -->
+            <g v-for="(crest, idx) in tideData.tideCurve.highTides" :key="'high_' + idx">
+              <line :x1="crest.svgX" :y1="crest.svgY" :x2="crest.svgX" y2="165" stroke="rgba(0, 240, 255, 0.18)"
+                stroke-dasharray="2,2" />
+              <circle :cx="crest.svgX" :cy="crest.svgY" r="4.5" fill="#00f0ff" stroke="#ffffff" stroke-width="1.5" />
+              <rect :x="crest.svgX - 38" :y="crest.svgY - 24" width="76" height="18" rx="4" fill="rgba(4, 18, 36, 0.9)"
+                stroke="rgba(0, 240, 255, 0.5)" stroke-width="1" />
+              <text :x="crest.svgX" :y="crest.svgY - 11" text-anchor="middle" fill="#00f0ff" font-size="9.5"
+                font-weight="bold" font-family="'Space Grotesk', sans-serif">
+                HIGH {{ crest.height }}m
+              </text>
+            </g>
+
+            <!-- Low Tide Trough Dips Badges -->
+            <g v-for="(trough, idx) in tideData.tideCurve.lowTides" :key="'low_' + idx">
+              <line :x1="trough.svgX" :y1="trough.svgY" :x2="trough.svgX" y2="165" stroke="rgba(255, 184, 48, 0.18)"
+                stroke-dasharray="2,2" />
+              <circle :cx="trough.svgX" :cy="trough.svgY" r="4.5" fill="#ffb830" stroke="#ffffff" stroke-width="1.5" />
+              <rect :x="trough.svgX - 38" :y="trough.svgY + 8" width="76" height="18" rx="4" fill="rgba(4, 18, 36, 0.9)"
+                stroke="rgba(255, 184, 48, 0.5)" stroke-width="1" />
+              <text :x="trough.svgX" :y="trough.svgY + 21" text-anchor="middle" fill="#ffb830" font-size="9.5"
+                font-weight="bold" font-family="'Space Grotesk', sans-serif">
+                LOW {{ trough.height }}m
+              </text>
+            </g>
+
+            <!-- Real-Time 'NOW' Vertical Cursor & Pulsing Indicator -->
+            <g class="tide-now-marker">
+              <line :x1="tideData.tideCurve.currentMarker.x" y1="25" :x2="tideData.tideCurve.currentMarker.x" y2="165"
+                stroke="#10b981" stroke-dasharray="3,3" stroke-width="1.5" />
+              <circle :cx="tideData.tideCurve.currentMarker.x" :cy="tideData.tideCurve.currentMarker.y" r="9"
+                fill="#10b981" class="tide-ping-animation" />
+              <circle :cx="tideData.tideCurve.currentMarker.x" :cy="tideData.tideCurve.currentMarker.y" r="5"
+                fill="#10b981" stroke="#ffffff" stroke-width="1.5" />
+              <rect :x="tideData.tideCurve.currentMarker.x - 44"
+                :y="tideData.tideCurve.currentMarker.y > 60 ? (tideData.tideCurve.currentMarker.y - 30) : (tideData.tideCurve.currentMarker.y + 12)"
+                width="88" height="20" rx="4" fill="rgba(16, 185, 129, 0.9)" stroke="#ffffff" stroke-width="1" />
+              <text :x="tideData.tideCurve.currentMarker.x"
+                :y="tideData.tideCurve.currentMarker.y > 60 ? (tideData.tideCurve.currentMarker.y - 16) : (tideData.tideCurve.currentMarker.y + 26)"
+                text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="bold"
+                font-family="'Space Grotesk', sans-serif">
+                NOW {{ tideData.currentHeight }}m
+              </text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Maritime Passage Current Advisory Footer -->
+        <div class="tide-advice-strip">
+          <div class="tide-advice-icon"><i class="fa-solid fa-circle-info"></i></div>
+          <div class="tide-advice-body">
+            <strong>Atoll Channel Flow Advisory:</strong> {{ tideData.currentSpeedDesc }}
+            <span style="color: var(--text-muted); margin-left: 0.35rem;">
+              Shallow coral flats minimum depth at low water: <strong style="color: #ffb830;">{{
+                tideData.tideCurve.minHeight }}m</strong>; Maximum keel clearance at high water: <strong
+                style="color: #00f0ff;">{{ tideData.tideCurve.maxHeight }}m</strong>.
+            </span>
+          </div>
+        </div>
+      </section>
+    </div> <!-- END TAB PANE 2: WEATHER & MARINE FORECASTS -->
+
+    <!-- TAB PANE 3: SPORTFISHING INTELLIGENCE -->
+    <div class="tab-content-pane tab-pane-fishing" v-show="activeMainTab === 'fishing' || activeMainTab === 'all'">
+      <!-- MALDIVIAN SPORTFISHING INTELLIGENCE & SOLUNAR ADVISORY (Jigging & Casting) -->
+      <section v-if="fishingReport" class="glass-panel fishing-section" id="fishing-section">
+        <div class="fishing-header-row">
+          <div class="fishing-title-box">
+            <div class="section-label" style="margin-bottom: 0.25rem;">
+              <span><i class="fa-solid fa-fish-fins"></i></span> Maldivian Sportfishing Intelligence & Solunar Feeding
+              Advisory
+            </div>
+            <div class="fishing-subtitle">
+              Expert recommendations for <strong>{{ departureLocation.name }}</strong> • Evaluates Tidal Velocity
+              (|dh/dt|), Oceanic Drift, Swell Foam, Barometric Stability & Solar UV
+            </div>
+          </div>
+          <!-- Overall Bite Gauge -->
+          <div class="fishing-overall-badge" :style="{ borderColor: fishingReport.biteBadgeColor }">
+            <div class="bite-score-circle" :style="{ borderColor: fishingReport.biteBadgeColor }">
+              <span class="bite-score-num">{{ fishingReport.overallBiteRating }}</span>
+              <span class="bite-score-sub">INDEX</span>
+            </div>
+            <div class="bite-level-text">
+              <span class="bite-rating-title" :style="{ color: fishingReport.biteBadgeColor }">{{
+                fishingReport.biteLevel }}</span>
+              <span class="bite-solunar-desc">Solunar & Tidal Alignment</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modality Tab Controls -->
+        <div class="fishing-modality-tabs">
+          <button class="fishing-tab-btn" :class="{ active: activeFishingTab === 'jigging' }"
+            @click="activeFishingTab = 'jigging'">
+            <i class="fa-solid fa-anchor"></i>
+            <span>Deep Jigging (Channels & Passes)</span>
+            <span class="tab-score-pill">Score: {{ fishingReport.currentJigScore }}/100</span>
+          </button>
+          <button class="fishing-tab-btn" :class="{ active: activeFishingTab === 'casting' }"
+            @click="activeFishingTab = 'casting'">
+            <i class="fa-solid fa-burst"></i>
+            <span>Topwater Casting (Reef Crests & Flats)</span>
+            <span class="tab-score-pill">Score: {{ fishingReport.currentCastScore }}/100</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: JIGGING INTELLIGENCE -->
+        <div v-if="activeFishingTab === 'jigging'" class="fishing-tab-content">
+          <!-- Optimal Jigging Window Banner -->
+          <div class="fishing-window-card jig-highlight">
+            <div class="window-card-header">
+              <div class="window-badge-box">
+                <span class="window-tag jig-tag"><i class="fa-solid fa-crosshairs"></i> OPTIMAL JIGGING WINDOW</span>
+                <span class="window-hours">{{ fishingReport.bestJiggingWindow.startTime }} – {{
+                  fishingReport.bestJiggingWindow.endTime }}</span>
+              </div>
+              <div class="window-score-badge">
+                <span>Peak Bite:</span>
+                <strong>{{ fishingReport.bestJiggingWindow.peakScore }}/100</strong>
+              </div>
+            </div>
+
+            <p class="window-rationale">
+              <i class="fa-solid fa-quote-left"
+                style="color: var(--cyan-primary); opacity: 0.5; margin-right: 0.35rem;"></i>
+              {{ fishingReport.bestJiggingWindow.rationale }}
+            </p>
+
+            <div class="fishing-meta-grid">
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-arrows-down-to-line"></i> Target Depths</span>
+                <span class="meta-val">{{ fishingReport.bestJiggingWindow.targetDepths }}</span>
+              </div>
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-gauge-high"></i> Current & Drift Strategy</span>
+                <span class="meta-val">{{ fishingReport.bestJiggingWindow.currentDriftAdvice }}</span>
+              </div>
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-toolbox"></i> Recommended Tackle & Jigs</span>
+                <span class="meta-val">{{ fishingReport.bestJiggingWindow.recommendedTackle }}</span>
+              </div>
+            </div>
+
+            <!-- Target Pelagic Species -->
+            <div class="species-row">
+              <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
+              <div class="species-pills">
+                <span v-for="sp in fishingReport.bestJiggingWindow.targetSpecies" :key="sp" class="species-pill">
+                  <i class="fa-solid fa-circle-dot"></i> {{ sp }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Localized Jigging Hotspots -->
+          <div class="fishing-hotspots-section">
+            <div class="hotspots-header">
+              <h4><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i> Top Jigging Hotspots for
+                {{ fishingReport.hotspots.atollName }}</h4>
+              <span class="hotspots-sub">Dynamic Atoll Reef Coordinates & Deep Drop Ledges</span>
+            </div>
+            <div class="hotspots-grid">
+              <div v-for="(spot, idx) in fishingReport.hotspots.jiggingSpots" :key="idx" class="hotspot-card">
+                <div class="hotspot-top">
+                  <div class="hotspot-name">{{ spot.name }}</div>
+                  <div class="hotspot-coords">{{ spot.coordinates }}</div>
+                </div>
+                <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong>
+                </div>
+                <div class="hotspot-species">
+                  <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                </div>
+                <div class="hotspot-tactics">
+                  <strong>Tackle:</strong> {{ spot.tackle }}
+                </div>
+                <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
+                  <strong>Tactics:</strong> {{ spot.tactics }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CASTING & TOPWATER POPPING INTELLIGENCE -->
+        <div v-if="activeFishingTab === 'casting'" class="fishing-tab-content">
+          <!-- Optimal Casting Window Banner -->
+          <div class="fishing-window-card cast-highlight">
+            <div class="window-card-header">
+              <div class="window-badge-box">
+                <span class="window-tag cast-tag"><i class="fa-solid fa-bolt"></i> OPTIMAL TOPWATER CASTING
+                  WINDOW</span>
+                <span class="window-hours">{{ fishingReport.bestCastingWindow.startTime }} – {{
+                  fishingReport.bestCastingWindow.endTime }}</span>
+              </div>
+              <div class="window-score-badge">
+                <span>Peak Bite:</span>
+                <strong style="color: #ffb830;">{{ fishingReport.bestCastingWindow.peakScore }}/100</strong>
+              </div>
+            </div>
+
+            <p class="window-rationale">
+              <i class="fa-solid fa-quote-left" style="color: #ffb830; opacity: 0.5; margin-right: 0.35rem;"></i>
+              {{ fishingReport.bestCastingWindow.rationale }}
+            </p>
+
+            <div class="fishing-meta-grid">
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-water-ladder"></i> Target Zones</span>
+                <span class="meta-val">{{ fishingReport.bestCastingWindow.targetZones }}</span>
+              </div>
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-wind"></i> Swell & White-Water Strategy</span>
+                <span class="meta-val">{{ fishingReport.bestCastingWindow.surfAdvice }}</span>
+              </div>
+              <div class="fishing-meta-item">
+                <span class="meta-label"><i class="fa-solid fa-toolbox"></i> Recommended Tackle & Lures</span>
+                <span class="meta-val">{{ fishingReport.bestCastingWindow.recommendedTackle }}</span>
+              </div>
+            </div>
+
+            <!-- Target Topwater Species -->
+            <div class="species-row">
+              <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
+              <div class="species-pills">
+                <span v-for="sp in fishingReport.bestCastingWindow.targetSpecies" :key="sp"
+                  class="species-pill cast-pill">
+                  <i class="fa-solid fa-circle-dot"></i> {{ sp }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Localized Casting Hotspots -->
+          <div class="fishing-hotspots-section">
+            <div class="hotspots-header">
+              <h4><i class="fa-solid fa-location-dot" style="color: #ffb830;"></i> Top Casting Hotspots for {{
+                fishingReport.hotspots.atollName }}</h4>
+              <span class="hotspots-sub">Reef Crests, Surf Wash & Outer Faru Ledges</span>
+            </div>
+            <div class="hotspots-grid">
+              <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="idx"
+                class="hotspot-card cast-border">
+                <div class="hotspot-top">
+                  <div class="hotspot-name">{{ spot.name }}</div>
+                  <div class="hotspot-coords">{{ spot.coordinates }}</div>
+                </div>
+                <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong>
+                </div>
+                <div class="hotspot-species">
+                  <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag cast-tag">{{ s }}</span>
+                </div>
+                <div class="hotspot-tactics">
+                  <strong>Tackle:</strong> {{ spot.tackle }}
+                </div>
+                <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
+                  <strong>Tactics:</strong> {{ spot.tactics }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 24-Hour Solunar / Hourly Bite Activity Timeline -->
+        <div class="fishing-timeline-section">
+          <div class="fishing-timeline-header">
+            <span><i class="fa-solid fa-chart-line"></i> 24-Hour Solunar & Environmental Feeding Activity
+              Timeline</span>
+            <div class="timeline-legend">
+              <span class="legend-item"><span class="legend-box jig-box"></span> Jigging Score</span>
+              <span class="legend-item"><span class="legend-box cast-box"></span> Casting Score</span>
+            </div>
+          </div>
+          <div class="fishing-timeline-scroll">
+            <div v-for="slot in fishingReport.hourlyScores" :key="slot.time" class="fishing-hour-col">
+              <div class="f-hour-label">{{ slot.displayTime }}</div>
+
+              <!-- Dual Score Bars -->
+              <div class="f-bar-container">
+                <div class="f-bar-jig" :style="{ height: Math.round(slot.jigScore * 0.75) + 'px' }"
+                  :title="'Jigging: ' + slot.jigScore + '/100'">
+                  <span v-if="slot.jigScore >= 75" class="f-bar-num">{{ slot.jigScore }}</span>
+                </div>
+                <div class="f-bar-cast" :style="{ height: Math.round(slot.castScore * 0.75) + 'px' }"
+                  :title="'Casting: ' + slot.castScore + '/100'">
+                  <span v-if="slot.castScore >= 75" class="f-bar-num">{{ slot.castScore }}</span>
+                </div>
+              </div>
+
+              <div class="f-tide-state" :title="'Tidal flow: ' + slot.tidalFlowRate + ' cm/h'">
+                {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling' :
+                '● Slack') }}
+              </div>
+              <div class="f-current-val" :title="'Current Speed'">
+                {{ slot.currentSpeedKnots }} kn
+              </div>
+
+              <!-- Hot badge for high scoring hours -->
+              <div v-if="slot.jigScore >= 85 || slot.castScore >= 85" class="f-hot-pill">
+                PRIME
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div> <!-- END TAB PANE 3: SPORTFISHING INTELLIGENCE -->
+  </main>
+
+    <!-- Main Footer with Concept Attribution -->
+    <footer class="site-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
+          <span>SEAVOYAGE AI • Maldives Meteorological Operations Center & Nautical Passage Planner</span>
+        </div>
+        <div class="footer-concept-card">
+          <span class="concept-pre">Concept by</span>
+          <span class="concept-name">Ahmed Nimal</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- MODAL: Firebase Auth Modal -->
+    <div class="modal-overlay" v-if="showAuthModal" @click.self="showAuthModal = false">
+      <div class="glass-panel modal-content">
+        <div class="modal-header">
+          <h3>{{ isRegisterMode ? 'Register Skipper Account' : 'Sign In to SeaVoyage' }}</h3>
+          <button class="modal-close" @click="showAuthModal = false">&times;</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">
+          Sync your atoll favorites and custom routes across all devices with Firebase.
+        </p>
+        <div v-if="authError"
+          style="background: rgba(255, 51, 102, 0.12); border: 1px solid rgba(255, 51, 102, 0.35); border-radius: var(--radius-sm); padding: 0.75rem 0.9rem; color: #ff99aa; font-size: 0.82rem; margin-bottom: 1rem; line-height: 1.45;">
+          <div
+            style="font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem; color: #ff3366;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Firebase Setup Required
+          </div>
+          {{ authError }}
+          <div style="margin-top: 0.5rem;">
+            <a href="https://console.firebase.google.com/project/ssc1-476ee/authentication" target="_blank"
+              style="color: var(--cyan-primary); text-decoration: underline; font-weight: 600;">
+              Open Firebase Console (ssc1-476ee) ➔
+            </a>
+          </div>
+        </div>
+        <form @submit.prevent="handleAuthSubmit">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" required v-model="authEmail" placeholder="captain@maldives.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" required v-model="authPassword" placeholder="••••••••" />
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.2rem;">
+            <a href="javascript:void(0)" @click="isRegisterMode = !isRegisterMode"
+              style="color: var(--cyan-primary); font-size: 0.85rem; text-decoration: none;">
+              {{ isRegisterMode ? 'Already have an account? Sign in' : 'Need an account? Register' }}
+            </a>
+            <button type="submit" class="btn-primary">
+              {{ isRegisterMode ? 'Create Account' : 'Sign In' }}
+            </button>
+          </div>
+        </form>
+
+        <div
+          style="margin-top: 1.2rem; padding-top: 0.9rem; border-top: 1px solid var(--border-glow); text-align: center;">
+          <button type="button" class="btn-secondary" @click="continueAsGuest"
+            style="width: 100%; font-size: 0.82rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
+            <i class="fa-solid fa-compass"></i> Continue in Local Offline Mode (Save Logs & Bookmarks Locally)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: Harmonic Tidal Constituents Inspector (20 Components) -->
+    <div class="modal-overlay" v-if="showHarmonicsModal" @click.self="showHarmonicsModal = false">
+      <div class="glass-panel modal-content"
+        style="max-width: 960px; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+          <div>
+            <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-calculator" style="color: var(--cyan-primary);"></i>
+              Harmonic Tidal Constituents (20 Astronomical Components)
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Least-Squares Regression from 814,000+ Hourly Maldives Tidal Gauge Observations
+            </p>
+          </div>
+          <button class="modal-close" @click="showHarmonicsModal = false">&times;</button>
+        </div>
+
+        <!-- Station Attribution & Mathematical Calibration Card -->
+        <div class="harmonics-meta-card" v-if="tideData">
+          <div class="harmonics-stations-row">
+            <div class="harm-stn-item"
+              :class="{ active: tideData.weights.hanimaadhoo >= tideData.weights.male && tideData.weights.hanimaadhoo >= tideData.weights.gan }">
+              <span class="harm-stn-tag"><i class="fa-solid fa-satellite-dish"></i> Hanimaadhoo (North, 6.75°N)</span>
+              <strong>{{ (tideData.weights.hanimaadhoo * 100).toFixed(1) }}% Gauge Weight</strong>
+              <small>{{ tideData.distances.hanimaadhooKm }} km distance (178,617 observations)</small>
+            </div>
+            <div class="harm-stn-item"
+              :class="{ active: tideData.weights.male >= tideData.weights.hanimaadhoo && tideData.weights.male >= tideData.weights.gan }">
+              <span class="harm-stn-tag"><i class="fa-solid fa-satellite-dish"></i> Malé Port (Center, 4.18°N)</span>
+              <strong>{{ (tideData.weights.male * 100).toFixed(1) }}% Gauge Weight</strong>
+              <small>{{ tideData.distances.maleKm }} km distance (325,888 observations)</small>
+            </div>
+            <div class="harm-stn-item"
+              :class="{ active: tideData.weights.gan >= tideData.weights.hanimaadhoo && tideData.weights.gan >= tideData.weights.male }">
+              <span class="harm-stn-tag"><i class="fa-solid fa-satellite-dish"></i> Gan Addu (South, -0.69°S)</span>
+              <strong>{{ (tideData.weights.gan * 100).toFixed(1) }}% Gauge Weight</strong>
+              <small>{{ tideData.distances.ganKm }} km distance (310,285 observations)</small>
+            </div>
+          </div>
+          <div class="harmonics-formula-box">
+            <i class="fa-solid fa-square-root-variable" style="color: var(--cyan-primary); font-size: 1.1rem;"></i>
+            <span>
+              <strong>Harmonic Formulation:</strong>
+              <code>h(t) = Z₀ + ∑ₖ [ Aₖ · cos(σₖ·t - gₖ) ]</code>
+              • Local vector phase synthesis: <code>Cₖ = ∑ wᵢ Aᵢ cos(gᵢ), Sₖ = ∑ wᵢ Aᵢ sin(gᵢ)</code> to eliminate phase
+              wrap-around discontinuity.
+            </span>
+          </div>
+        </div>
+
+        <!-- 20 Constituents Table -->
+        <div class="harmonics-table-container" v-if="tideData && tideData.harmonicConstituents">
+          <table class="harmonics-table">
+            <thead>
+              <tr>
+                <th>Constituent</th>
+                <th>Origin / Description</th>
+                <th>Species</th>
+                <th>Speed (σ)</th>
+                <th>Period (T)</th>
+                <th>Local Amplitude (A)</th>
+                <th>Greenwich Phase (g)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in tideData.harmonicConstituents" :key="c.name">
+                <td class="harm-col-symbol">
+                  <strong>{{ c.name }}</strong>
+                </td>
+                <td class="harm-col-desc">{{ c.desc }}</td>
+                <td>
+                  <span class="harm-species-pill" :class="'species-' + c.type.toLowerCase().replace(/\s+/g, '-')">
+                    {{ c.type }}
+                  </span>
+                </td>
+                <td class="harm-col-num">{{ c.speed.toFixed(4) }}°/hr</td>
+                <td class="harm-col-num">{{ c.periodHours }} hrs</td>
+                <td class="harm-col-amp">
+                  <strong>{{ (c.amplitude * 100).toFixed(1) }} cm</strong>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 0.25rem;">({{
+                    c.amplitude.toFixed(3) }}m)</span>
+                </td>
+                <td class="harm-col-phase">{{ c.phase.toFixed(1) }}°</td>
+              </tr>
+            </tbody>
+          </table>
+          <i class="fa-solid fa-check-double" style="color: var(--sea-green); margin-right: 0.3rem;"></i>
+          Compliant with IHO SP-32 & NOAA Tidal Harmonic Standards (20 Tidal Constituents)
+          </span>
+          <button class="btn-primary" @click="showHarmonicsModal = false"
+            style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">
+            Close Inspector
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: A4 Print & JPEG Marine Bulletin -->
+    <div class="modal-overlay a4-modal-overlay" v-if="showA4BulletinModal" @click.self="showA4BulletinModal = false">
+      <div class="a4-modal-container">
+        <!-- Floating Top Toolbar -->
+        <div class="a4-toolbar">
+          <div class="a4-toolbar-title">
+            <i class="fa-solid fa-file-image" style="color: var(--cyan-primary);"></i>
+            <span>SeaVoyage • Safety First, Travel with Confidence</span>
+          </div>
+          <div class="a4-toolbar-actions">
+            <button class="btn-primary" @click="downloadA4BulletinJpeg()" :disabled="isGeneratingJpeg">
+              <i class="fa-solid fa-spinner fa-spin" v-if="isGeneratingJpeg"></i>
+              <i class="fa-solid fa-download" v-else></i>
+              <span>{{ isGeneratingJpeg ? 'Rendering JPEG...' : 'Save as JPEG' }}</span>
+            </button>
+            <button class="btn-secondary" @click="copyA4BulletinImage()"
+              title="Copy JPEG to clipboard to paste into WhatsApp / Viber">
+              <i class="fa-solid fa-copy"></i>
+              <span>Copy Image</span>
+            </button>
+            <button class="btn-secondary" @click="printA4Bulletin()" title="Print via browser">
+              <i class="fa-solid fa-print"></i>
+              <span>Print / PDF</span>
+            </button>
+            <button class="btn-icon" @click="showA4BulletinModal = false" title="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="jpegDownloadSuccess" class="jpeg-success-toast">
+          <i class="fa-solid fa-circle-check"></i> High-Resolution A4 JPEG saved successfully! Ready to share on
+          WhatsApp, Viber & Telegram groups.
+        </div>
+
+        <!-- The Nicely Outlined A4 Document Sheet -->
+        <div class="a4-sheet-wrapper">
+          <div class="a4-sheet" id="a4-bulletin-sheet">
+            <!-- Outlined Border Corner Accents -->
+            <div class="a4-corner a4-corner-tl"></div>
+            <div class="a4-corner a4-corner-tr"></div>
+            <div class="a4-corner a4-corner-bl"></div>
+            <div class="a4-corner a4-corner-br"></div>
+
+            <!-- Header Section -->
+            <div class="a4-header">
+              <div class="a4-header-top">
+                <div class="a4-brand-block">
+                  <div class="a4-logo"><i class="fa-solid fa-compass"></i></div>
+                  <div>
+                    <div class="a4-main-title">SeaVoyage • Safety First, Travel with Confidence</div>
+                    <div class="a4-sub-title">Maldives Meteorological Center & Oceanic Intelligence</div>
+                  </div>
+                </div>
+                <div class="a4-stamp-block">
+                  <div class="a4-stamp-label">BULLETIN ISSUE TIME</div>
+                  <div class="a4-stamp-time">{{ liveClock ? liveClock.fullStamp : '' }}</div>
+                  <div class="a4-stamp-ref">REF: MVT-{{ new Date().toISOString().slice(0,10).replace(/-/g,'') }}</div>
+                </div>
+              </div>
+
+              <!-- Route Banner -->
+              <div class="a4-route-strip">
+                <div class="a4-route-corridor">
+                  <span class="a4-port-from"><i class="fa-solid fa-anchor"></i> {{ departureLocation.name }} <span v-if="departureLocation.atoll" style="font-size: 0.82rem; font-weight: 600; color: #a7f3d0;">({{ departureLocation.atoll }} Atoll)</span></span>
+                  <i class="fa-solid fa-arrow-right-long a4-route-arrow"></i>
+                  <span class="a4-port-to"><i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name }} <span v-if="destinationLocation.atoll" style="font-size: 0.82rem; font-weight: 600; color: #7dd3fc;">({{ destinationLocation.atoll }} Atoll)</span></span>
+                </div>
+                <div class="a4-route-stats" v-if="routeData">
+                  <span>Course: <strong>{{ routeData.cardinal }} ({{ routeData.bearing }}°)</strong></span>
+                  <span>Distance: <strong>{{ routeData.distanceNm }} NM ({{ routeData.distanceKm }} km)</strong></span>
+                  <span>Est Transit: <strong>{{ routeData.transitTimeStr }}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid 1: Meteorological Alert & Best Travel Window -->
+            <div class="a4-split-row">
+              <div class="a4-card a4-alert-card" :class="'a4-alert-' + (currentMmsAlert.color || 'white')">
+                <div class="a4-card-title">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>MALDIVES MET SERVICE ALERT</span>
+                  <span class="a4-badge"
+                    :style="{ background: currentMmsAlert.color === 'yellow' ? '#f59e0b' : (currentMmsAlert.color === 'red' ? '#ef4444' : '#38bdf8'), color: '#000' }">
+                    ALERT {{ (currentMmsAlert.color || 'NORMAL').toUpperCase() }}
+                  </span>
+                </div>
+
+                <!-- Alert Location: Atoll Coverage Range (From Atoll to Atoll) -->
+                <div class="a4-alert-location-row" v-if="currentMmsAlert && currentMmsAlert.areaDesc">
+                  <div class="a4-alert-loc-box">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span class="a4-loc-label">ALERT LOCATION (ATOLL COVERAGE):</span>
+                    <strong class="a4-loc-range">{{ currentMmsAlert.areaDesc }}</strong>
+                  </div>
+                  <div class="a4-alert-time-box" v-if="currentMmsAlert.effective || currentMmsAlert.expires">
+                    <span v-if="currentMmsAlert.effective"><i class="fa-regular fa-clock"></i> {{ currentMmsAlert.effective.slice(11, 16) || currentMmsAlert.effective }}</span>
+                    <span v-if="currentMmsAlert.expires">➔ {{ currentMmsAlert.expires.slice(11, 16) || currentMmsAlert.expires }}</span>
+                  </div>
+                </div>
+
+                <!-- Explicit From Which Atoll to Which Atoll Range Pill -->
+                <div class="a4-atoll-range-strip" v-if="currentMmsAlert && currentMmsAlert.startAtoll && currentMmsAlert.endAtoll">
+                  <div class="a4-atoll-step a4-atoll-from">
+                    <span class="a4-atoll-sub">FROM ATOLL</span>
+                    <span class="a4-atoll-name"><i class="fa-solid fa-circle-dot" style="color: #f59e0b;"></i> {{ currentMmsAlert.startAtoll }}</span>
+                  </div>
+                  <div class="a4-atoll-flow">
+                    <i class="fa-solid fa-arrow-right-long"></i>
+                    <span class="a4-atoll-flow-text">ATOLL ADVISORY CORRIDOR</span>
+                  </div>
+                  <div class="a4-atoll-step a4-atoll-to">
+                    <span class="a4-atoll-sub">TO ATOLL</span>
+                    <span class="a4-atoll-name"><i class="fa-solid fa-flag-checkered" style="color: #ef4444;"></i> {{ currentMmsAlert.endAtoll }}</span>
+                  </div>
+                </div>
+
+                <div class="a4-alert-headline">{{ currentMmsAlert.headline }}</div>
+                <div class="a4-alert-body">{{ currentMmsAlert.description }}</div>
+              </div>
+
+              <div class="a4-card a4-travel-card" v-if="bestTravelWindow">
+                <div class="a4-card-title">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>RECOMMENDED TRAVEL WINDOW</span>
+                </div>
+                <div class="a4-travel-hours">{{ bestTravelWindow.optimal.startTime }} – {{
+                  bestTravelWindow.optimal.endTime }}</div>
+                <div class="a4-travel-metrics">
+                  <span>Wave: <strong>{{ bestTravelWindow.optimal.avgWave }}m</strong></span>
+                  <span>Wind: <strong>{{ bestTravelWindow.optimal.avgWind }} kn</strong></span>
+                  <span>Gusts: <strong>{{ bestTravelWindow.optimal.maxGusts }} kn</strong></span>
+                </div>
+                <div class="a4-travel-note">{{ bestTravelWindow.optimal.advice }}</div>
+              </div>
+            </div>
+
+            <!-- Grid 2: Astronomical Tide Extremes Showcase -->
+            <div class="a4-card a4-tide-card" v-if="tideData">
+              <div class="a4-card-title">
+                <i class="fa-solid fa-water"></i>
+                <span>ASTRONOMICAL TIDE EXTREMES & CHANNEL CURRENTS (20 HARMONICS)</span>
+                <span class="a4-card-sub">{{ departureLocation.atoll || 'Maldives' }} Spatially Interpolated
+                  Gauge</span>
+              </div>
+              <div class="a4-tide-twin-grid">
+                <div class="a4-tide-box a4-tide-high">
+                  <div class="a4-tide-lbl"><i class="fa-solid fa-angles-up" style="color: #00f0ff;"></i> NEXT HIGH TIDE
+                  </div>
+                  <div class="a4-tide-val">{{ tideData.nextHighTide.time }}</div>
+                  <div class="a4-tide-h">{{ tideData.nextHighTide.height }}m Chart Datum</div>
+                </div>
+                <div class="a4-tide-box a4-tide-low">
+                  <div class="a4-tide-lbl"><i class="fa-solid fa-angles-down" style="color: #ffb830;"></i> NEXT LOW TIDE
+                  </div>
+                  <div class="a4-tide-val">{{ tideData.nextLowTide.time }}</div>
+                  <div class="a4-tide-h">{{ tideData.nextLowTide.height }}m Chart Datum</div>
+                </div>
+                <div class="a4-tide-box a4-tide-now">
+                  <div class="a4-tide-lbl"><i class="fa-solid fa-gauge"></i> CURRENT WATER LEVEL</div>
+                  <div class="a4-tide-val">{{ tideData.currentHeight }}m</div>
+                  <div class="a4-tide-h"
+                    :style="{ color: parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '#00f0ff' : '#ffb830' }">
+                    {{ parseFloat(tideData.rateOfChangeCmPerHour) >= 0 ? '+' : '' }}{{ tideData.rateOfChangeCmPerHour }}
+                    cm/h ({{ tideData.tideTrend }})
+                  </div>
+                </div>
+                <div class="a4-tide-box a4-tide-moon" v-if="moonPhase">
+                  <div class="a4-tide-lbl"><i :class="moonPhase.icon"></i> MOON PHASE & RANGE</div>
+                  <div class="a4-tide-val" style="font-size: 1.05rem;">{{ moonPhase.name }}</div>
+                  <div class="a4-tide-h">{{ moonPhase.illumination }}% lit • {{ moonPhase.tideType }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid 3: Comprehensive Oceanographic & Meteorological Telemetry -->
+            <div class="a4-card a4-telemetry-card" v-if="marineReport">
+              <div class="a4-card-title">
+                <i class="fa-solid fa-satellite"></i>
+                <span>OCEANOGRAPHIC & ATMOSPHERIC ENVIRONMENTAL TELEMETRY</span>
+              </div>
+              <div class="a4-telemetry-grid">
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-temperature-half" style="color: #f97316;"></i> Sea Temp
+                  </div>
+                  <div class="a4-tel-v">{{ formatSeaTemp(marineReport.current.seaTemperature) }}</div>
+                  <div class="a4-tel-s">Tropical Ocean Waters</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Waves (Hs)</div>
+                  <div class="a4-tel-v">{{ formatWave(marineReport.current.waveHeight) }}</div>
+                  <div class="a4-tel-s">{{ safetyEvaluation.seaState.name }}</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-stopwatch" style="color: #00f0ff;"></i> Swell & Period
+                  </div>
+                  <div class="a4-tel-v">{{ formatWave(marineReport.current.swellHeight) }}</div>
+                  <div class="a4-tel-s">{{ marineReport.current.swellPeriod || 8 }}s ({{
+                    marineReport.current.swellDirection ? getWindDirectionCardinal(marineReport.current.swellDirection)
+                    : 'SSE' }})</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-water-ladder" style="color: #a855f7;"></i> Wind Waves
+                  </div>
+                  <div class="a4-tel-v">{{ formatWave(marineReport.current.windWaveHeight) }}</div>
+                  <div class="a4-tel-s">{{ marineReport.current.windWavePeriod || 3 }}s Surface Chop</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Sea Current
+                  </div>
+                  <div class="a4-tel-v">{{ formatCurrentSpeed(marineReport.current.oceanCurrentSpeedKnots) }}</div>
+                  <div class="a4-tel-s">{{ marineReport.current.oceanCurrentSpeedKmh }} km/h @ {{
+                    marineReport.current.oceanCurrentDirection }}°</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-gauge" style="color: #eab308;"></i> Air Pressure</div>
+                  <div class="a4-tel-v">{{ formatPressure(marineReport.current.surfacePressure) }}</div>
+                  <div class="a4-tel-s">Trend: {{ marineReport.current.pressureTrend }}</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-droplet" style="color: #0284c7;"></i> Humidity</div>
+                  <div class="a4-tel-v">{{ formatHumidity(marineReport.current.humidity) }}</div>
+                  <div class="a4-tel-s">Maritime Air Mass</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-cloud-showers-heavy" style="color: #64748b;"></i>
+                    Precipitation</div>
+                  <div class="a4-tel-v">{{ formatPrecipitation(marineReport.current.precipitation) }}</div>
+                  <div class="a4-tel-s">{{ marineReport.current.precipitationProbability }}% Prob</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> UV Index</div>
+                  <div class="a4-tel-v">{{ formatUvIndex(marineReport.current.uvIndex) }}</div>
+                  <div class="a4-tel-s">{{ marineReport.current.uvCategory }}</div>
+                </div>
+                <div class="a4-tel-item">
+                  <div class="a4-tel-k"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Wind & Gusts</div>
+                  <div class="a4-tel-v">{{ formatWind(marineReport.current.windSpeed) }}</div>
+                  <div class="a4-tel-s">Gusts {{ formatWind(marineReport.current.windGusts) }} ({{ windCardinal }})
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid 4: 10-Day Voyage Planning & Marine Weather Predictions Outlook -->
+            <div class="a4-card a4-tenday-card" v-if="tenDayForecast && tenDayForecast.length > 0">
+              <div class="a4-card-title">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>10-DAY VOYAGE PLANNING & MARINE WEATHER PREDICTIONS (OPEN-METEO OPEN API)</span>
+                <span class="a4-card-sub">High-Resolution Multi-Day Projections: Waves, Wind, Gusts, Currents, Rain & Feasibility</span>
+              </div>
+              <div class="a4-tenday-table-wrap">
+                <table class="a4-tenday-table">
+                  <thead>
+                    <tr>
+                      <th>Day / Date</th>
+                      <th>Weather</th>
+                      <th>Waves (Hs)</th>
+                      <th>Wind & Peak Gusts</th>
+                      <th>Sea Current</th>
+                      <th>Precipitation</th>
+                      <th>Best Window</th>
+                      <th>Trip Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="d in tenDayForecast" :key="d.date">
+                      <td><strong>{{ d.dayLabel }}</strong> <small>({{ d.date.slice(5) }})</small></td>
+                      <td><i :class="d.weatherCondition.icon"></i> {{ d.weatherCondition.label }}</td>
+                      <td><strong>{{ formatWave(d.waveHeightMax) }}</strong> <small>({{ d.seaState.name.split(' ')[0] }})</small></td>
+                      <td>{{ formatWind(d.windSpeedMax) }} <small style="color: #f59e0b;">(G:{{ formatWind(d.windGustsMax) }})</small> {{ d.windCardinal }}</td>
+                      <td style="color: #10b981;">{{ formatCurrentSpeed(d.oceanCurrentSpeedMaxKnots) }} {{ d.oceanCurrentCardinal }}</td>
+                      <td>{{ formatPrecipitation(d.precipitationSum) }} <small>({{ d.precipitationProbabilityMax }}%)</small></td>
+                      <td><span v-if="d.bestWindow">{{ d.bestWindow.startTime }}–{{ d.bestWindow.endTime }}</span><span v-else>—</span></td>
+                      <td>
+                        <span class="a4-status-badge" :class="'a4-st-' + d.status">{{ d.status }} ({{ d.score }}%)</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Grid 5: Maldivian Sportfishing Intelligence (Jigging & Casting) -->
+            <div class="a4-card a4-fishing-card" v-if="fishingReport">
+              <div class="a4-card-title">
+                <i class="fa-solid fa-fish-fins"></i>
+                <span>MALDIVIAN SPORTFISHING INTELLIGENCE (SOLUNAR & TIDAL ALIGNMENT)</span>
+                <span class="a4-badge" style="background: rgba(0, 240, 255, 0.2); color: #00f0ff;">
+                  BITE INDEX: {{ fishingReport.overallBiteRating }}/100 • {{ fishingReport.biteLevel.toUpperCase() }}
+                </span>
+              </div>
+
+              <div class="a4-fishing-columns">
+                <!-- Deep Jigging Block -->
+                <div class="a4-fish-col a4-jig-col">
+                  <div class="a4-fish-head">
+                    <i class="fa-solid fa-anchor" style="color: #00f0ff;"></i>
+                    <span>DEEP JIGGING (CHANNELS & PASSES)</span>
+                    <strong style="color: #00f0ff;">{{ fishingReport.bestJiggingWindow.peakScore }}/100</strong>
+                  </div>
+                  <div class="a4-fish-win">Best Window: <strong>{{ fishingReport.bestJiggingWindow.startTime }} – {{
+                      fishingReport.bestJiggingWindow.endTime }}</strong></div>
+                  <div class="a4-fish-meta">
+                    <div><strong>Depths:</strong> {{ fishingReport.bestJiggingWindow.targetDepths }}</div>
+                    <div><strong>Tackle:</strong> {{ fishingReport.bestJiggingWindow.recommendedTackle }}</div>
+                    <div><strong>Species:</strong> {{ fishingReport.bestJiggingWindow.targetSpecies.join(', ') }}</div>
+                    <div><strong>Hotspots:</strong> {{ fishingReport.hotspots.jiggingSpots.map(s => s.name).join(' • ')
+                      }}</div>
+                  </div>
+                </div>
+
+                <!-- Topwater Casting Block -->
+                <div class="a4-fish-col a4-cast-col">
+                  <div class="a4-fish-head">
+                    <i class="fa-solid fa-burst" style="color: #ffb830;"></i>
+                    <span>TOPWATER CASTING (REEF CRESTS & FLATS)</span>
+                    <strong style="color: #ffb830;">{{ fishingReport.bestCastingWindow.peakScore }}/100</strong>
+                  </div>
+                  <div class="a4-fish-win">Best Window: <strong>{{ fishingReport.bestCastingWindow.startTime }} – {{
+                      fishingReport.bestCastingWindow.endTime }}</strong></div>
+                  <div class="a4-fish-meta">
+                    <div><strong>Zones:</strong> {{ fishingReport.bestCastingWindow.targetZones }}</div>
+                    <div><strong>Lures:</strong> {{ fishingReport.bestCastingWindow.recommendedTackle }}</div>
+                    <div><strong>Species:</strong> {{ fishingReport.bestCastingWindow.targetSpecies.join(', ') }}</div>
+                    <div><strong>Hotspots:</strong> {{ fishingReport.hotspots.castingSpots.map(s => s.name).join(' • ')
+                      }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Outlined Footer & Attribution -->
+            <div class="a4-footer">
+              <div class="a4-footer-left">
+                <i class="fa-solid fa-shield-halved" style="color: var(--cyan-primary);"></i>
+                <span>Safety First, Be Smart and Enjoy the Voyage!</span>
+              </div>
+              <div class="a4-footer-right">
+                <span class="a4-concept-tag">Brought to you by</span>
+                <span class="a4-concept-name">Ahmed Nimal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
+  <script type="module" src="src/js/app.js"></script>
+</body>
+
+</html>
