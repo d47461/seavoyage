@@ -81,6 +81,9 @@ const app = createApp({
 
     function setMainTab(tabKey) {
       activeMainTab.value = tabKey;
+      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       if (tabKey === 'advisories' || tabKey === 'all') {
         nextTick(() => {
           if (typeof leafletMap !== 'undefined' && leafletMap) {

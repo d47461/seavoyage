@@ -7300,64 +7300,16 @@ button, a, input, select, textarea {
   }
 }
 
-/* Breakpoint 2: Tablets & Small Displays (640px to 899px) */
-@media (max-width: 899px) and (min-width: 640px) {
-  .main-tab-nav-wrapper {
-    margin: 0 0 1rem 0;
-    padding: 0.5rem;
-  }
-
+/* Breakpoint 2: Landscape Tablets & Intermediate Screens (769px to 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
   .main-tab-nav {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.55rem;
-  }
-
-  .main-tab-btn {
-    padding: 0.75rem 1rem;
-    min-height: 56px;
-  }
-
-  .tab-btn-inner {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-  }
-
-  .tab-title-row {
-    font-size: 0.88rem;
-    gap: 0.5rem;
-  }
-
-  .tab-icon {
-    font-size: 1.15rem;
-  }
-
-  .tab-badge {
-    font-size: 0.66rem;
-    padding: 0.18rem 0.5rem;
-  }
-}
-
-/* Breakpoint 3: Standard Mobile Phones (421px to 639px) */
-@media (max-width: 639px) {
-  .main-tab-nav-wrapper {
-    margin: 0 0 0.9rem 0;
-    padding: 0.38rem;
-    border-radius: 14px;
-  }
-
-  .main-tab-nav {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.45rem;
   }
 
   .main-tab-btn {
-    padding: 0.65rem 0.45rem;
-    min-height: 52px;
-    border-radius: 10px;
+    padding: 0.65rem 0.5rem;
+    min-height: 54px;
   }
 
   .tab-btn-inner {
@@ -7365,14 +7317,13 @@ button, a, input, select, textarea {
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 0.3rem;
+    gap: 0.35rem;
   }
 
   .tab-title-row {
     justify-content: center;
     font-size: 0.84rem;
     gap: 0.35rem;
-    width: 100%;
     text-align: center;
   }
 
@@ -7380,103 +7331,189 @@ button, a, input, select, textarea {
     font-size: 1.05rem;
   }
 
-  .tab-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  /* Concise labels on mobile */
-  .tab-label-full {
-    display: none;
-  }
-  .tab-label-short {
-    display: inline;
-  }
-
   .tab-badge {
-    font-size: 0.60rem;
-    padding: 0.14rem 0.42rem;
-    max-width: 100%;
+    font-size: 0.62rem;
+    padding: 0.15rem 0.45rem;
   }
 }
 
-/* Breakpoint 4: Compact Mobile Phones (341px to 420px, e.g. iPhone SE, 360-390px screens) */
-@media (max-width: 420px) {
+/* ==========================================================================
+   MOBILE & SMARTPHONE UI: NATIVE FLOATING BOTTOM NAVIGATION APP BAR (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Accommodate fixed bottom app bar height so content is never obscured */
+  .app-container {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  /* Fixed Bottom App Bar Container */
   .main-tab-nav-wrapper {
-    margin: 0 0 0.8rem 0;
-    padding: 0.3rem;
-    border-radius: 12px;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.3rem 0.6rem calc(0.45rem + env(safe-area-inset-bottom, 10px)) 0.6rem !important;
+    background: rgba(6, 18, 34, 0.94) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-top: 1px solid rgba(0, 240, 255, 0.28) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.08) !important;
+    z-index: 9999 !important;
   }
 
+  /* 4 Equal Items Across the Mobile Screen */
   .main-tab-nav {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.35rem;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.25rem !important;
+    width: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
   }
 
+  /* Native Mobile App Bar Item */
   .main-tab-btn {
-    padding: 0.55rem 0.35rem;
-    min-height: 48px;
-    border-radius: 8px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 52px !important;
+    padding: 0.35rem 0.2rem !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    overflow: visible !important;
+  }
+
+  .main-tab-btn:hover {
+    background: rgba(0, 240, 255, 0.06) !important;
+  }
+
+  .main-tab-btn.active {
+    background: rgba(0, 240, 255, 0.12) !important;
+    box-shadow: inset 0 -3px 0 var(--cyan-primary, #00f0ff) !important;
+    border-radius: 12px !important;
   }
 
   .tab-btn-inner {
-    gap: 0.25rem;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.15rem !important;
+    width: 100% !important;
+    position: relative !important;
   }
 
   .tab-title-row {
-    font-size: 0.78rem;
-    gap: 0.3rem;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.18rem !important;
+    width: 100% !important;
+    text-align: center !important;
   }
 
   .tab-icon {
-    font-size: 0.95rem;
+    font-size: 1.22rem !important;
+    color: var(--text-muted, #94a3b8) !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
+  .main-tab-btn.active .tab-icon {
+    color: var(--cyan-primary, #00f0ff) !important;
+    filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.85)) !important;
+    transform: translateY(-1px) scale(1.08) !important;
+  }
+
+  .tab-label {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    color: var(--text-muted, #94a3b8) !important;
+    transition: color 0.2s ease !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .main-tab-btn.active .tab-label {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+  }
+
+  /* Concise Labels on Mobile Phone App Bar */
+  .tab-label-full {
+    display: none !important;
+  }
+  .tab-label-short {
+    display: inline !important;
+  }
+
+  /* Floating Notification / Status Dot Badge Anchored to Icon */
   .tab-badge {
-    font-size: 0.56rem;
-    padding: 0.12rem 0.35rem;
-    gap: 0.2rem;
+    position: absolute !important;
+    top: -2px !important;
+    right: calc(50% - 20px) !important;
+    font-size: 0.52rem !important;
+    font-weight: 800 !important;
+    padding: 0.08rem 0.28rem !important;
+    border-radius: 999px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55) !important;
+    z-index: 10 !important;
   }
 
   .tab-badge i {
-    font-size: 0.52rem;
+    font-size: 0.48rem !important;
+  }
+
+  .tab-badge span {
+    font-size: 0.52rem !important;
   }
 }
 
-/* Breakpoint 5: Ultra-Narrow Devices (<= 340px) */
-@media (max-width: 340px) {
-  .main-tab-nav {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
+/* Compact Smartphones (<= 400px, e.g. iPhone SE, 360px Androids) */
+@media (max-width: 400px) {
+  .main-tab-nav-wrapper {
+    padding: 0.25rem 0.35rem calc(0.4rem + env(safe-area-inset-bottom, 8px)) 0.35rem !important;
   }
 
   .main-tab-btn {
-    padding: 0.5rem 0.65rem;
-    min-height: 44px;
+    min-height: 48px !important;
+    padding: 0.25rem 0.15rem !important;
   }
 
-  .tab-btn-inner {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  .tab-icon {
+    font-size: 1.12rem !important;
   }
 
-  .tab-title-row {
-    font-size: 0.8rem;
-    gap: 0.35rem;
-  }
-
-  .tab-label-full {
-    display: inline;
-  }
-  .tab-label-short {
-    display: none;
+  .tab-label {
+    font-size: 0.67rem !important;
+    letter-spacing: 0.1px !important;
   }
 
   .tab-badge {
-    font-size: 0.6rem;
-    padding: 0.14rem 0.4rem;
+    right: calc(50% - 17px) !important;
+    font-size: 0.48rem !important;
+    padding: 0.06rem 0.22rem !important;
   }
 }
 
@@ -7558,6 +7595,47 @@ button, a, input, select, textarea {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Mobile Theme Overrides for Bottom Navigation App Bar */
+@media (max-width: 768px) {
+  [data-theme="light"] .main-tab-nav-wrapper {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-top: 1px solid #cbd5e1 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  [data-theme="light"] .main-tab-btn.active {
+    background: rgba(2, 132, 199, 0.12) !important;
+    box-shadow: inset 0 -3px 0 #0284c7 !important;
+  }
+
+  [data-theme="light"] .main-tab-btn.active .tab-icon {
+    color: #0284c7 !important;
+  }
+
+  [data-theme="light"] .main-tab-btn.active .tab-label {
+    color: #0f172a !important;
+  }
+
+  [data-theme="dark"] .main-tab-nav-wrapper {
+    background: rgba(10, 10, 15, 0.96) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  [data-theme="dark"] .main-tab-btn.active {
+    background: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: inset 0 -3px 0 #ffffff !important;
+  }
+
+  [data-theme="dark"] .main-tab-btn.active .tab-icon {
+    color: #ffffff !important;
+  }
+
+  [data-theme="dark"] .main-tab-btn.active .tab-label {
+    color: #ffffff !important;
+  }
 }
 
 /* ==========================================================================
