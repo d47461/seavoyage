@@ -3,7 +3,7 @@
 // and Traditional Maldivian Monsoon Calendar (Nakaiy / "Kanduvikun")
 // Provides Single-Location / Atoll Sportfishing Intelligence, Spot Discovery, Modality Ranking & Best Times of Day
 
-import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v7';
+import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v10';
 import { getMoonPhaseInfo } from './tide-lunar.js?v=20260912-v8';
 
 export const MALDIVES_ATOLL_LIST = [

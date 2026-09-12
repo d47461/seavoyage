@@ -55,7 +55,7 @@ import {
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
-} from './nakaiy-engine.js?v=20260912-v7';
+} from './nakaiy-engine.js?v=20260912-v10';
 
 const app = createApp({
   setup() {
