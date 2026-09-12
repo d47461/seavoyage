@@ -131,7 +131,10 @@
             <span class="tab-btn-inner">
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                <span class="tab-label">Travel Advisories</span>
+                <span class="tab-label">
+                  <span class="tab-label-full">Travel Advisories</span>
+                  <span class="tab-label-short">Advisories</span>
+                </span>
               </span>
               <span class="tab-badge" v-if="advisoriesTabBadge" :class="advisoriesTabBadge.type">
                 <i class="fa-solid fa-triangle-exclamation" v-if="advisoriesTabBadge.isAlert"></i>
@@ -148,7 +151,10 @@
             <span class="tab-btn-inner">
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span>
-                <span class="tab-label">Weather & Marine</span>
+                <span class="tab-label">
+                  <span class="tab-label-full">Weather & Marine</span>
+                  <span class="tab-label-short">Weather</span>
+                </span>
               </span>
               <span class="tab-badge tab-badge-weather" v-if="weatherTabBadge">
                 <i class="fa-solid fa-water"></i>
@@ -165,7 +171,10 @@
             <span class="tab-btn-inner">
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-fish-fins"></i></span>
-                <span class="tab-label">Sportfishing</span>
+                <span class="tab-label">
+                  <span class="tab-label-full">Sportfishing</span>
+                  <span class="tab-label-short">Fishing</span>
+                </span>
               </span>
               <span class="tab-badge tab-badge-fishing" v-if="fishingTabBadge">
                 <i class="fa-solid fa-bolt"></i>
@@ -182,7 +191,10 @@
             <span class="tab-btn-inner">
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-layer-group"></i></span>
-                <span class="tab-label">All Intel</span>
+                <span class="tab-label">
+                  <span class="tab-label-full">All Intel</span>
+                  <span class="tab-label-short">All</span>
+                </span>
               </span>
               <span class="tab-badge tab-badge-all">
                 <i class="fa-solid fa-list-check"></i>
