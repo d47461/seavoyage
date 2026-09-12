@@ -32,7 +32,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-v3" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260912-nakaiy" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -1527,97 +1527,225 @@
 
       <!-- TAB PANE 3: SPORTFISHING INTELLIGENCE -->
       <div class="tab-content-pane single-screen-pane tab-pane-fishing" v-show="activeMainTab === 'fishing' || activeMainTab === 'all'">
-      <!-- Segmented Sub-Navigation for Sportfishing -->
-      <div class="segmented-sub-nav">
-        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'solunar' }" @click="setFishingSubTab('solunar')">
-          <i class="fa-solid fa-bolt"></i> <span>Solunar Bite Dial</span>
-        </button>
-        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'jigging' }" @click="setFishingSubTab('jigging')">
-          <i class="fa-solid fa-anchor"></i> <span>Deep Jigging</span>
-        </button>
-        <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'casting' }" @click="setFishingSubTab('casting')">
-          <i class="fa-solid fa-burst"></i> <span>Topwater Casting</span>
-        </button>
-      </div>
+        <!-- Segmented Sub-Navigation for Sportfishing -->
+        <div class="segmented-sub-nav">
+          <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'intel' }" @click="setFishingSubTab('intel')">
+            <i class="fa-solid fa-brain"></i> <span>Algorithmic Intelligence & Nakaiy</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'jigging' }" @click="setFishingSubTab('jigging')">
+            <i class="fa-solid fa-anchor"></i> <span>Deep Jigging</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'casting' }" @click="setFishingSubTab('casting')">
+            <i class="fa-solid fa-burst"></i> <span>Topwater Casting</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'trolling' }" @click="setFishingSubTab('trolling')">
+            <i class="fa-solid fa-ship"></i> <span>Trolling & Night</span>
+          </button>
+          <button class="sub-nav-btn" :class="{ active: activeFishingSubTab === 'spots' }" @click="setFishingSubTab('spots')">
+            <i class="fa-solid fa-map-location-dot"></i> <span>Atoll Spots</span>
+          </button>
+        </div>
 
-        <!-- Sleek Compact Route & Location Context Strip for Sportfishing -->
-        <div class="compact-loc-strip">
-          <div class="compact-loc-info">
-            <span class="compact-loc-tag"><i class="fa-solid fa-fish-fins"></i> Fishing Grounds:</span>
-            <span class="compact-loc-name dep" title="Departure Port">
-              <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
-            </span>
-            <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
-            <span class="compact-loc-name dest" title="Destination Port">
-              <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
-            </span>
-            <span class="compact-loc-meta" v-if="departureLocation.atoll">
-              • {{ departureLocation.atoll }} Atoll
-            </span>
+        <!-- Single-Location Maldivian Atoll Selector Strip -->
+        <div class="fishing-atoll-picker-strip">
+          <div class="atoll-selector-left">
+            <div class="atoll-selector-label">
+              <i class="fa-solid fa-location-dot"></i>
+              <span>Select Atoll / Fishing Grounds:</span>
+            </div>
+            <!-- Atoll Custom Dropdown -->
+            <select class="atoll-custom-select" v-model="selectedFishingAtollKey" @change="setFishingAtoll(selectedFishingAtollKey)">
+              <option v-for="atoll in fishingAtolls" :key="atoll.key" :value="atoll.key">
+                {{ atoll.name }} ({{ atoll.shortName }})
+              </option>
+            </select>
+            <!-- Quick Atoll Chips for 1-Tap Switching -->
+            <div class="atoll-quick-chips">
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Lhaviyani' }" @click="setFishingAtoll('Lhaviyani')">
+                Lh. Atoll
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Kaafu' }" @click="setFishingAtoll('Kaafu')">
+                K. Atoll (Malé)
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Baa' }" @click="setFishingAtoll('Baa')">
+                B. Atoll
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Alif Alif' }" @click="setFishingAtoll('Alif Alif')">
+                AA. Atoll (Rasdhoo)
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Vaavu' }" @click="setFishingAtoll('Vaavu')">
+                V. Atoll (Fotteyo)
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Haa Dhaalu' }" @click="setFishingAtoll('Haa Dhaalu')">
+                HDh. Atoll
+              </button>
+              <button class="atoll-chip" :class="{ active: selectedFishingAtollKey === 'Gaafu Dhaalu' }" @click="setFishingAtoll('Gaafu Dhaalu')">
+                GDh. Atoll
+              </button>
+            </div>
           </div>
-          <div class="compact-loc-actions">
-            <button class="loc-mini-btn" @click="detectDeviceLocation(true)" :title="'Use physical GPS coordinates'">
-              <i class="fa-solid fa-location-crosshairs"></i> GPS
-            </button>
-            <button class="loc-mini-btn btn-modify-route" @click="setMainTab('advisories')"
-              title="Open Route Passage Planner to adjust ports or vessel">
-              <i class="fa-solid fa-route"></i> Change Route / Ports
-            </button>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="atoll-coords-pill">
+              <i class="fa-solid fa-compass"></i>
+              <span>{{ selectedFishingAtoll.lat.toFixed(3) }}°N, {{ selectedFishingAtoll.lon.toFixed(3) }}°E</span>
+            </span>
+            <span v-if="isFishingLoading" style="color: var(--cyan-primary); font-size: 0.85rem;">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+            </span>
           </div>
         </div>
 
-        <!-- MALDIVIAN SPORTFISHING INTELLIGENCE & SOLUNAR ADVISORY (Jigging & Casting) -->
-        <section v-if="fishingReport" class="glass-panel fishing-section" id="fishing-section">
-          <div class="fishing-header-row">
-            <div class="fishing-title-box">
-              <div class="section-label" style="margin-bottom: 0.25rem;">
-                <span><i class="fa-solid fa-fish-fins"></i></span> Maldivian Sportfishing Intelligence & Solunar Feeding
-                Advisory
+        <!-- MALDIVIAN SPORTFISHING INTELLIGENCE COCKPIT -->
+        <div v-if="fishingReport" class="fishing-section" id="fishing-section">
+
+          <!-- SUB-VIEW 1: ALGORITHMIC INTELLIGENCE & MALDIVIAN NAKAIY CALENDAR -->
+          <div v-show="activeFishingSubTab === 'intel' || activeMainTab === 'all'" class="sub-view-group">
+            
+            <!-- Traditional Maldivian Nakaiy (Monsoon Calendar) Banner Card -->
+            <div class="nakaiy-banner-card" style="margin-bottom: 1rem;">
+              <div class="nakaiy-header">
+                <div class="nakaiy-title-group">
+                  <div class="nakaiy-icon-box">
+                    <i class="fa-solid" :class="currentNakaiy.monsoonIcon"></i>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8;">
+                      Maldivian Monsoon Calendar (Nakaiy System)
+                    </div>
+                    <div class="nakaiy-name-en">
+                      <span>{{ currentNakaiy.name }} Nakaiy</span>
+                      <span class="nakaiy-name-thaana">({{ currentNakaiy.thaana }})</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <span class="nakaiy-monsoon-tag">
+                    <i class="fa-solid fa-wind"></i> {{ currentNakaiy.monsoonFull }}
+                  </span>
+                  <span class="nakaiy-dates-badge">
+                    <i class="fa-regular fa-calendar"></i> {{ currentNakaiy.dateRangeStr }}
+                  </span>
+                </div>
               </div>
-              <div class="fishing-subtitle">
-                Expert recommendations for <strong>{{ departureLocation.name }}</strong> • Evaluates Tidal Velocity
-                (|dh/dt|), Oceanic Drift, Swell Foam, Barometric Stability & Solar UV
+
+              <div class="nakaiy-body-grid">
+                <div class="kanduvikun-box">
+                  <div class="kanduvikun-label">
+                    <i class="fa-solid fa-compass"></i> Meteorological Sea State
+                  </div>
+                  <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">{{ currentNakaiy.weatherPattern }}</p>
+                </div>
+                <div class="kanduvikun-box" style="border-left-color: var(--cyan-primary);">
+                  <div class="kanduvikun-label" style="color: var(--cyan-primary);">
+                    <i class="fa-solid fa-anchor"></i> Maldivian Elder Fishing Wisdom ("Kanduvikun")
+                  </div>
+                  <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">{{ currentNakaiy.fishingLore }}</p>
+                </div>
               </div>
             </div>
-            <!-- Overall Bite Gauge -->
-            <div class="fishing-overall-badge" :style="{ borderColor: fishingReport.biteBadgeColor }">
-              <div class="bite-score-circle" :style="{ borderColor: fishingReport.biteBadgeColor }">
-                <span class="bite-score-num">{{ fishingReport.overallBiteRating }}</span>
-                <span class="bite-score-sub">INDEX</span>
+
+            <!-- Algorithmic Intelligence Captain's Verdict & Modality Ranking Card -->
+            <div class="captain-verdict-card" style="margin-bottom: 1rem;">
+              <div class="verdict-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="section-label" style="margin: 0;">
+                    <span><i class="fa-solid fa-brain"></i></span> Algorithmic Fishing Intelligence
+                  </span>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">• {{ selectedFishingAtoll.name }}</span>
+                </div>
+                <div class="top-modality-hero">
+                  <i class="fa-solid fa-crown" style="color: #ffb830;"></i>
+                  <span class="top-modality-title">#1 RECOMMENDED: {{ fishingReport.topRecommended.label.toUpperCase() }}</span>
+                  <span class="top-modality-score">{{ fishingReport.topRecommended.score }}/100</span>
+                </div>
               </div>
-              <div class="bite-level-text">
-                <span class="bite-rating-title" :style="{ color: fishingReport.biteBadgeColor }">{{
-                  fishingReport.biteLevel }}</span>
-                <span class="bite-solunar-desc">Solunar & Tidal Alignment</span>
+
+              <p class="verdict-text">
+                <i class="fa-solid fa-quote-left" style="color: var(--cyan-primary); opacity: 0.6; margin-right: 0.35rem;"></i>
+                {{ fishingReport.captainVerdict }}
+              </p>
+
+              <!-- 4-Modality Ranking Comparison Grid -->
+              <div class="modality-rank-grid">
+                <div v-for="mod in fishingReport.allModalityRankings" :key="mod.type" class="modality-rank-card"
+                  :class="{ 'is-top': mod.type === fishingReport.topRecommended.type }"
+                  @click="setFishingSubTab(mod.type === 'night' ? 'trolling' : mod.type)">
+                  <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <i class="fa-solid" :class="mod.icon" style="color: var(--cyan-primary);"></i>
+                    <span class="modality-rank-badge" v-if="mod.type === fishingReport.topRecommended.type">TOP PICK</span>
+                  </div>
+                  <span class="modality-rank-name">{{ mod.label }}</span>
+                  <span class="modality-rank-score" :class="{ high: mod.score >= 80 }">{{ mod.score }}<small style="font-size: 0.7rem; color: var(--text-muted);">/100</small></span>
+                  <span style="font-size: 0.72rem; color: #94a3b8;">Window: {{ mod.win.startTime }}–{{ mod.win.endTime }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Modality Tab Controls -->
-          <div class="fishing-modality-tabs">
-            <button class="fishing-tab-btn" :class="{ active: activeFishingTab === 'jigging' }"
-              @click="activeFishingTab = 'jigging'">
-              <i class="fa-solid fa-anchor"></i>
-              <span>Deep Jigging (Channels & Passes)</span>
-              <span class="tab-score-pill">Score: {{ fishingReport.currentJigScore }}/100</span>
-            </button>
-            <button class="fishing-tab-btn" :class="{ active: activeFishingTab === 'casting' }"
-              @click="activeFishingTab = 'casting'">
-              <i class="fa-solid fa-burst"></i>
-              <span>Topwater Casting (Reef Crests & Flats)</span>
-              <span class="tab-score-pill">Score: {{ fishingReport.currentCastScore }}/100</span>
-            </button>
-          </div>
+            <!-- Best Time of the Day Highlight Banner -->
+            <div class="best-time-hero-card" style="margin-bottom: 1rem;">
+              <div class="best-time-left">
+                <div class="best-time-icon">
+                  <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                  <div class="best-time-title">Prime Feeding Window of the Day</div>
+                  <div class="best-time-hours">{{ fishingReport.bestTimeOfDay.primaryWindow }}</div>
+                  <div class="best-time-meta">{{ fishingReport.bestTimeOfDay.rationale }}</div>
+                </div>
+              </div>
+              <div style="text-align: right; min-width: 140px;">
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Peak Activity Score</div>
+                <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-mono); color: #ffb830;">
+                  {{ fishingReport.bestTimeOfDay.peakScore }}<small style="font-size: 0.9rem; color: #cbd5e1;">/100</small>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--sea-green); font-weight: 700;">{{ fishingReport.biteLevel }}</div>
+              </div>
+            </div>
 
-          <!-- TAB 1: JIGGING INTELLIGENCE -->
-          <div v-if="activeFishingTab === 'jigging'" class="fishing-tab-content">
-            <!-- Optimal Jigging Window Banner -->
-            <div class="fishing-window-card jig-highlight">
+            <!-- 24-Hour Solunar & Nakaiy Feeding Activity Timeline -->
+            <div class="fishing-timeline-section">
+              <div class="fishing-timeline-header">
+                <span><i class="fa-solid fa-chart-line"></i> 24-Hour Hourly Bite Index for {{ selectedFishingAtoll.name }}</span>
+                <div class="timeline-legend">
+                  <span class="legend-item"><span class="legend-box jig-box"></span> Jigging Score</span>
+                  <span class="legend-item"><span class="legend-box cast-box"></span> Casting Score</span>
+                </div>
+              </div>
+              <div class="fishing-timeline-scroll">
+                <div v-for="slot in fishingReport.hourlyScores" :key="slot.time" class="fishing-hour-col">
+                  <div class="f-hour-label">{{ slot.displayTime }}</div>
+                  <div class="f-bar-container">
+                    <div class="f-bar-jig" :style="{ height: Math.round(slot.jigScore * 0.75) + 'px' }"
+                      :title="'Jigging: ' + slot.jigScore + '/100'">
+                      <span v-if="slot.jigScore >= 75" class="f-bar-num">{{ slot.jigScore }}</span>
+                    </div>
+                    <div class="f-bar-cast" :style="{ height: Math.round(slot.castScore * 0.75) + 'px' }"
+                      :title="'Casting: ' + slot.castScore + '/100'">
+                      <span v-if="slot.castScore >= 75" class="f-bar-num">{{ slot.castScore }}</span>
+                    </div>
+                  </div>
+                  <div class="f-tide-state" :title="'Tidal flow: ' + slot.tidalFlowRate + ' cm/h'">
+                    {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling' : '● Slack') }}
+                  </div>
+                  <div class="f-current-val" :title="'Current Speed'">
+                    {{ slot.currentSpeedKnots }} kn
+                  </div>
+                  <div v-if="slot.jigScore >= 85 || slot.castScore >= 85" class="f-hot-pill">
+                    PRIME
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- END SUB-VIEW 1: INTEL -->
+
+          <!-- SUB-VIEW 2: DEEP JIGGING INTELLIGENCE -->
+          <div v-show="activeFishingSubTab === 'jigging' || activeMainTab === 'all'" class="sub-view-group">
+            <div class="fishing-window-card jig-highlight" style="margin-bottom: 1rem;">
               <div class="window-card-header">
                 <div class="window-badge-box">
                   <span class="window-tag jig-tag"><i class="fa-solid fa-crosshairs"></i> OPTIMAL JIGGING WINDOW</span>
-                  <span class="window-hours">{{ fishingReport.bestJiggingWindow.startTime }} – {{
-                    fishingReport.bestJiggingWindow.endTime }}</span>
+                  <span class="window-hours">{{ fishingReport.bestJiggingWindow.startTime }} – {{ fishingReport.bestJiggingWindow.endTime }}</span>
                 </div>
                 <div class="window-score-badge">
                   <span>Peak Bite:</span>
@@ -1626,8 +1754,7 @@
               </div>
 
               <p class="window-rationale">
-                <i class="fa-solid fa-quote-left"
-                  style="color: var(--cyan-primary); opacity: 0.5; margin-right: 0.35rem;"></i>
+                <i class="fa-solid fa-quote-left" style="color: var(--cyan-primary); opacity: 0.5; margin-right: 0.35rem;"></i>
                 {{ fishingReport.bestJiggingWindow.rationale }}
               </p>
 
@@ -1646,7 +1773,6 @@
                 </div>
               </div>
 
-              <!-- Target Pelagic Species -->
               <div class="species-row">
                 <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
                 <div class="species-pills">
@@ -1657,13 +1783,11 @@
               </div>
             </div>
 
-            <!-- Localized Jigging Hotspots -->
+            <!-- Localized Jigging Hotspots for Selected Atoll -->
             <div class="fishing-hotspots-section">
               <div class="hotspots-header">
-                <h4><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i> Top Jigging Hotspots
-                  for
-                  {{ fishingReport.hotspots.atollName }}</h4>
-                <span class="hotspots-sub">Dynamic Atoll Reef Coordinates & Deep Drop Ledges</span>
+                <h4><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i> Top Jigging Hotspots for {{ fishingReport.hotspots.atollName }}</h4>
+                <span class="hotspots-sub">Deep Channel Ledges & Oceanic Pinnacles</span>
               </div>
               <div class="hotspots-grid">
                 <div v-for="(spot, idx) in fishingReport.hotspots.jiggingSpots" :key="idx" class="hotspot-card">
@@ -1671,32 +1795,26 @@
                     <div class="hotspot-name">{{ spot.name }}</div>
                     <div class="hotspot-coords">{{ spot.coordinates }}</div>
                   </div>
-                  <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong>
-                  </div>
+                  <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
                     <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
                   </div>
-                  <div class="hotspot-tactics">
-                    <strong>Tackle:</strong> {{ spot.tackle }}
-                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
                     <strong>Tactics:</strong> {{ spot.tactics }}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </div> <!-- END SUB-VIEW 2: JIGGING -->
 
-          <!-- TAB 2: CASTING & TOPWATER POPPING INTELLIGENCE -->
-          <div v-if="activeFishingTab === 'casting'" class="fishing-tab-content">
-            <!-- Optimal Casting Window Banner -->
-            <div class="fishing-window-card cast-highlight">
+          <!-- SUB-VIEW 3: TOPWATER CASTING INTELLIGENCE -->
+          <div v-show="activeFishingSubTab === 'casting' || activeMainTab === 'all'" class="sub-view-group">
+            <div class="fishing-window-card cast-highlight" style="margin-bottom: 1rem;">
               <div class="window-card-header">
                 <div class="window-badge-box">
-                  <span class="window-tag cast-tag"><i class="fa-solid fa-bolt"></i> OPTIMAL TOPWATER CASTING
-                    WINDOW</span>
-                  <span class="window-hours">{{ fishingReport.bestCastingWindow.startTime }} – {{
-                    fishingReport.bestCastingWindow.endTime }}</span>
+                  <span class="window-tag cast-tag"><i class="fa-solid fa-bolt"></i> OPTIMAL TOPWATER CASTING WINDOW</span>
+                  <span class="window-hours">{{ fishingReport.bestCastingWindow.startTime }} – {{ fishingReport.bestCastingWindow.endTime }}</span>
                 </div>
                 <div class="window-score-badge">
                   <span>Peak Bite:</span>
@@ -1724,89 +1842,182 @@
                 </div>
               </div>
 
-              <!-- Target Topwater Species -->
               <div class="species-row">
                 <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
                 <div class="species-pills">
-                  <span v-for="sp in fishingReport.bestCastingWindow.targetSpecies" :key="sp"
-                    class="species-pill cast-pill">
+                  <span v-for="sp in fishingReport.bestCastingWindow.targetSpecies" :key="sp" class="species-pill cast-pill">
                     <i class="fa-solid fa-circle-dot"></i> {{ sp }}
                   </span>
                 </div>
               </div>
             </div>
 
-            <!-- Localized Casting Hotspots -->
+            <!-- Localized Casting Hotspots for Selected Atoll -->
             <div class="fishing-hotspots-section">
               <div class="hotspots-header">
-                <h4><i class="fa-solid fa-location-dot" style="color: #ffb830;"></i> Top Casting Hotspots for {{
-                  fishingReport.hotspots.atollName }}</h4>
+                <h4><i class="fa-solid fa-location-dot" style="color: #ffb830;"></i> Top Casting Hotspots for {{ fishingReport.hotspots.atollName }}</h4>
                 <span class="hotspots-sub">Reef Crests, Surf Wash & Outer Faru Ledges</span>
               </div>
               <div class="hotspots-grid">
-                <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="idx"
-                  class="hotspot-card cast-border">
+                <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="idx" class="hotspot-card cast-border">
                   <div class="hotspot-top">
                     <div class="hotspot-name">{{ spot.name }}</div>
                     <div class="hotspot-coords">{{ spot.coordinates }}</div>
                   </div>
-                  <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong>
-                  </div>
+                  <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
                     <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag cast-tag">{{ s }}</span>
                   </div>
-                  <div class="hotspot-tactics">
-                    <strong>Tackle:</strong> {{ spot.tackle }}
-                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
                     <strong>Tactics:</strong> {{ spot.tactics }}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </div> <!-- END SUB-VIEW 3: CASTING -->
 
-          <!-- 24-Hour Solunar / Hourly Bite Activity Timeline -->
-          <div class="fishing-timeline-section">
-            <div class="fishing-timeline-header">
-              <span><i class="fa-solid fa-chart-line"></i> 24-Hour Solunar & Environmental Feeding Activity
-                Timeline</span>
-              <div class="timeline-legend">
-                <span class="legend-item"><span class="legend-box jig-box"></span> Jigging Score</span>
-                <span class="legend-item"><span class="legend-box cast-box"></span> Casting Score</span>
+          <!-- SUB-VIEW 4: TROLLING & NIGHT REEF HANDLINING -->
+          <div v-show="activeFishingSubTab === 'trolling' || activeMainTab === 'all'" class="sub-view-group">
+            
+            <!-- Pelagic Trolling Card -->
+            <div class="fishing-window-card" style="border-left: 5px solid #38bdf8; margin-bottom: 1rem;">
+              <div class="window-card-header">
+                <div class="window-badge-box">
+                  <span class="window-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">
+                    <i class="fa-solid fa-ship"></i> PELAGIC TROLLING WINDOW
+                  </span>
+                  <span class="window-hours">{{ fishingReport.bestTrollingWindow.startTime }} – {{ fishingReport.bestTrollingWindow.endTime }}</span>
+                </div>
+                <div class="window-score-badge">
+                  <span>Peak Score:</span>
+                  <strong style="color: #38bdf8;">{{ fishingReport.bestTrollingWindow.peakScore }}/100</strong>
+                </div>
               </div>
-            </div>
-            <div class="fishing-timeline-scroll">
-              <div v-for="slot in fishingReport.hourlyScores" :key="slot.time" class="fishing-hour-col">
-                <div class="f-hour-label">{{ slot.displayTime }}</div>
-
-                <!-- Dual Score Bars -->
-                <div class="f-bar-container">
-                  <div class="f-bar-jig" :style="{ height: Math.round(slot.jigScore * 0.75) + 'px' }"
-                    :title="'Jigging: ' + slot.jigScore + '/100'">
-                    <span v-if="slot.jigScore >= 75" class="f-bar-num">{{ slot.jigScore }}</span>
-                  </div>
-                  <div class="f-bar-cast" :style="{ height: Math.round(slot.castScore * 0.75) + 'px' }"
-                    :title="'Casting: ' + slot.castScore + '/100'">
-                    <span v-if="slot.castScore >= 75" class="f-bar-num">{{ slot.castScore }}</span>
-                  </div>
+              <div class="fishing-meta-grid">
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-compass"></i> Target Zones</span>
+                  <span class="meta-val">{{ fishingReport.bestTrollingWindow.targetZones }}</span>
                 </div>
-
-                <div class="f-tide-state" :title="'Tidal flow: ' + slot.tidalFlowRate + ' cm/h'">
-                  {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling' : '● Slack') }}
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-fish"></i> Target Pelagics</span>
+                  <span class="meta-val">{{ fishingReport.bestTrollingWindow.targetSpecies.join(', ') }}</span>
                 </div>
-                <div class="f-current-val" :title="'Current Speed'">
-                  {{ slot.currentSpeedKnots }} kn
-                </div>
-
-                <!-- Hot badge for high scoring hours -->
-                <div v-if="slot.jigScore >= 85 || slot.castScore >= 85" class="f-hot-pill">
-                  PRIME
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-toolbox"></i> Recommended Gear</span>
+                  <span class="meta-val">{{ fishingReport.bestTrollingWindow.recommendedTackle }}</span>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+
+            <!-- Night Reef Handlining Card -->
+            <div class="fishing-window-card" style="border-left: 5px solid #a855f7; margin-bottom: 1rem;">
+              <div class="window-card-header">
+                <div class="window-badge-box">
+                  <span class="window-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">
+                    <i class="fa-solid fa-moon"></i> NIGHT REEF HANDLINING WINDOW
+                  </span>
+                  <span class="window-hours">{{ fishingReport.bestNightWindow.startTime }} – {{ fishingReport.bestNightWindow.endTime }}</span>
+                </div>
+                <div class="window-score-badge">
+                  <span>Bite Score:</span>
+                  <strong style="color: #c084fc;">{{ fishingReport.bestNightWindow.peakScore }}/100</strong>
+                </div>
+              </div>
+              <div class="fishing-meta-grid">
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-water"></i> Target Zones</span>
+                  <span class="meta-val">{{ fishingReport.bestNightWindow.targetZones }}</span>
+                </div>
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-fish"></i> Target Species</span>
+                  <span class="meta-val">{{ fishingReport.bestNightWindow.targetSpecies.join(', ') }}</span>
+                </div>
+                <div class="fishing-meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-toolbox"></i> Traditional Rig</span>
+                  <span class="meta-val">{{ fishingReport.bestNightWindow.recommendedTackle }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trolling & Night Hotspots -->
+            <div class="fishing-hotspots-section" v-if="fishingReport.hotspots.trollingSpots || fishingReport.hotspots.nightSpots">
+              <div class="hotspots-header">
+                <h4><i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> Blue Water & Night Grounds for {{ fishingReport.hotspots.atollName }}</h4>
+              </div>
+              <div class="hotspots-grid">
+                <div v-for="(spot, idx) in (fishingReport.hotspots.trollingSpots || [])" :key="'troll_' + idx" class="hotspot-card" style="border-left: 3px solid #38bdf8;">
+                  <div class="hotspot-top">
+                    <div class="hotspot-name">{{ spot.name }}</div>
+                    <div class="hotspot-coords">{{ spot.coordinates }}</div>
+                  </div>
+                  <div class="hotspot-depth"><i class="fa-solid fa-ship"></i> Type: <strong>{{ spot.type }}</strong> • Depth: <strong>{{ spot.depth }}</strong></div>
+                  <div class="hotspot-species">
+                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
+                  <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
+                </div>
+                <div v-for="(spot, idx) in (fishingReport.hotspots.nightSpots || [])" :key="'night_' + idx" class="hotspot-card" style="border-left: 3px solid #a855f7;">
+                  <div class="hotspot-top">
+                    <div class="hotspot-name">{{ spot.name }}</div>
+                    <div class="hotspot-coords">{{ spot.coordinates }}</div>
+                  </div>
+                  <div class="hotspot-depth"><i class="fa-solid fa-moon"></i> Type: <strong>{{ spot.type }}</strong> • Depth: <strong>{{ spot.depth }}</strong></div>
+                  <div class="hotspot-species">
+                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
+                  <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- END SUB-VIEW 4: TROLLING & NIGHT -->
+
+          <!-- SUB-VIEW 5: COMPREHENSIVE ATOLL SPOTS DIRECTORY -->
+          <div v-show="activeFishingSubTab === 'spots' || activeMainTab === 'all'" class="sub-view-group">
+            <div class="fishing-hotspots-section">
+              <div class="hotspots-header">
+                <h4>
+                  <i class="fa-solid fa-map-location-dot" style="color: var(--cyan-primary);"></i>
+                  Master Fishing Spot Directory: {{ fishingReport.hotspots.atollName }}
+                </h4>
+                <span class="hotspots-sub">{{ fishingReport.hotspots.description }}</span>
+              </div>
+              
+              <div class="hotspots-grid">
+                <!-- All Jigging Spots -->
+                <div v-for="(spot, idx) in fishingReport.hotspots.jiggingSpots" :key="'all_jig_' + idx" class="hotspot-card">
+                  <div class="hotspot-top">
+                    <div class="hotspot-name">{{ spot.name }}</div>
+                    <span class="mini-spec-tag" style="background: rgba(0, 240, 255, 0.15); color: var(--cyan-primary);">Jigging</span>
+                  </div>
+                  <div class="hotspot-coords"><i class="fa-solid fa-location-crosshairs"></i> {{ spot.coordinates }} • {{ spot.depth }}</div>
+                  <div class="hotspot-species">
+                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
+                  <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
+                </div>
+
+                <!-- All Casting Spots -->
+                <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="'all_cast_' + idx" class="hotspot-card cast-border">
+                  <div class="hotspot-top">
+                    <div class="hotspot-name">{{ spot.name }}</div>
+                    <span class="mini-spec-tag cast-tag">Topwater</span>
+                  </div>
+                  <div class="hotspot-coords"><i class="fa-solid fa-location-crosshairs"></i> {{ spot.coordinates }} • {{ spot.depth }}</div>
+                  <div class="hotspot-species">
+                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag cast-tag">{{ s }}</span>
+                  </div>
+                  <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
+                  <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- END SUB-VIEW 5: SPOTS -->
+
+        </div> <!-- END .fishing-section -->
       </div> <!-- END TAB PANE 3: SPORTFISHING INTELLIGENCE -->
     </main>
 
@@ -2618,7 +2829,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v3"></script>
+  <script type="module" src="src/js/app.js?v=20260912-nakaiy"></script>
 </body>
 
 </html>

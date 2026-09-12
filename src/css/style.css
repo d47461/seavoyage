@@ -3031,14 +3031,13 @@ button, a, input, select, textarea {
 .fishing-section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 2rem;
-  border: 1px solid rgba(0, 240, 255, 0.22);
-  background: linear-gradient(180deg, rgba(8, 22, 45, 0.85) 0%, rgba(4, 14, 30, 0.95) 100%);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5);
+  gap: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fishing-header-row {
@@ -3608,11 +3607,425 @@ button, a, input, select, textarea {
   letter-spacing: 0.5px;
 }
 
+/* ==========================================================================
+   SINGLE-LOCATION ATOLL SELECTOR & MALDIVIAN NAKAIY INTELLIGENCE COMPONENTS
+   ========================================================================== */
+
+/* Atoll Location Picker Strip */
+.fishing-atoll-picker-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: rgba(8, 22, 45, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  flex-wrap: wrap;
+}
+
+.atoll-selector-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.atoll-selector-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--cyan-primary);
+  white-space: nowrap;
+}
+
+.atoll-custom-select {
+  background: rgba(5, 14, 30, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.atoll-custom-select:hover,
+.atoll-custom-select:focus {
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.atoll-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.atoll-chip {
+  background: rgba(14, 30, 58, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.atoll-chip:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+}
+
+.atoll-chip.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(10, 35, 75, 0.9) 100%);
+  border-color: var(--cyan-primary);
+  color: var(--cyan-primary);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.atoll-coords-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+/* Traditional Maldivian Nakaiy (Monsoon Calendar) Banner */
+.nakaiy-banner-card {
+  background: linear-gradient(135deg, rgba(3, 30, 50, 0.85) 0%, rgba(6, 18, 40, 0.95) 100%);
+  border: 1px solid rgba(0, 229, 163, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(0, 229, 163, 0.05);
+}
+
+.nakaiy-banner-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(0, 229, 163, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.nakaiy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.nakaiy-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.nakaiy-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 229, 163, 0.15);
+  border: 1px solid rgba(0, 229, 163, 0.4);
+  color: #00e5a3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 0 15px rgba(0, 229, 163, 0.25);
+  flex-shrink: 0;
+}
+
+.nakaiy-name-en {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+}
+
+.nakaiy-name-thaana {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #00e5a3;
+  letter-spacing: 0.5px;
+}
+
+.nakaiy-monsoon-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  background: rgba(0, 229, 163, 0.18);
+  color: #00e5a3;
+  border: 1px solid rgba(0, 229, 163, 0.4);
+}
+
+.nakaiy-dates-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nakaiy-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.kanduvikun-box {
+  background: rgba(2, 14, 30, 0.6);
+  border-left: 3px solid #00e5a3;
+  padding: 0.75rem 1rem;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.kanduvikun-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #00e5a3;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Algorithmic Intelligence Captain Verdict Card */
+.captain-verdict-card {
+  background: linear-gradient(135deg, rgba(14, 32, 65, 0.9) 0%, rgba(6, 18, 38, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.verdict-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.top-modality-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(0, 229, 163, 0.15) 100%);
+  border: 1px solid var(--cyan-primary);
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.top-modality-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.4px;
+}
+
+.top-modality-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--cyan-primary);
+}
+
+.verdict-text {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+/* 4-Modality Ranking Grid */
+.modality-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.modality-rank-card {
+  background: rgba(9, 22, 44, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.modality-rank-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(14, 30, 60, 0.9);
+}
+
+.modality-rank-card.is-top {
+  border-color: var(--cyan-primary);
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.15) 0%, rgba(8, 20, 42, 0.9) 100%);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+}
+
+.modality-rank-icon {
+  font-size: 1.25rem;
+  color: var(--cyan-primary);
+}
+
+.modality-rank-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.modality-rank-score {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+.modality-rank-score.high {
+  color: var(--cyan-primary);
+}
+
+.modality-rank-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan-primary);
+  letter-spacing: 0.5px;
+}
+
+/* Best Time of Day Card */
+.best-time-hero-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(16, 32, 60, 0.9) 0%, rgba(6, 18, 38, 0.95) 100%);
+  border: 1px solid rgba(255, 184, 48, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  flex-wrap: wrap;
+}
+
+.best-time-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.best-time-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 184, 48, 0.18);
+  border: 1px solid rgba(255, 184, 48, 0.4);
+  color: #ffb830;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 0 15px rgba(255, 184, 48, 0.3);
+  flex-shrink: 0;
+}
+
+.best-time-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #ffb830;
+}
+
+.best-time-hours {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+.best-time-meta {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+
+@media (max-width: 900px) {
+  .modality-rank-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .nakaiy-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Responsiveness for Fishing Section */
 @media (max-width: 768px) {
   .fishing-section {
-    padding: 1.25rem 1rem;
-    gap: 1.2rem;
+    padding: 0;
+    gap: 0.85rem;
   }
   
   .fishing-header-row {
@@ -5186,9 +5599,84 @@ button, a, input, select, textarea {
 
 /* Sportfishing Intelligence Section */
 [data-theme="light"] .fishing-section {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+[data-theme="light"] .fishing-atoll-picker-strip {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(14, 116, 144, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .atoll-custom-select {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .atoll-chip {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+[data-theme="light"] .atoll-chip.active {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
+[data-theme="light"] .nakaiy-banner-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border-color: #86efac;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .nakaiy-name-en {
+  color: #0f172a;
+}
+
+[data-theme="light"] .kanduvikun-box {
+  background: #f8fafc;
+  color: #334155;
+}
+
+[data-theme="light"] .captain-verdict-card {
   background: #ffffff;
-  border-color: rgba(14, 116, 144, 0.20);
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+  border-color: rgba(14, 116, 144, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .verdict-text {
+  color: #334155;
+}
+
+[data-theme="light"] .modality-rank-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .modality-rank-name {
+  color: #0f172a;
+}
+
+[data-theme="light"] .modality-rank-score {
+  color: #0f172a;
+}
+
+[data-theme="light"] .best-time-hero-card {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+[data-theme="light"] .best-time-hours {
+  color: #78350f;
+}
+
+[data-theme="light"] .best-time-meta {
+  color: #451a03;
 }
 
 [data-theme="light"] .fishing-overall-badge {

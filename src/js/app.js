@@ -47,8 +47,14 @@ import {
   findBestTravelWindow
 } from './tide-lunar.js';
 import {
-  evaluateFishingConditions
+  evaluateFishingConditions,
+  MALDIVES_ATOLL_LIST,
+  MALDIVES_FISHING_HOTSPOTS
 } from './fishing-engine.js';
+import {
+  getCurrentNakaiy,
+  NAKAIY_CALENDAR
+} from './nakaiy-engine.js';
 
 const app = createApp({
   setup() {
@@ -82,7 +88,7 @@ const app = createApp({
     // Single-Screen Sub-Navigation States
     const activeAdvisorySubTab = ref('chart'); // 'chart', 'verdict', 'briefing', 'hazards'
     const activeWeatherSubTab = ref('forecast'); // 'forecast', 'telemetry', 'tides'
-    const activeFishingSubTab = ref('solunar'); // 'solunar', 'jigging', 'casting'
+    const activeFishingSubTab = ref('intel'); // 'intel', 'jigging', 'casting', 'trolling', 'spots'
     const showRoutePlannerModal = ref(false);
 
     function setAdvisorySubTab(subKey) {
@@ -102,7 +108,7 @@ const app = createApp({
 
     function setFishingSubTab(subKey) {
       activeFishingSubTab.value = subKey;
-      if (subKey === 'jigging' || subKey === 'casting') {
+      if (['jigging', 'casting', 'trolling', 'night'].includes(subKey)) {
         activeFishingTab.value = subKey;
       }
     }
@@ -438,14 +444,54 @@ const app = createApp({
       );
     });
 
-    // Maldivian Sportfishing Intelligence Advisory (Jigging vs Casting)
+    // Dedicated Single-Location Maldivian Sportfishing Intelligence State
+    const fishingAtolls = ref(MALDIVES_ATOLL_LIST);
+    const selectedFishingAtollKey = ref('Lhaviyani'); // Default to Lh. Atoll (Faadhippolhu)
+    const selectedFishingAtoll = computed(() => {
+      return fishingAtolls.value.find(a => a.key === selectedFishingAtollKey.value) || fishingAtolls.value[0];
+    });
+
+    const activeFishingModality = ref('jigging'); // 'jigging', 'casting', 'trolling', 'night'
+    const fishingMarineReport = ref(null);
+    const isFishingLoading = ref(false);
+
+    // Active Traditional Maldivian Nakaiy (Monsoon Calendar)
+    const currentNakaiy = computed(() => {
+      return getCurrentNakaiy(currentClockTime.value || new Date());
+    });
+
+    // Fetch marine telemetry specifically for selected fishing atoll
+    async function loadFishingAtollData(atollKey) {
+      const atoll = fishingAtolls.value.find(a => a.key === atollKey) || selectedFishingAtoll.value;
+      if (!atoll) return;
+      isFishingLoading.value = true;
+      try {
+        const report = await fetchMarineAndWeatherData(atoll.lat, atoll.lon);
+        if (report) {
+          fishingMarineReport.value = report;
+        }
+      } catch (err) {
+        console.warn('Dedicated fishing atoll marine fetch fallback:', err);
+      } finally {
+        isFishingLoading.value = false;
+      }
+    }
+
+    function setFishingAtoll(atollKey) {
+      selectedFishingAtollKey.value = atollKey;
+      loadFishingAtollData(atollKey);
+    }
+
+    // Maldivian Sportfishing Intelligence Advisory (Single Atoll + Nakaiy + Solunar + 4 Modalities)
     const fishingReport = computed(() => {
-      if (!marineReport.value) return null;
+      const reportToUse = fishingMarineReport.value || marineReport.value;
+      if (!reportToUse) return null;
       return evaluateFishingConditions(
-        marineReport.value,
+        reportToUse,
         tideData.value,
         moonPhase.value,
-        departureLocation.value
+        selectedFishingAtoll.value,
+        currentNakaiy.value
       );
     });
 
@@ -1124,7 +1170,10 @@ const app = createApp({
       // 3. Fetch marine conditions for route passage
       await loadDataForRoute();
 
-      // 3. Initialize interactive nautical map
+      // 4. Fetch dedicated sportfishing telemetry for default atoll (Lhaviyani)
+      loadFishingAtollData(selectedFishingAtollKey.value);
+
+      // 5. Initialize interactive nautical map
       nextTick(() => {
         initMap();
       });
@@ -1265,9 +1314,18 @@ const app = createApp({
       moonPhase,
       tideData,
       visibilityData,
-      bestTravelWindow,
       activeFishingTab,
       fishingReport,
+      fishingAtolls,
+      selectedFishingAtollKey,
+      selectedFishingAtoll,
+      activeFishingModality,
+      fishingMarineReport,
+      isFishingLoading,
+      currentNakaiy,
+      setFishingAtoll,
+      loadFishingAtollData,
+      bestTravelWindow,
       applyBestWindowToVoyage,
       applyHourToVoyage,
       formatWave,
