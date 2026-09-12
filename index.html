@@ -679,8 +679,7 @@
                     10-Day Weather Predictions & Voyage Trip Planner
                   </div>
                   <div class="ten-day-subtitle">
-                    Comprehensive 10-day environmental & marine forecast for <strong>{{ departureLocation.name.split('
-                      ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> • Evaluates Waves, Wind, Gusts,
+                    Comprehensive 10-day environmental & marine forecast for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> • Evaluates Waves, Wind, Gusts,
                     Currents,
                     Swells, Rain & Passage Feasibility
                   </div>
@@ -2028,8 +2027,7 @@
                       </div>
                     </div>
                     <div class="f-tide-state" :title="'Tidal flow: ' + slot.tidalFlowRate + ' cm/h'">
-                      {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼
-                      Falling' : '● Slack') }}
+                      {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling' : '● Slack') }}
                     </div>
                     <div class="f-current-val" :title="'Current Speed'">
                       {{ slot.currentSpeedKnots }} kn
@@ -2734,7 +2732,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v9"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v10"></script>
 </body>
 
 </html>
