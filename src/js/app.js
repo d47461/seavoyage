@@ -688,6 +688,19 @@ const app = createApp({
       return Number(uv).toFixed(1);
     }
 
+    function getFirstName(name) {
+      if (!name) return '';
+      return String(name).split(' ')[0];
+    }
+
+    function formatTideStageBadge(stage) {
+      if (!stage) return '● Slack';
+      const s = String(stage);
+      if (s.includes('Rising')) return '▲ Rising';
+      if (s.includes('Falling')) return '▼ Falling';
+      return '● Slack';
+    }
+
     // Load Live Maldives Meteorological Service Alerts
     async function loadMmsAlerts() {
       isLoadingMmsAlerts.value = true;
@@ -1283,6 +1296,8 @@ const app = createApp({
       formatPrecipitation,
       formatHumidity,
       formatUvIndex,
+      getFirstName,
+      formatTideStageBadge,
       selectVessel,
       selectedVesselKey,
       vesselProfiles,
