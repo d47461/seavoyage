@@ -5,7 +5,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './locations.js';
+} from './locations.js?v=20260912-v5';
 
 export {
   MALDIVES_ISLANDS_DATABASE,

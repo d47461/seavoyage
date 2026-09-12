@@ -1,6 +1,6 @@
 // Nautical Astronomical Tide, Lunar Phase & Optimal Window Engine
-import { getRelativeSeaAspect } from './marine-api.js';
-import { TIDE_STATIONS, HARMONIC_REFERENCE_EPOCH } from './tide-harmonic-constants.js';
+import { getRelativeSeaAspect } from './marine-api.js?v=20260912-v5';
+import { TIDE_STATIONS, HARMONIC_REFERENCE_EPOCH } from './tide-harmonic-constants.js?v=20260912-v5';
 
 /**
  * Calculates accurate Lunar Phase, Illumination, and Spring/Neap Tide Classification
