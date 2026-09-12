@@ -7263,8 +7263,8 @@ button, a, input, select, textarea {
    ADAPTIVE CATEGORY TABS BREAKPOINTS FOR ALL SCREEN SIZES
    ========================================================================== */
 
-/* Breakpoint 1: Medium Laptops & Desktops (1025px to 1280px) */
-@media (max-width: 1280px) and (min-width: 1025px) {
+/* Breakpoint 1: Medium Laptops & Desktops (> 1200px) */
+@media (min-width: 1201px) and (max-width: 1366px) {
   .main-tab-nav {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.45rem;
@@ -7301,9 +7301,9 @@ button, a, input, select, textarea {
 }
 
 /* ==========================================================================
-   MOBILE SMARTPHONE & TABLET / "TAB" UI: NATIVE BOTTOM NAVIGATION APP BAR (<= 1024px)
+   MOBILE SMARTPHONE & TABLET / "TAB" UI: NATIVE BOTTOM NAVIGATION APP BAR (<= 1200px)
    ========================================================================== */
-@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+@media (max-width: 1200px), (hover: none) and (pointer: coarse) {
   /* Accommodate fixed bottom app bar height so content is never obscured */
   .app-container {
     padding-bottom: calc(85px + env(safe-area-inset-bottom, 15px)) !important;
@@ -7453,18 +7453,18 @@ button, a, input, select, textarea {
   }
 }
 
-/* Floating Dock Styling on Tablets / "Tabs" (601px to 1024px) */
-@media (min-width: 601px) and (max-width: 1024px) {
+/* Floating Dock Styling on Tablets / "Tabs" (601px to 1200px, Portrait & Landscape) */
+@media (min-width: 601px) and (max-width: 1200px), (hover: none) and (pointer: coarse) and (min-width: 601px) {
   .main-tab-nav-wrapper {
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: calc(100% - 3rem) !important;
-    max-width: 620px !important;
-    bottom: 12px !important;
+    max-width: 640px !important;
+    bottom: 14px !important;
     border-radius: 24px !important;
-    border: 1px solid rgba(0, 240, 255, 0.32) !important;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.18) !important;
-    padding: 0.4rem 0.85rem !important;
+    border: 1px solid rgba(0, 240, 255, 0.35) !important;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.2) !important;
+    padding: 0.45rem 0.95rem !important;
   }
 
   .main-tab-btn {
@@ -7588,7 +7588,7 @@ button, a, input, select, textarea {
 }
 
 /* Mobile & Tablet Theme Overrides for Bottom Navigation App Bar */
-@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+@media (max-width: 1200px), (hover: none) and (pointer: coarse) {
   [data-theme="light"] .main-tab-nav-wrapper {
     background: rgba(255, 255, 255, 0.96) !important;
     border-top: 1px solid #cbd5e1 !important;
