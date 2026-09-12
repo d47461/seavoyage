@@ -25,6 +25,29 @@ export const MALDIVES_ATOLLS = [
   { code: 'S', key: 'Seenu', name: 'Seenu / Addu City', shortName: 'S. Atoll', region: 'Southernmost Equatorial' }
 ];
 
+export const MALDIVES_ATOLL_LIST = [
+  { code: 'Lh', key: 'Lhaviyani', name: 'Lhaviyani Atoll (Faadhippolhu)', shortName: 'Lh. Atoll', lat: 5.365, lon: 73.435, region: 'Northern Atolls' },
+  { code: 'K', key: 'Kaafu', name: 'Kaafu Atoll (North & South Malé)', shortName: 'K. Atoll', lat: 4.175, lon: 73.509, region: 'Central Atolls' },
+  { code: 'B', key: 'Baa', name: 'Baa Atoll (South Maalhosmadulu)', shortName: 'B. Atoll', lat: 5.158, lon: 73.131, region: 'Northern Atolls' },
+  { code: 'AA', key: 'Alif Alif', name: 'Alif Alif (North Ari & Rasdhoo)', shortName: 'AA. Atoll', lat: 4.262, lon: 72.990, region: 'Central Western Atolls' },
+  { code: 'ADh', key: 'Alif Dhaalu', name: 'Alif Dhaalu (South Ari Atoll)', shortName: 'ADh. Atoll', lat: 3.535, lon: 72.927, region: 'Central Western Atolls' },
+  { code: 'HDh', key: 'Haa Dhaalu', name: 'Haa Dhaalu (Hanimaadhoo Waters)', shortName: 'HDh. Atoll', lat: 6.750, lon: 73.185, region: 'Far Northern Atolls' },
+  { code: 'HA', key: 'Haa Alif', name: 'Haa Alif (Thiladhunmathi North)', shortName: 'HA. Atoll', lat: 6.980, lon: 72.950, region: 'Far Northern Atolls' },
+  { code: 'Sh', key: 'Shaviyani', name: 'Shaviyani (Miladhunmadulu North)', shortName: 'Sh. Atoll', lat: 6.300, lon: 73.050, region: 'Northern Atolls' },
+  { code: 'N', key: 'Noonu', name: 'Noonu (Miladhunmadulu South)', shortName: 'N. Atoll', lat: 5.850, lon: 73.250, region: 'Northern Atolls' },
+  { code: 'R', key: 'Raa', name: 'Raa Atoll (North Maalhosmadulu)', shortName: 'R. Atoll', lat: 5.600, lon: 72.950, region: 'Northern Atolls' },
+  { code: 'V', key: 'Vaavu', name: 'Vaavu Atoll (Felidhe • Fotteyo Ledge)', shortName: 'V. Atoll', lat: 3.550, lon: 73.550, region: 'Eastern Outer Rim' },
+  { code: 'M', key: 'Meemu', name: 'Meemu Atoll (Mulaku Waters)', shortName: 'M. Atoll', lat: 2.950, lon: 73.550, region: 'Central Eastern Atolls' },
+  { code: 'F', key: 'Faafu', name: 'Faafu Atoll (Nilandhe North)', shortName: 'F. Atoll', lat: 3.250, lon: 72.950, region: 'Central Western Atolls' },
+  { code: 'Dh', key: 'Dhaalu', name: 'Dhaalu Atoll (Nilandhe South)', shortName: 'Dh. Atoll', lat: 2.850, lon: 72.950, region: 'Central Western Atolls' },
+  { code: 'Th', key: 'Thaa', name: 'Thaa Atoll (Kolhumadulu)', shortName: 'Th. Atoll', lat: 2.350, lon: 73.150, region: 'Southern Central Atolls' },
+  { code: 'L', key: 'Laamu', name: 'Laamu Atoll (Haddhunmathi)', shortName: 'L. Atoll', lat: 1.950, lon: 73.450, region: 'Southern Central Atolls' },
+  { code: 'GA', key: 'Gaafu Alif', name: 'Gaafu Alif (North Huvadhoo)', shortName: 'GA. Atoll', lat: 0.750, lon: 73.350, region: 'Deep Southern Atolls' },
+  { code: 'GDh', key: 'Gaafu Dhaalu', name: 'Gaafu Dhaalu (South Huvadhoo)', shortName: 'GDh. Atoll', lat: 0.520, lon: 73.010, region: 'Deep Southern Atolls' },
+  { code: 'Gn', key: 'Gnaviyani', name: 'Gnaviyani (Fuvahmulah Oceanic Island)', shortName: 'Gn. Atoll', lat: -0.300, lon: 73.430, region: 'Equatorial Oceanic Island' },
+  { code: 'S', key: 'Seenu', name: 'Seenu Atoll (Addu City & Gan)', shortName: 'S. Atoll', lat: -0.690, lon: 73.165, region: 'Southernmost Equatorial' }
+];
+
 export const MALDIVES_ISLANDS_DATABASE = [
   // LHAVIYANI ATOLL (Lh)
   { name: 'Maafilaafushi (Lhaviyani Atoll)', island: 'Maafilaafushi', atoll: 'Lhaviyani', atollCode: 'Lh', latitude: 5.3625, longitude: 73.4197, country: 'Maldives', isDefault: true, type: 'Base / Coast Guard / Port' },

@@ -20,9 +20,10 @@ import {
   getRelativeSeaAspect,
   MALDIVES_ISLANDS_DATABASE,
   MALDIVES_ATOLLS,
+  MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './marine-api.js';
+} from './marine-api.js?v=20260912-v4';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
@@ -30,10 +31,10 @@ import {
   getDouglasSeaState,
   evaluateDayTripPlanning,
   generateTenDayTripSummary
-} from './safety-engine.js';
+} from './safety-engine.js?v=20260912-v4';
 import { 
   generateCaptainAdvisory 
-} from './ai-advisory.js';
+} from './ai-advisory.js?v=20260912-v4';
 import { 
   initAuthListener, 
   loginAnonymously, 
@@ -43,22 +44,21 @@ import {
   saveFavoriteLocation, 
   fetchFavoriteLocations, 
   removeFavoriteLocation 
-} from './firebase-config.js';
+} from './firebase-config.js?v=20260912-v4';
 import {
   getMoonPhaseInfo,
   getTidePrediction,
   getVisibilityAnalysis,
   findBestTravelWindow
-} from './tide-lunar.js';
+} from './tide-lunar.js?v=20260912-v4';
 import {
   evaluateFishingConditions,
-  MALDIVES_ATOLL_LIST,
   MALDIVES_FISHING_HOTSPOTS
-} from './fishing-engine.js';
+} from './fishing-engine.js?v=20260912-v4';
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
-} from './nakaiy-engine.js';
+} from './nakaiy-engine.js?v=20260912-v4';
 
 const app = createApp({
   setup() {

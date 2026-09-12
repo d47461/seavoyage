@@ -2,6 +2,7 @@
 import {
   MALDIVES_ISLANDS_DATABASE,
   MALDIVES_ATOLLS,
+  MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
 } from './locations.js';
@@ -9,6 +10,7 @@ import {
 export {
   MALDIVES_ISLANDS_DATABASE,
   MALDIVES_ATOLLS,
+  MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
 };
