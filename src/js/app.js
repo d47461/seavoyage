@@ -79,6 +79,34 @@ const app = createApp({
     // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'fishing' | 'all')
     const activeMainTab = ref('advisories');
 
+    // Single-Screen Sub-Navigation States
+    const activeAdvisorySubTab = ref('chart'); // 'chart', 'verdict', 'briefing', 'hazards'
+    const activeWeatherSubTab = ref('forecast'); // 'forecast', 'telemetry', 'tides'
+    const activeFishingSubTab = ref('solunar'); // 'solunar', 'jigging', 'casting'
+    const showRoutePlannerModal = ref(false);
+
+    function setAdvisorySubTab(subKey) {
+      activeAdvisorySubTab.value = subKey;
+      if (subKey === 'chart') {
+        nextTick(() => {
+          if (typeof leafletMap !== 'undefined' && leafletMap) {
+            leafletMap.invalidateSize();
+          }
+        });
+      }
+    }
+
+    function setWeatherSubTab(subKey) {
+      activeWeatherSubTab.value = subKey;
+    }
+
+    function setFishingSubTab(subKey) {
+      activeFishingSubTab.value = subKey;
+      if (subKey === 'jigging' || subKey === 'casting') {
+        activeFishingTab.value = subKey;
+      }
+    }
+
     function setMainTab(tabKey) {
       activeMainTab.value = tabKey;
       if (typeof window !== 'undefined' && window.innerWidth <= 1200) {
@@ -1277,6 +1305,13 @@ const app = createApp({
       printA4Bulletin,
       activeMainTab,
       setMainTab,
+      activeAdvisorySubTab,
+      setAdvisorySubTab,
+      activeWeatherSubTab,
+      setWeatherSubTab,
+      activeFishingSubTab,
+      setFishingSubTab,
+      showRoutePlannerModal,
       advisoriesTabBadge,
       weatherTabBadge,
       fishingTabBadge,
