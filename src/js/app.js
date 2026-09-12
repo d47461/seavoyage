@@ -136,6 +136,7 @@ const app = createApp({
     // Vessel Profile & Units (Default: Maldivian Speedboat)
     const selectedVesselKey = ref('maldives_speedboat');
     const vesselProfiles = ref(VESSEL_PROFILES);
+    const selectedVessel = computed(() => vesselProfiles.value[selectedVesselKey.value] || vesselProfiles.value.maldives_speedboat);
     const unitSystem = ref('nautical'); // 'nautical' (knots/m), 'metric' (km/h/m), 'imperial' (mph/ft)
 
     // Maldives Meteorological Service (MMS) Alerts State
@@ -1218,6 +1219,7 @@ const app = createApp({
       activeRegionTab,
       selectedVesselKey,
       vesselProfiles,
+      selectedVessel,
       unitSystem,
       mmsAlerts,
       currentMmsAlert,

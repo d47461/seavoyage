@@ -429,9 +429,7 @@
                 <span><i class="fa-solid fa-star" style="color: #ffb830;"></i></span> The Best Time of the Day to Travel
               </div>
               <span style="font-size: 0.85rem; color: var(--text-muted);">
-                Refined for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split('
-                  ')[0]
-                  }}</strong> across Met alerts, wind direction, wave height, swells & gust spikes
+                Refined for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> across Met alerts, wind direction, wave height, swells & gust spikes
               </span>
             </div>
             <div style="display: flex; gap: 0.6rem; align-items: center;">
@@ -741,8 +739,7 @@
                 10-Day Weather Predictions & Voyage Trip Planner
               </div>
               <div class="ten-day-subtitle">
-                Comprehensive 10-day environmental & marine forecast for <strong>{{ departureLocation.name.split(' ')[0]
-                  }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> • Evaluates Waves, Wind, Gusts, Currents,
+                Comprehensive 10-day environmental & marine forecast for <strong>{{ departureLocation.name.split(' ')[0] }} ➔ {{ destinationLocation.name.split(' ')[0] }}</strong> • Evaluates Waves, Wind, Gusts, Currents,
                 Swells, Rain & Passage Feasibility
               </div>
             </div>
@@ -1787,9 +1784,7 @@
                 </div>
 
                 <div class="f-tide-state" :title="'Tidal flow: ' + slot.tidalFlowRate + ' cm/h'">
-                  {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling'
-                  :
-                  '● Slack') }}
+                  {{ slot.tideStage.includes('Rising') ? '▲ Rising' : (slot.tideStage.includes('Falling') ? '▼ Falling' : '● Slack') }}
                 </div>
                 <div class="f-current-val" :title="'Current Speed'">
                   {{ slot.currentSpeedKnots }} kn
@@ -1864,9 +1859,7 @@
                 title="Detect and always show details for my current device GPS location">
                 <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
                 <i class="fa-solid fa-location-crosshairs" v-else></i>
-                <span>{{ isLocatingDevice ? 'Acquiring GPS...' : (departureLocation.isDeviceLocation ? 'Device GPS
-                  Active'
-                  : 'Use Device Location') }}</span>
+                <span>{{ isLocatingDevice ? 'Acquiring GPS...' : (departureLocation.isDeviceLocation ? 'Device GPS Active' : 'Use Device Location') }}</span>
               </button>
             </div>
           </div>
@@ -1962,8 +1955,7 @@
             <div class="island-strip-header">
               <div class="island-strip-title">
                 <i class="fa-solid fa-compass" style="color: var(--cyan-primary);"></i>
-                <span>Choose Starting Island ({{ activePickerTarget === 'departure' ? 'Departure Location' :
-                  'Destination Location' }}):</span>
+                <span>Choose Starting Island ({{ activePickerTarget === 'departure' ? 'Departure Location' : 'Destination Location' }}):</span>
               </div>
               <span class="island-strip-hint">Click any island to change departure point or search above</span>
             </div>
