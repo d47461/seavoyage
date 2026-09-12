@@ -124,14 +124,6 @@
           </button>
         </div>
 
-        <!-- User / Auth -->
-        <button class="btn-icon"
-          @click="currentUser && !currentUser.isAnonymous ? handleLogout() : (showAuthModal = true)"
-          title="Account / Sign In">
-          <i class="fa-solid fa-user"></i>
-          <span class="btn-label">{{ currentUser && !currentUser.isAnonymous ? (currentUser.email ?
-            currentUser.email.split('@')[0] : 'Captain') : 'Sign In' }}</span>
-        </button>
       </div>
     </nav>
 
@@ -2496,60 +2488,6 @@
       </div>
     </div>
 
-    <!-- MODAL: Firebase Auth Modal -->
-    <div class="modal-overlay" v-if="showAuthModal" @click.self="showAuthModal = false">
-      <div class="glass-panel modal-content">
-        <div class="modal-header">
-          <h3>{{ isRegisterMode ? 'Register Skipper Account' : 'Sign In to SeaVoyage' }}</h3>
-          <button class="modal-close" @click="showAuthModal = false">&times;</button>
-        </div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">
-          Sync your atoll favorites and custom routes across all devices with Firebase.
-        </p>
-        <div v-if="authError"
-          style="background: rgba(255, 51, 102, 0.12); border: 1px solid rgba(255, 51, 102, 0.35); border-radius: var(--radius-sm); padding: 0.75rem 0.9rem; color: #ff99aa; font-size: 0.82rem; margin-bottom: 1rem; line-height: 1.45;">
-          <div
-            style="font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem; color: #ff3366;">
-            <i class="fa-solid fa-triangle-exclamation"></i> Firebase Setup Required
-          </div>
-          {{ authError }}
-          <div style="margin-top: 0.5rem;">
-            <a href="https://console.firebase.google.com/project/ssc1-476ee/authentication" target="_blank"
-              style="color: var(--cyan-primary); text-decoration: underline; font-weight: 600;">
-              Open Firebase Console (ssc1-476ee) ➔
-            </a>
-          </div>
-        </div>
-        <form @submit.prevent="handleAuthSubmit">
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <input type="email" class="form-input" required v-model="authEmail" placeholder="captain@maldives.com" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-input" required v-model="authPassword" placeholder="••••••••" />
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.2rem;">
-            <a href="javascript:void(0)" @click="isRegisterMode = !isRegisterMode"
-              style="color: var(--cyan-primary); font-size: 0.85rem; text-decoration: none;">
-              {{ isRegisterMode ? 'Already have an account? Sign in' : 'Need an account? Register' }}
-            </a>
-            <button type="submit" class="btn-primary">
-              {{ isRegisterMode ? 'Create Account' : 'Sign In' }}
-            </button>
-          </div>
-        </form>
-
-        <div
-          style="margin-top: 1.2rem; padding-top: 0.9rem; border-top: 1px solid var(--border-glow); text-align: center;">
-          <button type="button" class="btn-secondary" @click="continueAsGuest"
-            style="width: 100%; font-size: 0.82rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
-            <i class="fa-solid fa-compass"></i> Continue in Local Offline Mode (Save Logs & Bookmarks Locally)
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- MODAL 4: Harmonic Tidal Constituents Inspector (20 Components) -->
     <div class="modal-overlay" v-if="showHarmonicsModal" @click.self="showHarmonicsModal = false">
       <div class="glass-panel modal-content"
@@ -2654,7 +2592,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v8"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v9"></script>
 </body>
 
 </html>

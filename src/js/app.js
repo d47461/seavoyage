@@ -38,13 +38,10 @@ import {
 import { 
   initAuthListener, 
   loginAnonymously, 
-  loginWithEmail, 
-  registerWithEmail, 
-  logoutUser, 
   saveFavoriteLocation, 
   fetchFavoriteLocations, 
   removeFavoriteLocation 
-} from './firebase-config.js?v=20260912-v7';
+} from './firebase-config.js?v=20260912-v8';
 import {
   getMoonPhaseInfo,
   getTidePrediction,
@@ -245,16 +242,11 @@ const app = createApp({
     const aiBrief = ref('');
     const isAiLoading = ref(false);
 
-    // User & Firebase
+    // User & Persistence
     const currentUser = ref(null);
     const favoriteLocations = ref([]);
-    const showAuthModal = ref(false);
     const showHarmonicsModal = ref(false);
     const selectedConstituent = ref(null);
-    const authEmail = ref('');
-    const authPassword = ref('');
-    const authError = ref('');
-    const isRegisterMode = ref(false);
 
     // Theme Management: System, Dark, Light
     const themeMode = ref(localStorage.getItem('seavoyage_theme') || 'system');
@@ -1028,35 +1020,7 @@ const app = createApp({
       }
     }
 
-    async function handleAuthSubmit() {
-      authError.value = '';
-      try {
-        if (isRegisterMode.value) {
-          currentUser.value = await registerWithEmail(authEmail.value, authPassword.value);
-        } else {
-          currentUser.value = await loginWithEmail(authEmail.value, authPassword.value);
-        }
-        showAuthModal.value = false;
-        authEmail.value = '';
-        authPassword.value = '';
-        await refreshUserData();
-      } catch (err) {
-        authError.value = err.message || 'Authentication error';
-      }
-    }
 
-    async function handleLogout() {
-      await logoutUser();
-      currentUser.value = null;
-      await loginAnonymously();
-    }
-
-    async function continueAsGuest() {
-      currentUser.value = { uid: 'local-guest', isAnonymous: true, displayName: 'Skipper (Local Session)' };
-      showAuthModal.value = false;
-      authError.value = '';
-      await refreshUserData();
-    }
 
     // Leaflet Interactive Nautical Chart Initialization
     function initMap() {
@@ -1272,13 +1236,8 @@ const app = createApp({
       isAiLoading,
       currentUser,
       favoriteLocations,
-      showAuthModal,
       showHarmonicsModal,
       selectedConstituent,
-      authEmail,
-      authPassword,
-      authError,
-      isRegisterMode,
       gaugeRadius,
       gaugeCircumference,
       gaugeOffset,
@@ -1324,9 +1283,6 @@ const app = createApp({
       selectSearchResult,
       onSearchInput,
       toggleFavorite,
-      handleAuthSubmit,
-      handleLogout,
-      continueAsGuest,
       fetchAiBrief,
       loadMmsAlerts,
       isLocatingDevice,
