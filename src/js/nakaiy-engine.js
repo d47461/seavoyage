@@ -526,7 +526,7 @@ export function getCurrentNakaiy(date = new Date()) {
   }
 
   // Default fallback if boundary edge
-  return formatNakaiyResult(NAKAIY_CALENDAR[20], target); // Hey Nakaiy fallback
+  return formatNakaiyResult(NAKAIY_CALENDAR[23], target); // Hei Nakaiy fallback
 }
 
 function formatNakaiyResult(nakaiy, currentDate) {
@@ -545,10 +545,10 @@ function formatNakaiyResult(nakaiy, currentDate) {
   // Squall risk assessment based on centuries of Maldivian seafaring lore
   let squallRisk = 'Moderate';
   let squallRiskColor = '#ffb830';
-  if (['assidha', 'burunu', 'kethi', 'roanu', 'miyahelia', 'alha'].includes(nakaiy.id)) {
+  if (['assidha', 'burunu', 'kethi', 'roanu', 'miaheli', 'adha'].includes(nakaiy.id)) {
     squallRisk = 'High (Frequent Squall Spells)';
     squallRiskColor = '#ff3366';
-  } else if (['huvan', 'dhinasha', 'hiyagala', 'reyva', 'bandaha', 'viha', 'nora'].includes(nakaiy.id)) {
+  } else if (['huvan', 'dhinasha', 'hiyavihaa', 'fas-badhuruvaa', 'reyvaa', 'hitha', 'vihaa'].includes(nakaiy.id)) {
     squallRisk = 'Low (Fair Weather & Glassy Seas)';
     squallRiskColor = '#10b981';
   } else {
