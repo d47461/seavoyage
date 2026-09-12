@@ -3,7 +3,7 @@
 // and Traditional Maldivian Monsoon Calendar (Nakaiy / "Kanduvikun")
 // Provides Single-Location / Atoll Sportfishing Intelligence, Spot Discovery, Modality Ranking & Best Times of Day
 
-import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v5';
+import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v6';
 
 export const MALDIVES_ATOLL_LIST = [
   { code: 'Lh', key: 'Lhaviyani', name: 'Lhaviyani Atoll (Faadhippolhu)', shortName: 'Lh. Atoll', lat: 5.365, lon: 73.435, region: 'Northern Atolls' },

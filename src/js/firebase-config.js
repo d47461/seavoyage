@@ -87,18 +87,9 @@ export function initAuthListener(onUserChanged) {
   });
 }
 
-// Sign in anonymously for rapid hassle-free sea travel assessment
+// Guest session for rapid hassle-free sea travel assessment (backed by robust LocalStorage)
 export async function loginAnonymously() {
-  if (!isFirebaseInitialized || !auth) {
-    return { uid: 'local-guest', isAnonymous: true, displayName: 'Maritime Guest' };
-  }
-  try {
-    const credential = await signInAnonymously(auth);
-    return credential.user;
-  } catch (err) {
-    console.warn("Anonymous sign-in error, using local guest:", err);
-    return { uid: 'local-guest', isAnonymous: true, displayName: 'Maritime Guest' };
-  }
+  return { uid: 'local-guest', isAnonymous: true, displayName: 'Maritime Guest' };
 }
 
 export async function loginWithEmail(email, password) {

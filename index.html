@@ -30,7 +30,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-v5" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260912-v6" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -505,7 +505,7 @@
               destinationLocation.name.split(' ')[0] }} corridor.
             </p>
             <div class="timeline-scroller" v-if="safetyEvaluation && safetyEvaluation.timelineWindows">
-              <div v-for="slot in safetyEvaluation.timelineWindows" :key="slot.rawTime" class="timeline-slot"
+              <div v-for="(slot, idx) in safetyEvaluation.timelineWindows" :key="'timeline_' + idx + '_' + (slot.rawTime || slot.time)" class="timeline-slot"
                 :class="'slot-' + slot.status">
                 <div class="slot-time">{{ slot.time }}</div>
                 <div class="slot-wave">{{ formatWave(slot.waveHeight) }}</div>
@@ -955,7 +955,7 @@
               </div>
 
               <div class="detail-hourly-scroller">
-                <div v-for="h in selectedDayForecast.hours" :key="h.time" class="detail-hour-cell"
+                <div v-for="(h, idx) in selectedDayForecast.hours" :key="'fc_h_' + idx + '_' + (h.time || h.hour)" class="detail-hour-cell"
                   :class="{ daylight: h.isDaylight }">
                   <div class="d-hour-time">
                     <i :class="h.isDaylight ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"
@@ -1349,7 +1349,7 @@
                 </text>
 
                 <!-- 3-Hour Time Axis Vertical Grids -->
-                <g v-for="tick in tideData.tideCurve.timeTicks" :key="tick.time">
+                <g v-for="(tick, idx) in tideData.tideCurve.timeTicks" :key="'tide_tick_' + idx + '_' + tick.hourOffset">
                   <line :x1="tick.svgX" y1="25" :x2="tick.svgX" y2="165" stroke="rgba(255, 255, 255, 0.05)"
                     stroke-width="1" />
                   <text :x="tick.svgX" y="185" text-anchor="middle" fill="rgba(200, 225, 255, 0.6)" font-size="11"
@@ -1573,7 +1573,7 @@
           </div>
 
           <div class="hourly-scroll-track">
-            <div class="hourly-slot-card" v-for="slot in bestTravelWindow.hourlySchedule" :key="slot.rawTime"
+            <div class="hourly-slot-card" v-for="(slot, idx) in bestTravelWindow.hourlySchedule" :key="'travel_slot_' + idx + '_' + (slot.rawTime || slot.time)"
               :class="'slot-' + slot.status">
               <div class="hourly-slot-header">
                 <div class="hourly-slot-time">
@@ -1918,7 +1918,7 @@
                 </div>
               </div>
               <div class="fishing-timeline-scroll">
-                <div v-for="slot in fishingReport.hourlyScores" :key="slot.time" class="fishing-hour-col">
+                <div v-for="(slot, idx) in fishingReport.hourlyScores" :key="'fish_slot_' + idx + '_' + slot.time" class="fishing-hour-col">
                   <div class="f-hour-label">{{ slot.displayTime }}</div>
                   <div class="f-bar-container">
                     <div class="f-bar-jig" :style="{ height: Math.round(slot.jigScore * 0.75) + 'px' }"
@@ -1982,7 +1982,7 @@
               <div class="species-row">
                 <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
                 <div class="species-pills">
-                  <span v-for="sp in fishingReport.bestJiggingWindow.targetSpecies" :key="sp" class="species-pill">
+                  <span v-for="(sp, spIdx) in fishingReport.bestJiggingWindow.targetSpecies" :key="'jig_sp_' + spIdx + '_' + sp" class="species-pill">
                     <i class="fa-solid fa-circle-dot"></i> {{ sp }}
                   </span>
                 </div>
@@ -1996,14 +1996,14 @@
                 <span class="hotspots-sub">Deep Channel Ledges & Oceanic Pinnacles</span>
               </div>
               <div class="hotspots-grid">
-                <div v-for="(spot, idx) in fishingReport.hotspots.jiggingSpots" :key="idx" class="hotspot-card">
+                <div v-for="(spot, idx) in fishingReport.hotspots.jiggingSpots" :key="'jig_spot_' + idx" class="hotspot-card">
                   <div class="hotspot-top">
                     <div class="hotspot-name">{{ spot.name }}</div>
                     <div class="hotspot-coords">{{ spot.coordinates }}</div>
                   </div>
                   <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'jig_s_' + idx + '_' + sIdx" class="mini-spec-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
@@ -2051,7 +2051,7 @@
               <div class="species-row">
                 <span class="species-title"><i class="fa-solid fa-fish"></i> Prime Target Species:</span>
                 <div class="species-pills">
-                  <span v-for="sp in fishingReport.bestCastingWindow.targetSpecies" :key="sp" class="species-pill cast-pill">
+                  <span v-for="(sp, spIdx) in fishingReport.bestCastingWindow.targetSpecies" :key="'cast_sp_' + spIdx + '_' + sp" class="species-pill cast-pill">
                     <i class="fa-solid fa-circle-dot"></i> {{ sp }}
                   </span>
                 </div>
@@ -2065,14 +2065,14 @@
                 <span class="hotspots-sub">Reef Crests, Surf Wash & Outer Faru Ledges</span>
               </div>
               <div class="hotspots-grid">
-                <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="idx" class="hotspot-card cast-border">
+                <div v-for="(spot, idx) in fishingReport.hotspots.castingSpots" :key="'cast_spot_' + idx" class="hotspot-card cast-border">
                   <div class="hotspot-top">
                     <div class="hotspot-name">{{ spot.name }}</div>
                     <div class="hotspot-coords">{{ spot.coordinates }}</div>
                   </div>
                   <div class="hotspot-depth"><i class="fa-solid fa-water"></i> Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag cast-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'cast_s_' + idx + '_' + sIdx" class="mini-spec-tag cast-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);">
@@ -2159,7 +2159,7 @@
                   </div>
                   <div class="hotspot-depth"><i class="fa-solid fa-ship"></i> Type: <strong>{{ spot.type }}</strong> • Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'troll_s_' + idx + '_' + sIdx" class="mini-spec-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
@@ -2171,7 +2171,7 @@
                   </div>
                   <div class="hotspot-depth"><i class="fa-solid fa-moon"></i> Type: <strong>{{ spot.type }}</strong> • Depth: <strong>{{ spot.depth }}</strong></div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'night_s_' + idx + '_' + sIdx" class="mini-spec-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
@@ -2200,7 +2200,7 @@
                   </div>
                   <div class="hotspot-coords"><i class="fa-solid fa-location-crosshairs"></i> {{ spot.coordinates }} • {{ spot.depth }}</div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'all_jig_s_' + idx + '_' + sIdx" class="mini-spec-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
@@ -2214,7 +2214,7 @@
                   </div>
                   <div class="hotspot-coords"><i class="fa-solid fa-location-crosshairs"></i> {{ spot.coordinates }} • {{ spot.depth }}</div>
                   <div class="hotspot-species">
-                    <span v-for="s in spot.targetSpecies" :key="s" class="mini-spec-tag cast-tag">{{ s }}</span>
+                    <span v-for="(s, sIdx) in spot.targetSpecies" :key="'all_cast_s_' + idx + '_' + sIdx" class="mini-spec-tag cast-tag">{{ s }}</span>
                   </div>
                   <div class="hotspot-tactics"><strong>Tackle:</strong> {{ spot.tackle }}</div>
                   <div class="hotspot-tactics" style="margin-top: 0.35rem; color: var(--text-muted);"><strong>Tactics:</strong> {{ spot.tactics }}</div>
@@ -2640,7 +2640,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v5"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v6"></script>
 </body>
 
 </html>

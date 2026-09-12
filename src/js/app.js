@@ -1,5 +1,5 @@
 // Vue 3 Maritime Voyage Application with Maldives Meteorological Service (MMS) Integration & Route Optimization
-import { createApp, ref, computed, watch, onMounted, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+import { createApp, ref, computed, watch, onMounted, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js';
 import { 
   fetchMarineAndWeatherData, 
   searchLocations, 
@@ -23,7 +23,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './marine-api.js?v=20260912-v5';
+} from './marine-api.js?v=20260912-v6';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
@@ -31,10 +31,10 @@ import {
   getDouglasSeaState,
   evaluateDayTripPlanning,
   generateTenDayTripSummary
-} from './safety-engine.js?v=20260912-v5';
+} from './safety-engine.js?v=20260912-v6';
 import { 
   generateCaptainAdvisory 
-} from './ai-advisory.js?v=20260912-v5';
+} from './ai-advisory.js?v=20260912-v6';
 import { 
   initAuthListener, 
   loginAnonymously, 
@@ -44,21 +44,21 @@ import {
   saveFavoriteLocation, 
   fetchFavoriteLocations, 
   removeFavoriteLocation 
-} from './firebase-config.js?v=20260912-v5';
+} from './firebase-config.js?v=20260912-v6';
 import {
   getMoonPhaseInfo,
   getTidePrediction,
   getVisibilityAnalysis,
   findBestTravelWindow
-} from './tide-lunar.js?v=20260912-v5';
+} from './tide-lunar.js?v=20260912-v6';
 import {
   evaluateFishingConditions,
   MALDIVES_FISHING_HOTSPOTS
-} from './fishing-engine.js?v=20260912-v5';
+} from './fishing-engine.js?v=20260912-v6';
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
-} from './nakaiy-engine.js?v=20260912-v5';
+} from './nakaiy-engine.js?v=20260912-v6';
 
 const app = createApp({
   setup() {

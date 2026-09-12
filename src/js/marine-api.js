@@ -5,7 +5,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './locations.js?v=20260912-v5';
+} from './locations.js?v=20260912-v6';
 
 export {
   MALDIVES_ISLANDS_DATABASE,
@@ -130,12 +130,32 @@ export const WMO_CODES = {
 // Fetch live Maldives Meteorological Service (MMS) alerts
 export async function fetchMMSAlerts() {
   try {
-    const res = await fetch('/api/mms-alerts');
-    if (!res.ok) throw new Error(`MMS alerts fetch error: ${res.status}`);
-    const data = await res.json();
-    return data.alerts || [];
+    // If running in development with custom server.py backend, query dynamic endpoint;
+    // on static deployment (GitHub Pages / seavoyage.info), query static snapshot
+    const isLocalCustomBackend = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+      window.location.port === '5173' &&
+      !window.STATIC_MODE;
+    
+    let res = null;
+    if (isLocalCustomBackend) {
+      try {
+        res = await fetch('/api/mms-alerts');
+      } catch (e) {
+        res = null;
+      }
+    }
+    
+    if (!res || !res.ok) {
+      res = await fetch('src/data/mms-alerts.json?v=20260912-v6');
+    }
+
+    if (res && res.ok) {
+      const data = await res.json();
+      return data.alerts || [];
+    }
+    return [];
   } catch (err) {
-    console.warn("MMS alerts fallback:", err);
     return [];
   }
 }
