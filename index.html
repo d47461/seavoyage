@@ -393,6 +393,11 @@
                     <i :class="weatherCondition.icon" style="color: var(--cyan-primary);"></i> {{ weatherCondition.label
                     }}
                   </div>
+                  <div class="weather-condition-pill" v-if="currentNakaiy"
+                    :title="currentNakaiy.weatherPattern"
+                    style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.8rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); font-size: 0.85rem; color: #fff;">
+                    <i class="fa-solid fa-wind" style="color: #10b981;"></i> {{ currentNakaiy.name }} Nakaiy ({{ currentNakaiy.thaana }})
+                  </div>
                   <span style="font-size: 0.85rem; color: var(--text-muted);">for {{ safetyEvaluation.vessel.name
                     }}</span>
                 </div>
@@ -782,6 +787,11 @@
                       {{ day.status }} ({{ day.score }}%)
                     </span>
                   </div>
+                  <div v-if="day.nakaiy" class="day-nakaiy-pill" :title="day.nakaiy.weatherPattern"
+                    style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; color: var(--cyan-primary); background: rgba(0, 240, 255, 0.08); padding: 2px 6px; border-radius: 4px; margin-bottom: 0.35rem; width: fit-content;">
+                    <i class="fa-solid fa-wind" style="font-size: 0.62rem;"></i>
+                    <span>{{ day.nakaiy.name }} • {{ day.nakaiy.thaana }}</span>
+                  </div>
 
                   <!-- Weather Icon & Condition -->
                   <div class="day-weather-row">
@@ -843,7 +853,7 @@
                       <div class="detail-main-title">{{ selectedDayForecast.fullDate }}</div>
                       <div class="detail-sub-title">
                         Corridor: <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> • {{
-                        selectedDayForecast.qualityRating }}
+                        selectedDayForecast.qualityRating }} <span v-if="selectedDayForecast.nakaiy">• {{ selectedDayForecast.nakaiy.name }} Nakaiy ({{ selectedDayForecast.nakaiy.thaana }})</span>
                       </div>
                     </div>
                   </div>
@@ -946,6 +956,12 @@
                     </div>
                     <div class="d-tel-val">{{ formatPressure(selectedDayForecast.surfacePressureAvg) }}</div>
                     <div class="d-tel-note">Tropical maritime gradient</div>
+                  </div>
+
+                  <div class="detail-tel-box" v-if="selectedDayForecast.nakaiy" style="border-left-color: var(--cyan-primary);">
+                    <div class="d-tel-label" style="color: var(--cyan-primary);"><i class="fa-solid fa-wind"></i> Maldivian Nakaiy (Monsoon)</div>
+                    <div class="d-tel-val" style="font-size: 1.15rem; color: #fff;">{{ selectedDayForecast.nakaiy.name }} <span class="d-tel-sub">({{ selectedDayForecast.nakaiy.thaana }})</span></div>
+                    <div class="d-tel-note" :style="{ color: selectedDayForecast.nakaiy.squallRiskColor }">{{ selectedDayForecast.nakaiy.squallRisk }} • {{ selectedDayForecast.nakaiy.monsoon }}</div>
                   </div>
                 </div>
 
@@ -1916,6 +1932,10 @@
                     <span class="nakaiy-dates-badge">
                       <i class="fa-regular fa-calendar"></i> {{ currentNakaiy.dateRangeStr }}
                     </span>
+                    <button class="btn-secondary" @click="showNakaiyModal = true"
+                      style="padding: 0.35rem 0.8rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                      <i class="fa-solid fa-calendar-days"></i> 27 Nakaiy Calendar
+                    </button>
                   </div>
                 </div>
 
@@ -1928,10 +1948,46 @@
                   </div>
                   <div class="kanduvikun-box" style="border-left-color: var(--cyan-primary);">
                     <div class="kanduvikun-label" style="color: var(--cyan-primary);">
-                      <i class="fa-solid fa-anchor"></i> Maldivian Elder Fishing Wisdom ("Dhuvasvee Masveringe Bunaa
-                      Gothun")
+                      <i class="fa-solid fa-anchor"></i> Maldivian Elder Fishing Wisdom ("Dhuvasvee Masveringe Bunaa Gothun")
                     </div>
                     <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">{{ currentNakaiy.fishingLore }}</p>
+                  </div>
+                  <div class="kanduvikun-box" style="border-left-color: #ffb830;" v-if="currentNakaiy.preferredTechnique">
+                    <div class="kanduvikun-label" style="color: #ffb830;">
+                      <i class="fa-solid fa-crosshairs"></i> Master Technique & Prime Locations
+                    </div>
+                    <p style="margin: 0 0 0.4rem 0; font-size: 0.85rem; color: #e2e8f0;">
+                      <strong>Preferred:</strong> {{ currentNakaiy.preferredTechnique }}
+                    </p>
+                    <p style="margin: 0; font-size: 0.82rem; color: #94a3b8;">
+                      <i class="fa-solid fa-location-dot" style="color: #ffb830;"></i> {{ currentNakaiy.bestLocations }}
+                    </p>
+                  </div>
+                  <div class="kanduvikun-box" style="border-left-color: #38bdf8;" v-if="currentNakaiy.recommendedTackle">
+                    <div class="kanduvikun-label" style="color: #38bdf8;">
+                      <i class="fa-solid fa-fish"></i> Target Pelagics & Recommended Tackle
+                    </div>
+                    <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.4rem;" v-if="currentNakaiy.targetSpecies">
+                      <span v-for="sp in currentNakaiy.targetSpecies" :key="sp"
+                        style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; font-weight: 600;">
+                        {{ sp }}
+                      </span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.8rem; color: #cbd5e1;">
+                      <i class="fa-solid fa-screwdriver-wrench" style="color: #38bdf8;"></i> {{ currentNakaiy.recommendedTackle }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Channel Crossing & Prevailing Winds Footnote -->
+                <div v-if="currentNakaiy.channelCrossingAdvisory"
+                  style="margin-top: 0.8rem; padding: 0.65rem 0.95rem; background: rgba(15, 23, 42, 0.6); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; color: #cbd5e1;">
+                  <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-compass" style="color: var(--cyan-primary); font-size: 1rem;"></i>
+                    <span><strong>Passage Advisory:</strong> {{ currentNakaiy.channelCrossingAdvisory }}</span>
+                  </div>
+                  <div v-if="currentNakaiy.nextNakaiy" style="font-size: 0.76rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.3rem;">
+                    <i class="fa-solid fa-arrow-right" style="color: var(--sea-green);"></i> Next: <strong style="color: #fff;">{{ currentNakaiy.nextNakaiy.name }} ({{ currentNakaiy.nextNakaiy.thaana }})</strong> on {{ currentNakaiy.nextNakaiy.startDate }}
                   </div>
                 </div>
               </div>
@@ -2725,6 +2781,90 @@
         </div>
       </div>
     </div>
+
+    <!-- 27 NAKAIY CALENDAR INSPECTOR MODAL -->
+    <div v-if="showNakaiyModal" class="modal-overlay" @click.self="showNakaiyModal = false"
+      style="position: fixed; inset: 0; background: rgba(5, 12, 22, 0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div class="glass-panel"
+        style="max-width: 960px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; border: 1px solid var(--border-glow); box-shadow: 0 10px 40px rgba(0, 240, 255, 0.2); background: #0b1526; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
+          <div>
+            <div class="section-label" style="margin-bottom: 0.25rem;">
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--cyan-primary);"></i></span>
+              27 Maldivian Nakaiy (Monsoon Calendar) Directory
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Centuries of Maldivian seafaring wisdom ("Kanduvikun") • 9 Iruvai Nakaiy & 18 Hulhangu Nakaiy
+            </div>
+          </div>
+          <button @click="showNakaiyModal = false" class="btn-icon"
+            style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; width: 34px; height: 34px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- 27 Nakaiy Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div v-for="nak in NAKAIY_CALENDAR" :key="nak.id"
+            :style="{
+              padding: '1rem',
+              borderRadius: '12px',
+              border: (nak.id === currentNakaiy.id) ? '2px solid var(--cyan-primary)' : '1px solid rgba(255, 255, 255, 0.08)',
+              background: (nak.id === currentNakaiy.id) ? 'rgba(0, 240, 255, 0.08)' : 'rgba(15, 23, 42, 0.6)',
+              position: 'relative'
+            }">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <div>
+                <div style="font-weight: 700; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                  <span>{{ nak.name }}</span>
+                  <span style="color: var(--cyan-primary); font-family: 'Faruma', sans-serif;">{{ nak.thaana }}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                  {{ nak.startDay }}/{{ nak.startMonth }} – {{ nak.endDay }}/{{ nak.endMonth }} ({{ nak.durationDays }} days)
+                </div>
+              </div>
+              <span v-if="nak.id === currentNakaiy.id"
+                style="background: var(--cyan-primary); color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                Active Now
+              </span>
+              <span v-else
+                :style="{
+                  background: (nak.monsoon === 'Iruvai') ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 229, 163, 0.15)',
+                  color: (nak.monsoon === 'Iruvai') ? 'var(--cyan-primary)' : '#00e5a3',
+                  fontSize: '0.65rem',
+                  fontWeight: '700',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }">
+                {{ nak.monsoon }}
+              </span>
+            </div>
+
+            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 0.5rem; line-height: 1.35;">
+              {{ nak.weatherPattern }}
+            </div>
+
+            <div style="font-size: 0.74rem; color: #94a3b8; margin-bottom: 0.5rem; line-height: 1.35;">
+              <strong style="color: #cbd5e1;">Lore:</strong> {{ nak.fishingLore }}
+            </div>
+
+            <div v-if="nak.targetSpecies && nak.targetSpecies.length" style="display: flex; gap: 0.25rem; flex-wrap: wrap; margin-top: 0.4rem;">
+              <span v-for="sp in nak.targetSpecies" :key="sp"
+                style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; font-size: 0.68rem; padding: 1px 6px; border-radius: 4px;">
+                {{ sp }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="btn-primary" @click="showNakaiyModal = false"
+            style="padding: 0.4rem 1.4rem; font-size: 0.85rem;">
+            Close Calendar
+          </button>
+        </div>
+      </div>
+    </div>
   </div> <!-- end #app -->
 
 
@@ -2732,7 +2872,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v10"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v11"></script>
 </body>
 
 </html>

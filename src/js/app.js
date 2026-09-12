@@ -246,6 +246,7 @@ const app = createApp({
     const currentUser = ref(null);
     const favoriteLocations = ref([]);
     const showHarmonicsModal = ref(false);
+    const showNakaiyModal = ref(false);
     const selectedConstituent = ref(null);
 
     // Theme Management: System, Dark, Light
@@ -730,14 +731,16 @@ const app = createApp({
         currentMmsAlert.value,
         routeData.value,
         tideData.value,
-        moonPhase.value
+        moonPhase.value,
+        currentNakaiy.value
       );
 
-      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning with Lunar dynamics
+      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning with Lunar & Nakaiy dynamics
       if (marineReport.value.tenDays && marineReport.value.tenDays.length > 0) {
         tenDayForecast.value = marineReport.value.tenDays.map(d => {
           const dMoon = getMoonPhaseInfo(new Date(d.date + 'T12:00:00Z'));
-          return evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value, dMoon);
+          const dNakaiy = getCurrentNakaiy(new Date(d.date + 'T12:00:00Z'));
+          return evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value, dMoon, dNakaiy);
         });
         tenDaySummary.value = generateTenDayTripSummary(
           tenDayForecast.value, 
@@ -755,6 +758,9 @@ const app = createApp({
       isAiLoading.value = true;
       try {
         let locationContext = `Passage: ${departureLocation.value.name} ➔ ${destinationLocation.value.name} (${routeData.value?.distanceNm} NM, heading ${routeData.value?.cardinal}, Est Transit: ${routeData.value?.transitTimeStr})`;
+        if (currentNakaiy.value) {
+          locationContext += ` [Active Nakaiy: ${currentNakaiy.value.name} (${currentNakaiy.value.thaana}) • ${currentNakaiy.value.monsoonFull} • ${currentNakaiy.value.weatherPattern}]`;
+        }
         if (currentMmsAlert.value && currentMmsAlert.value.active) {
           locationContext += ` [MMS Alert: ${currentMmsAlert.value.headline} - ${currentMmsAlert.value.areaDesc}]`;
         }
@@ -1259,6 +1265,8 @@ const app = createApp({
       fishingMarineReport,
       isFishingLoading,
       currentNakaiy,
+      NAKAIY_CALENDAR,
+      showNakaiyModal,
       setFishingAtoll,
       loadFishingAtollData,
       bestTravelWindow,

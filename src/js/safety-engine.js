@@ -1,6 +1,7 @@
 // Maritime Travel Safety Assessment Engine with Maldives Meteorological Service (MMS) Integration
 import { getRelativeSeaAspect } from './marine-api.js?v=20260912-v7';
 import { getMoonPhaseInfo } from './tide-lunar.js?v=20260912-v8';
+import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v10';
 
 export const VESSEL_PROFILES = {
   maldives_speedboat: {
@@ -101,7 +102,7 @@ export function getDouglasSeaState(waveMeters) {
 /**
  * Evaluates sea travel safety factoring in marine weather, Maldives Meteorological Service alerts, voyage route, and Astronomical Moon phase
  */
-export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_speedboat', mmsAlert = null, route = null, tidePrediction = null, moonPhase = null) {
+export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_speedboat', mmsAlert = null, route = null, tidePrediction = null, moonPhase = null, nakaiy = null) {
   const vessel = VESSEL_PROFILES[vesselProfileKey] || VESSEL_PROFILES.maldives_speedboat;
   const current = marineReport.current || {};
 
@@ -383,6 +384,26 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
     }
   }
 
+  // ==========================================
+  // 6. TRADITIONAL MALDIVIAN NAKAIY CALENDAR
+  // ==========================================
+  const effectiveNakaiy = nakaiy || getCurrentNakaiy(new Date());
+  if (effectiveNakaiy) {
+    if (effectiveNakaiy.squallRisk && effectiveNakaiy.squallRisk.includes('High')) {
+      score -= (vessel.id === 'maldives_speedboat' ? 6 : 3);
+      hazards.push({
+        level: 'caution',
+        source: 'Nakaiy Lore',
+        text: `Nakaiy Advisory (${effectiveNakaiy.name} • ${effectiveNakaiy.thaana}): ${effectiveNakaiy.weatherPattern} ${effectiveNakaiy.channelCrossingAdvisory}`
+      });
+    } else if (effectiveNakaiy.squallRisk && effectiveNakaiy.squallRisk.includes('Low')) {
+      score += 3;
+      positiveFactors.push(`Nakaiy Seasonal Alignment (${effectiveNakaiy.name} • ${effectiveNakaiy.thaana}): Fair weather window ("${effectiveNakaiy.weatherPattern}"). Prevailing: ${effectiveNakaiy.prevailingWind}`);
+    } else {
+      positiveFactors.push(`Active Nakaiy: ${effectiveNakaiy.name} (${effectiveNakaiy.thaana}) • ${effectiveNakaiy.monsoonFull} (${effectiveNakaiy.dateRangeStr}). ${effectiveNakaiy.weatherPattern}`);
+    }
+  }
+
   // Bound score between 0 and 100
   score = Math.max(0, Math.min(100, Math.round(score)));
 
@@ -418,6 +439,7 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
     mmsAlert,
     routeMetrics,
     moonPhase: effectiveMoon,
+    nakaiy: effectiveNakaiy,
     beaufort: getBeaufortScale(windSpeed),
     seaState: getDouglasSeaState(waveHeight),
     timelineWindows
@@ -468,9 +490,10 @@ function analyzeDepartureWindows(timeline, vessel, route = null) {
 /**
  * Evaluates full-day environmental marine predictions and suitability for day-trip travel
  */
-export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedboat', route = null, mmsAlert = null, moonPhase = null) {
+export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedboat', route = null, mmsAlert = null, moonPhase = null, nakaiy = null) {
   const vessel = VESSEL_PROFILES[vesselProfileKey] || VESSEL_PROFILES.maldives_speedboat;
   const dayMoon = moonPhase || getMoonPhaseInfo(new Date(day.date + 'T12:00:00Z'));
+  const dayNakaiy = nakaiy || getCurrentNakaiy(new Date(day.date + 'T12:00:00Z'));
 
   let score = 100;
   const hazards = [];
@@ -632,6 +655,21 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
     }
   }
 
+  // 9. Traditional Maldivian Nakaiy Dynamics for Day
+  if (dayNakaiy) {
+    if (dayNakaiy.squallRisk && dayNakaiy.squallRisk.includes('High')) {
+      if (gustsMax >= 18 || windMax >= 14) {
+        score -= 5;
+        hazards.push({
+          level: 'caution',
+          text: `${dayNakaiy.name} Nakaiy (${dayNakaiy.thaana}): Elevated seasonal squall risk ("${dayNakaiy.weatherPattern}"). ${dayNakaiy.channelCrossingAdvisory}`
+        });
+      }
+    } else if (dayNakaiy.squallRisk && dayNakaiy.squallRisk.includes('Low')) {
+      positiveFactors.push(`${dayNakaiy.name} Nakaiy (${dayNakaiy.thaana}): Seasonally calm window ("${dayNakaiy.weatherPattern}")`);
+    }
+  }
+
   score = Math.max(0, Math.min(100, Math.round(score)));
 
   let status = 'GO';
@@ -681,14 +719,14 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
     }
   }
 
-  if (!bestWindow && day.hours && day.hours.length > 0) {
+  if (!bestWindow) {
     bestWindow = {
       startTime: '06:00',
       endTime: '10:00',
-      avgWave: day.waveHeightAvg,
-      avgWind: day.windSpeedAvg,
-      maxGusts: day.windGustsMax,
-      rainProb: day.precipitationProbabilityMax,
+      avgWave: day.waveHeightAvg || ((day.waveHeightMax || 0.6) * 0.85).toFixed(1),
+      avgWind: day.windSpeedAvg || day.windSpeedMax || 10,
+      maxGusts: day.windGustsMax || day.windSpeedMax || 12,
+      rainProb: day.precipitationProbabilityMax || 0,
       score
     };
   }
@@ -715,6 +753,7 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
     bestWindow,
     verdictSummary,
     moonPhase: dayMoon,
+    nakaiy: dayNakaiy,
     beaufort: getBeaufortScale(windMax),
     seaState: getDouglasSeaState(waveMax)
   };
@@ -756,6 +795,16 @@ export function generateTenDayTripSummary(evaluatedDays, vessel, route) {
   }
   strategicPassageAdvice += lunarAdvice;
 
+  // Nakaiy Seasonal Transition Analysis across 10-day window
+  const distinctNakaiy = [...new Map(evaluatedDays.map(d => [d.nakaiy?.id, d.nakaiy])).values()].filter(Boolean);
+  let nakaiyAdvice = '';
+  if (distinctNakaiy.length > 1) {
+    nakaiyAdvice = ` Seasonal Nakaiy transition from ${distinctNakaiy[0].name} (${distinctNakaiy[0].thaana}) to ${distinctNakaiy[1].name} (${distinctNakaiy[1].thaana}) occurs mid-window; anticipate wind shifts and transitional channel currents.`;
+  } else if (distinctNakaiy.length === 1) {
+    nakaiyAdvice = ` 10-day voyage window falls within ${distinctNakaiy[0].name} (${distinctNakaiy[0].thaana}) Nakaiy (${distinctNakaiy[0].monsoonFull}) — ${distinctNakaiy[0].weatherPattern}`;
+  }
+  strategicPassageAdvice += nakaiyAdvice;
+
   return {
     topDays,
     avoidDays,
@@ -763,7 +812,8 @@ export function generateTenDayTripSummary(evaluatedDays, vessel, route) {
     roughestDay,
     goDaysCount,
     totalDays: evaluatedDays.length,
-    strategicPassageAdvice
+    strategicPassageAdvice,
+    distinctNakaiy
   };
 }
 

@@ -1011,8 +1011,8 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       averageScore: jigWindow.avgScore,
       rationale: generateJiggingRationale(jigWindow, current, nakaiy),
       targetDepths: '50m – 140m Channel Drop-offs & Deep Seamounts',
-      targetSpecies: ['Dogtooth Tuna (30kg+)', 'Giant Trevally (GT)', 'Amberjack', 'Ruby Snapper', 'Coral Trout'],
-      recommendedTackle: '200g – 280g Slow Pitch & Knife Jigs (Zebra Lumo / Pink Silver), PE 4–6 line, 100lb shock leader',
+      targetSpecies: (nakaiy.targetSpecies && nakaiy.targetSpecies.length) ? nakaiy.targetSpecies : ['Dogtooth Tuna (30kg+)', 'Giant Trevally (GT)', 'Amberjack', 'Ruby Snapper', 'Coral Trout'],
+      recommendedTackle: nakaiy.recommendedTackle || '200g – 280g Slow Pitch & Knife Jigs (Zebra Lumo / Pink Silver), PE 4–6 line, 100lb shock leader',
       currentDriftAdvice: (current.oceanCurrentSpeedKnots || 0.8) > 1.2 ? 'Heavy ocean current: Use 280g+ knife jigs for vertical presentation.' : 'Ideal gentle drift: Slow pitch fluttering jigs with 3-pitch flutter cadence.'
     },
     bestCastingWindow: {
@@ -1021,9 +1021,9 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       peakScore: castWindow.peakScore,
       averageScore: castWindow.avgScore,
       rationale: generateCastingRationale(castWindow, current, nakaiy),
-      targetZones: 'Outer Barrier Reef Crests (Faru) & Breaking Surf Wash',
-      targetSpecies: ['Giant Trevally (GT)', 'Bluefin Trevally', 'Red Bass', 'Barracuda', 'Coral Trout'],
-      recommendedTackle: '140g – 180g Cup-Faced Poppers & Floating Stickbaits, PE 6–8 braid, 130lb mono shock leader',
+      targetZones: nakaiy.bestLocations || 'Outer Barrier Reef Crests (Faru) & Breaking Surf Wash',
+      targetSpecies: (nakaiy.targetSpecies && nakaiy.targetSpecies.length) ? nakaiy.targetSpecies : ['Giant Trevally (GT)', 'Bluefin Trevally', 'Red Bass', 'Barracuda', 'Coral Trout'],
+      recommendedTackle: nakaiy.recommendedTackle || '140g – 180g Cup-Faced Poppers & Floating Stickbaits, PE 6–8 braid, 130lb mono shock leader',
       surfAdvice: (current.swellHeight || 0.7) >= 1.0 ? 'Superb white water foam on the outer reef crest masks leader and triggers aggressive surface ambushes.' : 'Glassy surface: Use floating stickbaits with long sweep-and-pause cadence.'
     },
     bestTrollingWindow: {
@@ -1031,9 +1031,9 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       endTime: trollWindow.endTime,
       peakScore: trollWindow.peakScore,
       averageScore: trollWindow.avgScore,
-      targetZones: 'Outer Atoll 100-Fathom Trench & Open Blue Water',
-      targetSpecies: ['Wahoo', 'Yellowfin Tuna', 'Sailfish', 'Mahi-Mahi'],
-      recommendedTackle: 'High-speed bibless minnows, skirted ballyhoo, 80lb trolling outfits'
+      targetZones: nakaiy.bestLocations || 'Outer Atoll 100-Fathom Trench & Open Blue Water',
+      targetSpecies: (nakaiy.targetSpecies && nakaiy.targetSpecies.length) ? nakaiy.targetSpecies : ['Wahoo', 'Yellowfin Tuna', 'Sailfish', 'Mahi-Mahi'],
+      recommendedTackle: nakaiy.recommendedTackle || 'High-speed bibless minnows, skirted ballyhoo, 80lb trolling outfits'
     },
     bestNightWindow: {
       startTime: nightWindow.startTime,
@@ -1042,7 +1042,7 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       averageScore: nightWindow.avgScore,
       targetZones: 'Inner Atoll Reef Slopes & Protected Sandy Thilas',
       targetSpecies: ['Spangled Emperor (Filolhu)', 'Red Snapper', 'Green Jobfish', 'Grouper'],
-      recommendedTackle: 'Traditional Maldivian handline, 50–70lb monofilament, fresh bonito/squid cut bait'
+      recommendedTackle: nakaiy.recommendedTackle || 'Traditional Maldivian handline, 50–70lb monofilament, fresh bonito/squid cut bait'
     }
   };
 }
@@ -1084,7 +1084,9 @@ function findContiguousBestWindow(hourlyScores, scoreKey, windowLength = 3) {
 function generateCaptainVerdict(topModality, nakaiy, current, atollName) {
   const windKn = Math.round(current.windSpeed || 12);
   const swellM = (current.swellHeight || 0.8).toFixed(1);
-  return `In ${atollName} during active ${nakaiy.name} (${nakaiy.thaana}) Nakaiy (${nakaiy.monsoon} Monsoon), conditions strongly favor ${topModality.label} (Score: ${topModality.score}/100). Moderate ${windKn} knot breeze and ${swellM}m ocean swell create ideal feeding triggers. ${nakaiy.fishingLore}`;
+  const tech = nakaiy.preferredTechnique ? ` Maldivian skippers favor ${nakaiy.preferredTechnique}.` : '';
+  const loc = nakaiy.bestLocations ? ` Prime zones: ${nakaiy.bestLocations}.` : '';
+  return `In ${atollName} during active ${nakaiy.name} (${nakaiy.thaana}) Nakaiy (${nakaiy.monsoonFull}), conditions strongly favor ${topModality.label} (Score: ${topModality.score}/100). ${nakaiy.weatherPattern} Moderate ${windKn} knot breeze and ${swellM}m ocean swell create ideal feeding triggers.${tech}${loc} ${nakaiy.fishingLore}`;
 }
 
 function generateJiggingRationale(win, current, nakaiy) {
