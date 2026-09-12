@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0e2a4a" />
+      <stop offset="60%" stop-color="#061325" />
+      <stop offset="100%" stop-color="#020712" />
+    </radialGradient>
+
+    <!-- Cyan Glow -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Wave Gradient -->
+    <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.8" />
+    </linearGradient>
+
+    <linearGradient id="waveGrad2" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0369a1" stop-opacity="0.7" />
+      <stop offset="50%" stop-color="#0284c7" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0.5" />
+    </linearGradient>
+
+    <!-- Compass Gold / Emerald Gradient -->
+    <linearGradient id="needleNorth" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <linearGradient id="needleSouth" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="25%" stop-color="#0369a1" />
+      <stop offset="50%" stop-color="#00f0ff" />
+      <stop offset="75%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle Shield -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGrad)" stroke="url(#ringGrad)" stroke-width="8" />
+
+  <!-- Outer Compass Ring -->
+  <circle cx="256" cy="256" r="192" fill="none" stroke="rgba(0, 240, 255, 0.25)" stroke-width="3" stroke-dasharray="6,6" />
+  <circle cx="256" cy="256" r="172" fill="none" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1.5" />
+
+  <!-- Compass Cardinal Markers -->
+  <line x1="256" y1="52" x2="256" y2="76" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+  <line x1="256" y1="436" x2="256" y2="460" stroke="rgba(255, 255, 255, 0.4)" stroke-width="3" stroke-linecap="round" />
+  <line x1="52" y1="256" x2="76" y2="256" stroke="rgba(0, 240, 255, 0.6)" stroke-width="3" stroke-linecap="round" />
+  <line x1="436" y1="256" x2="460" y2="256" stroke="rgba(0, 240, 255, 0.6)" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Stylized Oceanic Waves in lower quadrant -->
+  <path d="M 64 330 C 130 300, 180 340, 256 315 C 332 290, 380 325, 448 310 L 448 380 C 390 395, 330 375, 256 390 C 180 405, 120 380, 64 395 Z" fill="url(#waveGrad2)" />
+  <path d="M 64 355 C 130 330, 190 365, 256 345 C 322 325, 382 355, 448 340 L 448 420 C 370 435, 310 415, 256 425 C 190 435, 130 415, 64 430 Z" fill="url(#waveGrad1)" />
+
+  <!-- 8-Point Star Compass Rose Background -->
+  <!-- Diagonal Points -->
+  <polygon points="256,256 160,160 256,236" fill="rgba(255, 255, 255, 0.15)" />
+  <polygon points="256,256 160,160 236,256" fill="rgba(0, 240, 255, 0.18)" />
+  <polygon points="256,256 352,160 256,236" fill="rgba(0, 240, 255, 0.18)" />
+  <polygon points="256,256 352,160 276,256" fill="rgba(255, 255, 255, 0.15)" />
+  <polygon points="256,256 352,352 276,256" fill="rgba(0, 240, 255, 0.18)" />
+  <polygon points="256,256 352,352 256,276" fill="rgba(255, 255, 255, 0.15)" />
+  <polygon points="256,256 160,352 256,276" fill="rgba(0, 240, 255, 0.18)" />
+  <polygon points="256,256 160,352 236,256" fill="rgba(255, 255, 255, 0.15)" />
+
+  <!-- Main East/West Points -->
+  <polygon points="256,256 100,256 256,242" fill="rgba(255, 255, 255, 0.3)" />
+  <polygon points="256,256 100,256 256,270" fill="rgba(0, 240, 255, 0.4)" />
+  <polygon points="256,256 412,256 256,242" fill="rgba(0, 240, 255, 0.4)" />
+  <polygon points="256,256 412,256 256,270" fill="rgba(255, 255, 255, 0.3)" />
+
+  <!-- Main South Needle -->
+  <polygon points="256,256 238,256 256,396" fill="url(#needleSouth)" />
+  <polygon points="256,256 274,256 256,396" fill="#94a3b8" />
+
+  <!-- Main North Needle (Emerald Safety Beacon) -->
+  <polygon points="256,256 238,256 256,116" fill="url(#needleNorth)" filter="url(#glow)" />
+  <polygon points="256,256 274,256 256,116" fill="#34d399" filter="url(#glow)" />
+
+  <!-- Center Hub Bezel -->
+  <circle cx="256" cy="256" r="24" fill="#020b18" stroke="#00f0ff" stroke-width="4" />
+  <circle cx="256" cy="256" r="12" fill="#10b981" />
+  <circle cx="256" cy="256" r="5" fill="#ffffff" />
+</svg>
