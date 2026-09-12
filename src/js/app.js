@@ -123,8 +123,8 @@ const app = createApp({
     // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'planning' | 'fishing')
     const activeMainTab = ref('advisories');
 
-    // Single-Screen Sub-Navigation States
-    const activeAdvisorySubTab = ref('chart'); // 'chart', 'verdict', 'hazards'
+    // Single-Screen Sub-Navigation States (Default: Safety Verdict & MMS)
+    const activeAdvisorySubTab = ref('verdict'); // 'verdict', 'chart', 'hazards'
     const activeWeatherSubTab = ref('nakaiy'); // 'nakaiy', 'telemetry', 'forecast', 'tides'
     const activePlanningSubTab = ref('best-window'); // 'best-window', 'hourly', 'briefing', 'corridor'
     const activeFishingSubTab = ref('intel'); // 'intel', 'jigging', 'casting', 'trolling', 'spots'
@@ -136,6 +136,8 @@ const app = createApp({
         nextTick(() => {
           if (typeof leafletMap !== 'undefined' && leafletMap) {
             leafletMap.invalidateSize();
+          } else {
+            initMap();
           }
         });
       }
