@@ -4,10 +4,10 @@ import { getRelativeSeaAspect } from './marine-api.js';
 export const VESSEL_PROFILES = {
   maldives_speedboat: {
     id: 'maldives_speedboat',
-    name: 'Maldivian Speedboat (Resort / Transfer)',
+    name: 'Maldivian Speedboat (Island / Transfer)',
     subtitle: '24 - 38ft • Highly sensitive to channel chop (kandu)',
     icon: 'fa-solid fa-bolt',
-    cruisingSpeedKnots: 26, // Twin 250HP outboards
+    cruisingSpeedKnots: 30, // Twin 250HP outboards
     maxSafeWave: 0.9,     // meters
     cautionWave: 1.5,
     maxSafeWind: 14,      // knots
@@ -610,7 +610,7 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
         const avgSpd = chunk.reduce((s, c) => s + c.windSpeed, 0) / 3;
         const maxG = Math.max(...chunk.map(c => c.windGusts));
         const rainP = Math.max(...chunk.map(c => c.precipitationProbability));
-        
+
         let hScore = 100 - (avgW * 25) - (avgSpd * 1.5) - (maxG * 0.8) - (rainP * 0.2);
         if (hScore > bestHScore) {
           bestHScore = hScore;
