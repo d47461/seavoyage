@@ -7040,7 +7040,7 @@ button, a, input, select, textarea {
 .main-tab-nav-wrapper {
   position: relative;
   z-index: 50;
-  margin: 1.25rem 0 1.5rem 0;
+  margin: 0 0 1.25rem 0;
   padding: 0.55rem;
   background: rgba(7, 21, 38, 0.85);
   backdrop-filter: blur(18px);
@@ -7450,6 +7450,178 @@ button, a, input, select, textarea {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ==========================================================================
+   COMPACT ROUTE & LOCATION STRIP (Weather & Fishing Tabs)
+   ========================================================================== */
+.compact-loc-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: rgba(14, 28, 54, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glow, rgba(0, 240, 255, 0.2));
+  border-radius: var(--radius-md, 12px);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.compact-loc-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+}
+
+.compact-loc-tag {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 700;
+  margin-right: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.compact-loc-name {
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm, 6px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.compact-loc-name.dep {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.compact-loc-name.dest {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan-primary, #00f0ff);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+}
+
+.compact-loc-arrow {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.85rem;
+}
+
+.compact-loc-meta {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.compact-loc-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loc-mini-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  color: var(--text-main, #ffffff);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.loc-mini-btn:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--cyan-primary, #00f0ff);
+  color: var(--cyan-primary, #00f0ff);
+  transform: translateY(-1px);
+}
+
+.loc-mini-btn.btn-modify-route {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 102, 204, 0.25) 100%);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: var(--cyan-primary, #00f0ff);
+}
+
+.loc-mini-btn.btn-modify-route:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(0, 102, 204, 0.4) 100%);
+  border-color: var(--cyan-primary, #00f0ff);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+/* Light & Dark Theme Overrides for Compact Loc Strip */
+[data-theme="light"] .compact-loc-strip {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 102, 204, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .compact-loc-name.dep {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="light"] .compact-loc-name.dest {
+  background: rgba(0, 102, 204, 0.1);
+  color: #0052a3;
+  border-color: rgba(0, 102, 204, 0.3);
+}
+
+[data-theme="light"] .loc-mini-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+[data-theme="light"] .loc-mini-btn.btn-modify-route {
+  background: rgba(0, 102, 204, 0.08);
+  border-color: rgba(0, 102, 204, 0.3);
+  color: #0052a3;
+}
+
+[data-theme="dark"] .compact-loc-strip {
+  background: #151520;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .compact-loc-name.dep {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+[data-theme="dark"] .compact-loc-name.dest {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .loc-mini-btn {
+  background: #20202e;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .loc-mini-btn.btn-modify-route {
+  background: #28283a;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 

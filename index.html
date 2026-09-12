@@ -120,7 +120,88 @@
 
     <!-- Main Container -->
     <main class="app-container">
-      <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION) -->
+      <!-- MAIN NAVIGATION TABS BAR (Advisories • Weather • Fishing • All) -->
+      <nav class="main-tab-nav-wrapper" aria-label="Main Intelligence Category Navigation">
+        <div class="main-tab-nav">
+          <!-- Tab 1: Travel Advisories (Main / Default) -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'advisories' }"
+            @click="setMainTab('advisories')"
+            title="Travel and Safety Advisories, MMS Warnings and Interactive Route Chart">
+            <span class="tab-btn-inner">
+              <span class="tab-title-row">
+                <span class="tab-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                <span class="tab-label">Travel Advisories</span>
+              </span>
+              <span class="tab-badge" v-if="advisoriesTabBadge" :class="advisoriesTabBadge.type">
+                <i class="fa-solid fa-triangle-exclamation" v-if="advisoriesTabBadge.isAlert"></i>
+                <span>{{ advisoriesTabBadge.label }}</span>
+              </span>
+            </span>
+          </button>
+
+          <!-- Tab 2: Weather & Marine -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'weather' }"
+            @click="setMainTab('weather')"
+            title="10-Day Environmental Forecast, Real-Time Marine Telemetry and Astronomical Tides">
+            <span class="tab-btn-inner">
+              <span class="tab-title-row">
+                <span class="tab-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span>
+                <span class="tab-label">Weather & Marine</span>
+              </span>
+              <span class="tab-badge tab-badge-weather" v-if="weatherTabBadge">
+                <i class="fa-solid fa-water"></i>
+                <span>{{ weatherTabBadge }}</span>
+              </span>
+            </span>
+          </button>
+
+          <!-- Tab 3: Sportfishing Intelligence -->
+          <button class="main-tab-btn"
+            :class="{ active: activeMainTab === 'fishing' }"
+            @click="setMainTab('fishing')"
+            title="Maldivian Sportfishing Solunar Bite Rating, Jigging vs Casting, and Atoll Hotspots">
+            <span class="tab-btn-inner">
+              <span class="tab-title-row">
+                <span class="tab-icon"><i class="fa-solid fa-fish-fins"></i></span>
+                <span class="tab-label">Sportfishing</span>
+              </span>
+              <span class="tab-badge tab-badge-fishing" v-if="fishingTabBadge">
+                <i class="fa-solid fa-bolt"></i>
+                <span>{{ fishingTabBadge }}</span>
+              </span>
+            </span>
+          </button>
+
+          <!-- Tab 4: All Intelligence (Unified) -->
+          <button class="main-tab-btn tab-btn-all"
+            :class="{ active: activeMainTab === 'all' }"
+            @click="setMainTab('all')"
+            title="Comprehensive master view: display all advisories, weather telemetry and fishing intel together">
+            <span class="tab-btn-inner">
+              <span class="tab-title-row">
+                <span class="tab-icon"><i class="fa-solid fa-layer-group"></i></span>
+                <span class="tab-label">All Intel</span>
+              </span>
+              <span class="tab-badge tab-badge-all">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Master</span>
+              </span>
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Error State if any -->
+      <div v-if="errorMessage" class="glass-panel"
+        style="padding: 1.5rem; border-color: var(--storm-red); color: #ff99aa; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+      </div>
+
+      <!-- TAB PANE 1: TRAVEL & SAFETY ADVISORIES (MAIN / DEFAULT) -->
+      <div class="tab-content-pane tab-pane-advisories" v-show="activeMainTab === 'advisories' || activeMainTab === 'all'">
+        <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION) -->
       <section class="glass-panel route-planner-card">
         <div class="route-planner-header">
           <div class="section-label">
@@ -375,88 +456,7 @@
         </div>
       </section>
 
-      <!-- Error State if any -->
-      <div v-if="errorMessage" class="glass-panel"
-        style="padding: 1.5rem; border-color: var(--storm-red); color: #ff99aa; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-      </div>
-
-      <!-- MAIN NAVIGATION TABS BAR (Advisories • Weather • Fishing • All) -->
-      <nav class="main-tab-nav-wrapper" aria-label="Main Intelligence Category Navigation">
-        <div class="main-tab-nav">
-          <!-- Tab 1: Travel Advisories (Main) -->
-          <button class="main-tab-btn"
-            :class="{ active: activeMainTab === 'advisories' }"
-            @click="setMainTab('advisories')"
-            title="Travel and Safety Advisories, MMS Warnings and Interactive Route Chart">
-            <span class="tab-btn-inner">
-              <span class="tab-title-row">
-                <span class="tab-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                <span class="tab-label">Travel Advisories</span>
-              </span>
-              <span class="tab-badge" v-if="advisoriesTabBadge" :class="advisoriesTabBadge.type">
-                <i class="fa-solid fa-triangle-exclamation" v-if="advisoriesTabBadge.isAlert"></i>
-                <span>{{ advisoriesTabBadge.label }}</span>
-              </span>
-            </span>
-          </button>
-
-          <!-- Tab 2: Weather & Marine -->
-          <button class="main-tab-btn"
-            :class="{ active: activeMainTab === 'weather' }"
-            @click="setMainTab('weather')"
-            title="10-Day Environmental Forecast, Real-Time Marine Telemetry and Astronomical Tides">
-            <span class="tab-btn-inner">
-              <span class="tab-title-row">
-                <span class="tab-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span>
-                <span class="tab-label">Weather & Marine</span>
-              </span>
-              <span class="tab-badge tab-badge-weather" v-if="weatherTabBadge">
-                <i class="fa-solid fa-water"></i>
-                <span>{{ weatherTabBadge }}</span>
-              </span>
-            </span>
-          </button>
-
-          <!-- Tab 3: Sportfishing Intelligence -->
-          <button class="main-tab-btn"
-            :class="{ active: activeMainTab === 'fishing' }"
-            @click="setMainTab('fishing')"
-            title="Maldivian Sportfishing Solunar Bite Rating, Jigging vs Casting, and Atoll Hotspots">
-            <span class="tab-btn-inner">
-              <span class="tab-title-row">
-                <span class="tab-icon"><i class="fa-solid fa-fish-fins"></i></span>
-                <span class="tab-label">Sportfishing</span>
-              </span>
-              <span class="tab-badge tab-badge-fishing" v-if="fishingTabBadge">
-                <i class="fa-solid fa-bolt"></i>
-                <span>{{ fishingTabBadge }}</span>
-              </span>
-            </span>
-          </button>
-
-          <!-- Tab 4: All Intelligence (Unified) -->
-          <button class="main-tab-btn tab-btn-all"
-            :class="{ active: activeMainTab === 'all' }"
-            @click="setMainTab('all')"
-            title="Comprehensive master view: display all advisories, weather telemetry and fishing intel together">
-            <span class="tab-btn-inner">
-              <span class="tab-title-row">
-                <span class="tab-icon"><i class="fa-solid fa-layer-group"></i></span>
-                <span class="tab-label">All Intel</span>
-              </span>
-              <span class="tab-badge tab-badge-all">
-                <i class="fa-solid fa-list-check"></i>
-                <span>Master</span>
-              </span>
-            </span>
-          </button>
-        </div>
-      </nav>
-
-      <!-- TAB PANE 1: TRAVEL & SAFETY ADVISORIES (MAIN) -->
-      <div class="tab-content-pane tab-pane-advisories" v-show="activeMainTab === 'advisories' || activeMainTab === 'all'">
-        <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
+      <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
         <section v-if="currentMmsAlert" class="glass-panel mms-center-card"
           :class="'mms-' + (currentMmsAlert.color || 'green')">
           <div class="mms-header-row">
@@ -872,6 +872,31 @@
 
     <!-- TAB PANE 2: WEATHER & MARINE FORECASTS -->
     <div class="tab-content-pane tab-pane-weather" v-show="activeMainTab === 'weather' || activeMainTab === 'all'">
+      <!-- Sleek Compact Route & Location Context Strip for Weather -->
+      <div class="compact-loc-strip">
+        <div class="compact-loc-info">
+          <span class="compact-loc-tag"><i class="fa-solid fa-cloud-sun"></i> Weather Location:</span>
+          <span class="compact-loc-name dep" title="Departure Port">
+            <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
+          </span>
+          <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
+          <span class="compact-loc-name dest" title="Destination Port">
+            <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
+          </span>
+          <span class="compact-loc-meta" v-if="routeData">
+            • {{ routeData.distanceNm }} NM ({{ routeData.transitTimeStr }})
+          </span>
+        </div>
+        <div class="compact-loc-actions">
+          <button class="loc-mini-btn" @click="detectDeviceLocation(true)" :title="'Use physical GPS coordinates'">
+            <i class="fa-solid fa-location-crosshairs"></i> GPS
+          </button>
+          <button class="loc-mini-btn btn-modify-route" @click="setMainTab('advisories')" title="Open Route Passage Planner to adjust ports or vessel">
+            <i class="fa-solid fa-route"></i> Change Route / Ports
+          </button>
+        </div>
+      </div>
+
       <!-- 10-DAY WEATHER PREDICTIONS & VOYAGE TRIP PLANNER -->
       <section v-if="tenDayForecast && tenDayForecast.length > 0" class="glass-panel ten-day-section" id="ten-day-planner-section">
         <div class="ten-day-header">
@@ -1606,6 +1631,31 @@
 
     <!-- TAB PANE 3: SPORTFISHING INTELLIGENCE -->
     <div class="tab-content-pane tab-pane-fishing" v-show="activeMainTab === 'fishing' || activeMainTab === 'all'">
+      <!-- Sleek Compact Route & Location Context Strip for Sportfishing -->
+      <div class="compact-loc-strip">
+        <div class="compact-loc-info">
+          <span class="compact-loc-tag"><i class="fa-solid fa-fish-fins"></i> Fishing Grounds:</span>
+          <span class="compact-loc-name dep" title="Departure Port">
+            <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
+          </span>
+          <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
+          <span class="compact-loc-name dest" title="Destination Port">
+            <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
+          </span>
+          <span class="compact-loc-meta" v-if="departureLocation.atoll">
+            • {{ departureLocation.atoll }} Atoll
+          </span>
+        </div>
+        <div class="compact-loc-actions">
+          <button class="loc-mini-btn" @click="detectDeviceLocation(true)" :title="'Use physical GPS coordinates'">
+            <i class="fa-solid fa-location-crosshairs"></i> GPS
+          </button>
+          <button class="loc-mini-btn btn-modify-route" @click="setMainTab('advisories')" title="Open Route Passage Planner to adjust ports or vessel">
+            <i class="fa-solid fa-route"></i> Change Route / Ports
+          </button>
+        </div>
+      </div>
+
       <!-- MALDIVIAN SPORTFISHING INTELLIGENCE & SOLUNAR ADVISORY (Jigging & Casting) -->
       <section v-if="fishingReport" class="glass-panel fishing-section" id="fishing-section">
         <div class="fishing-header-row">
