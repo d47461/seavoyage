@@ -41,8 +41,8 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 15, casting: 8, trolling: 16, nightFishing: 10 }
   },
   {
-    id: 'uthuraatha',
-    name: 'Uthuraatha',
+    id: 'uthura-halha',
+    name: 'Uthura-halha',
     thaana: 'އުތުރާޅަ',
     monsoon: 'Iruvai',
     monsoonThaana: 'އިރުވައި',
@@ -95,9 +95,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 18, trolling: 12, nightFishing: 14 }
   },
   {
-    id: 'hiyagala',
-    name: 'Hiyagala',
-    thaana: 'ހިޔަގަޅަ',
+    id: 'hiyavihaa',
+    name: 'Hiyavihaa',
+    thaana: 'ހިޔަވީހަ',
     monsoon: 'Iruvai',
     monsoonThaana: 'އިރުވައި',
     monsoonFull: 'Iruvai Monsoon (North-East)',
@@ -113,9 +113,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 18, casting: 12, trolling: 20, nightFishing: 12 }
   },
   {
-    id: 'reyva',
-    name: 'Reyva',
-    thaana: 'ރޭވަ',
+    id: 'fura-badhuruvaa',
+    name: 'Fura-badhuruvaa',
+    thaana: 'ފުރަބަދުރ',
     monsoon: 'Iruvai',
     monsoonThaana: 'އިރުވައި',
     monsoonFull: 'Iruvai Monsoon (North-East)',
@@ -131,9 +131,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 16, trolling: 16, nightFishing: 12 }
   },
   {
-    id: 'bandaha',
-    name: 'Bandaha',
-    thaana: 'ބަނޑަހަ',
+    id: 'fas-badhuruvaa',
+    name: 'Fas-badhuruvaa',
+    thaana: 'ފަސްބަދުރ',
     monsoon: 'Iruvai',
     monsoonThaana: 'އިރުވައި',
     monsoonFull: 'Iruvai Monsoon (North-East)',
@@ -149,9 +149,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 24, casting: 8, trolling: 8, nightFishing: 20 }
   },
   {
-    id: 'furabadhuru',
-    name: 'Furabadhuru',
-    thaana: 'ފުރަބަދުރަ',
+    id: 'reyvaa',
+    name: 'Reyvaa',
+    thaana: 'ރޭވަ',
     monsoon: 'Iruvai',
     monsoonThaana: 'އިރުވައި',
     monsoonFull: 'Iruvai Monsoon (North-East)',
@@ -241,8 +241,8 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 14, casting: 12, trolling: 6, nightFishing: 12 }
   },
   {
-    id: 'miahelia',
-    name: 'Miahelia',
+    id: 'miaheli',
+    name: 'Miaheli',
     thaana: 'މިއަހެލި',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
@@ -313,9 +313,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 16, trolling: 14, nightFishing: 10 }
   },
   {
-    id: 'gadhawa',
-    name: 'Gadhawa',
-    thaana: 'ގަޅަވަ',
+    id: 'ahuliha',
+    name: 'Ahuliha',
+    thaana: 'އަހުލިހަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -331,9 +331,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 14, casting: 18, trolling: 16, nightFishing: 12 }
   },
   {
-    id: 'mathee',
-    name: 'Mathee',
-    thaana: 'މަތީ',
+    id: 'maa',
+    name: 'Maa',
+    thaana: 'މާ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -349,9 +349,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 18, casting: 12, trolling: 10, nightFishing: 12 }
   },
   {
-    id: 'hitha',
-    name: 'Hitha',
-    thaana: 'ހިތަ',
+    id: 'fura',
+    name: 'Fura',
+    thaana: 'ފުރަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -367,9 +367,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 18, casting: 18, trolling: 14, nightFishing: 14 }
   },
   {
-    id: 'hey',
-    name: 'Hey',
-    thaana: 'ހޭ',
+    id: 'uthura',
+    name: 'Uthura',
+    thaana: 'އުތުރަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -385,9 +385,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 22, casting: 20, trolling: 14, nightFishing: 16 }
   },
   {
-    id: 'heylhavo',
-    name: 'Heylhavo',
-    thaana: 'ހޭޅަވަ',
+    id: 'atha',
+    name: 'Atha',
+    thaana: 'އަތަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -403,9 +403,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 14, trolling: 20, nightFishing: 14 }
   },
   {
-    id: 'viha',
-    name: 'Viha',
-    thaana: 'ވިހަ',
+    id: 'hitha',
+    name: 'Hitha',
+    thaana: 'ހިތަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -421,9 +421,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 22, casting: 12, trolling: 10, nightFishing: 22 }
   },
   {
-    id: 'nora',
-    name: 'Nora',
-    thaana: 'ނޮރަ',
+    id: 'hei',
+    name: 'Hei',
+    thaana: 'ހެއި',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -439,9 +439,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 18, trolling: 12, nightFishing: 16 }
   },
   {
-    id: 'dhoosa',
-    name: 'Dhoosa',
-    thaana: 'ދޫސަ',
+    id: 'vihaa',
+    name: 'Vihaa',
+    thaana: 'ވިހާ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -457,9 +457,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 18, casting: 14, trolling: 14, nightFishing: 12 }
   },
   {
-    id: 'hura',
-    name: 'Hura',
-    thaana: 'ހުރަ',
+    id: 'nora',
+    name: 'Nora',
+    thaana: 'ނޮރަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -475,9 +475,9 @@ export const NAKAIY_CALENDAR = [
     scoreModifiers: { jigging: 16, casting: 16, trolling: 12, nightFishing: 10 }
   },
   {
-    id: 'singa',
-    name: 'Singa',
-    thaana: 'ސިންގަ',
+    id: 'dhosha',
+    name: 'Dhosha',
+    thaana: 'ދޮޝަ',
     monsoon: 'Hulhangu',
     monsoonThaana: 'ހުޅަނގު',
     monsoonFull: 'Hulhangu Monsoon (South-West)',
@@ -513,13 +513,13 @@ export function getCurrentNakaiy(date = new Date()) {
     } else if (nakaiy.startMonth > nakaiy.endMonth) {
       // Crosses year boundary (Dec -> Jan, e.g. Furahalha: Dec 23 - Jan 5)
       if ((month === nakaiy.startMonth && day >= nakaiy.startDay) ||
-          (month === nakaiy.endMonth && day <= nakaiy.endDay)) {
+        (month === nakaiy.endMonth && day <= nakaiy.endDay)) {
         return formatNakaiyResult(nakaiy, target);
       }
     } else {
       // Crosses month boundary (e.g. end of one month to start of next)
       if ((month === nakaiy.startMonth && day >= nakaiy.startDay) ||
-          (month === nakaiy.endMonth && day <= nakaiy.endDay)) {
+        (month === nakaiy.endMonth && day <= nakaiy.endDay)) {
         return formatNakaiyResult(nakaiy, target);
       }
     }
