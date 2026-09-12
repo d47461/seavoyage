@@ -9296,4 +9296,346 @@ button, a, input, select, textarea {
   }
 }
 
+/* ==========================================================================
+   Astronomical Lunar Orbit & Solunar Intelligence Styling
+   ========================================================================== */
+.lunar-orbit-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, rgba(7, 24, 48, 0.85) 0%, rgba(13, 37, 71, 0.75) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.35rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.05);
+  flex-wrap: wrap;
+}
+
+.lunar-card-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.moon-dhivehi-tag {
+  font-size: 0.82rem;
+  color: #ffd768;
+  font-weight: 600;
+  margin-left: 0.4rem;
+  background: rgba(255, 215, 104, 0.12);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 215, 104, 0.3);
+}
+
+.lunar-dot {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.tide-spring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.tide-spring-badge.badge-spring {
+  background: rgba(0, 240, 255, 0.18);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.45);
+}
+
+.tide-spring-badge.badge-neap {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.tide-spring-badge.badge-mod {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.lunar-card-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.lunar-impact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: rgba(2, 14, 28, 0.6);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lunar-impact-k {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lunar-impact-v {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+/* Solunar Major & Minor Feeding Windows Card */
+.solunar-intel-card {
+  background: linear-gradient(135deg, rgba(20, 24, 40, 0.9) 0%, rgba(12, 18, 36, 0.95) 100%);
+  border: 1px solid rgba(255, 215, 104, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(255, 215, 104, 0.06);
+}
+
+.solunar-intel-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(255, 215, 104, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.solunar-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.solunar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.solunar-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 215, 104, 0.15);
+  border: 1px solid rgba(255, 215, 104, 0.4);
+  color: #ffd768;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 0 15px rgba(255, 215, 104, 0.25);
+  flex-shrink: 0;
+}
+
+.solunar-phase-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.solunar-dhivehi {
+  font-size: 0.95rem;
+  color: #ffd768;
+  font-weight: 600;
+}
+
+.solunar-badge-score {
+  font-size: 0.8rem;
+  background: rgba(255, 215, 104, 0.2);
+  color: #ffd768;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 215, 104, 0.4);
+  font-family: var(--font-mono);
+}
+
+.solunar-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.solunar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 215, 104, 0.15);
+  color: #ffd768;
+  border: 1px solid rgba(255, 215, 104, 0.35);
+  border-radius: 20px;
+}
+
+.solunar-illum-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 240, 255, 0.12);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 20px;
+}
+
+.solunar-windows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 0.95rem;
+}
+
+.solunar-win-box {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(5, 15, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.solunar-win-box.major {
+  border-left: 3.5px solid #ffd768;
+  background: linear-gradient(135deg, rgba(255, 215, 104, 0.08) 0%, rgba(5, 15, 30, 0.7) 100%);
+}
+
+.solunar-win-box.minor {
+  border-left: 3.5px solid #00f0ff;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.06) 0%, rgba(5, 15, 30, 0.7) 100%);
+}
+
+.solunar-win-type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.solunar-win-box.major .solunar-win-type {
+  color: #ffd768;
+}
+
+.solunar-win-box.minor .solunar-win-type {
+  color: #00f0ff;
+}
+
+.solunar-win-time {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+.solunar-win-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.solunar-lore-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(255, 215, 104, 0.06);
+  border: 1px solid rgba(255, 215, 104, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+/* Hourly Solunar Tags */
+.f-solunar-major-tag {
+  background: rgba(255, 215, 104, 0.25);
+  color: #ffd768;
+  border: 1px solid rgba(255, 215, 104, 0.5);
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.1rem 0.3rem;
+  letter-spacing: 0.4px;
+  margin-top: 0.25rem;
+  box-shadow: 0 0 8px rgba(255, 215, 104, 0.3);
+}
+
+.f-solunar-minor-tag {
+  background: rgba(0, 240, 255, 0.18);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.1rem 0.3rem;
+  letter-spacing: 0.4px;
+  margin-top: 0.25rem;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .lunar-orbit-card {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .moon-name {
+  color: #0f172a;
+}
+[data-theme="light"] .lunar-impact-item {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+[data-theme="light"] .lunar-impact-v {
+  color: #0f172a;
+}
+[data-theme="light"] .solunar-intel-card {
+  background: #ffffff;
+  border-color: #fbbf24;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .solunar-phase-title {
+  color: #0f172a;
+}
+[data-theme="light"] .solunar-win-box {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+[data-theme="light"] .solunar-win-time {
+  color: #0f172a;
+}
+[data-theme="light"] .solunar-lore-strip {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #334155;
+}
+
 

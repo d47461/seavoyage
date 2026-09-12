@@ -47,11 +47,11 @@ import {
   getTidePrediction,
   getVisibilityAnalysis,
   findBestTravelWindow
-} from './tide-lunar.js?v=20260912-v7';
+} from './tide-lunar.js?v=20260912-v8';
 import {
   evaluateFishingConditions,
   MALDIVES_FISHING_HOTSPOTS
-} from './fishing-engine.js?v=20260912-v7';
+} from './fishing-engine.js?v=20260912-v8';
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
@@ -729,14 +729,16 @@ const app = createApp({
         selectedVesselKey.value,
         currentMmsAlert.value,
         routeData.value,
-        tideData.value
+        tideData.value,
+        moonPhase.value
       );
 
-      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning
+      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning with Lunar dynamics
       if (marineReport.value.tenDays && marineReport.value.tenDays.length > 0) {
-        tenDayForecast.value = marineReport.value.tenDays.map(d => 
-          evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value)
-        );
+        tenDayForecast.value = marineReport.value.tenDays.map(d => {
+          const dMoon = getMoonPhaseInfo(new Date(d.date + 'T12:00:00Z'));
+          return evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value, dMoon);
+        });
         tenDaySummary.value = generateTenDayTripSummary(
           tenDayForecast.value, 
           vesselProfiles.value[selectedVesselKey.value], 

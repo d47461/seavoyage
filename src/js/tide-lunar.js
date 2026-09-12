@@ -11,55 +11,126 @@ export function getMoonPhaseInfo(date = new Date()) {
   const synodicMonth = 29.53058867; // days
   const diffDays = (date.getTime() - refNewMoon.getTime()) / (1000 * 60 * 60 * 24);
   const phase = ((diffDays % synodicMonth) + synodicMonth) % synodicMonth / synodicMonth; // 0.0 to 1.0
+  const moonAgeDays = parseFloat((phase * synodicMonth).toFixed(1));
 
   // Illumination percentage (0% to 100%)
   const illumination = Math.round(((1 - Math.cos(phase * 2 * Math.PI)) / 2) * 100);
 
+  // Classification & Astronomical Phase
   let phaseName = 'New Moon';
+  let dhivehiName = 'Kaluvara';
   let phaseIcon = 'fa-regular fa-circle';
-  let tideType = 'Spring Tides';
-  let tideImpact = 'Maximum tidal range. Strongest tidal currents flowing through atoll channels and reef passes.';
+  let isSpringTide = false;
+  let isNeapTide = false;
+  let tideType = 'Moderate Tides';
+  let tideImpact = 'Moderate tidal currents. Good water exchange with manageable channel turbulence.';
+  let channelCurrentSpeed = '1.8 – 2.8 knots';
+  let channelTurbulence = 'MODERATE';
+  let nightNavVisibility = 'MODERATE VISIBILITY';
+  let solunarFeedingRating = 'GOOD';
+  let solunarFeedingScore = 75;
+  let nightHandliningCondition = 'Good feeding activity on reef drop-offs.';
 
-  if (phase < 0.03 || phase >= 0.97) {
+  if (phase < 0.04 || phase >= 0.96) {
     phaseName = 'New Moon';
+    dhivehiName = 'Kaluvara (Dark Moon)';
     phaseIcon = 'fa-regular fa-circle';
-    tideType = 'Spring Tides (High Range)';
-    tideImpact = 'Moon and Sun aligned. Strongest tidal flow through channels (kandu). Expect significant standing waves if wind opposes current.';
+    isSpringTide = true;
+    tideType = 'Spring Tides (Bodu Dhiyavaru)';
+    tideImpact = 'Moon and Sun aligned. Highest gravitational pull generating maximum tidal range (0.9m – 1.3m) and powerful water exchange through atoll channels (kandu).';
+    channelCurrentSpeed = '3.5 – 5.0+ knots';
+    channelTurbulence = 'HIGH: Steep standing chop (Gudhu-gudhu) likely when wind/swells oppose ebb current.';
+    nightNavVisibility = 'PITCH BLACK: Zero lunar illumination. Radar, FLIR, and strict GPS waypoint adherence required.';
+    solunarFeedingRating = 'SUPER PEAK (Major Feeding Surge)';
+    solunarFeedingScore = 95;
+    nightHandliningCondition = 'PRIME REY MASSVERIKAN: Dark moonless night allows bottom handlining (Red Snapper Raiy Mas, Grouper Faana) without monofilament spook.';
   } else if (phase < 0.22) {
     phaseName = 'Waxing Crescent';
+    dhivehiName = 'Handhu Falhi (Ithuru)';
     phaseIcon = 'fa-solid fa-moon';
-    tideType = 'Moderate Tides';
-    tideImpact = 'Moderate tidal currents. Good water exchange with manageable channel turbulence.';
+    tideType = 'Transitioning to Neap';
+    tideImpact = 'Tidal amplitude moderating. Steady channel water exchange with predictable tidal currents.';
+    channelCurrentSpeed = '1.6 – 2.5 knots';
+    channelTurbulence = 'MODERATE';
+    nightNavVisibility = 'LOW MOONLIGHT: Thin crescent sets in early evening.';
+    solunarFeedingRating = 'MODERATE TO GOOD';
+    solunarFeedingScore = 72;
+    nightHandliningCondition = 'Favorable for reef slope handlining as evening darkens.';
   } else if (phase < 0.28) {
     phaseName = 'First Quarter';
+    dhivehiName = 'Handhu Bahkulhi (Fahthey)';
     phaseIcon = 'fa-solid fa-circle-half-stroke';
-    tideType = 'Neap Tides (Low Range)';
-    tideImpact = 'Minimum tidal range. Weakest tidal currents through channels. Safest period for speedboats and small craft crossing atoll reef passes.';
-  } else if (phase < 0.47) {
+    isNeapTide = true;
+    tideType = 'Neap Tides (Kuda Dhiyavaru)';
+    tideImpact = 'Sun and Moon at 90° quadrature. Minimum tidal range (0.3m – 0.5m). Weakest channel currents of the fortnight. Safest period for speedboats, dhonis, and small craft crossing open atoll channels.';
+    channelCurrentSpeed = '0.8 – 1.6 knots';
+    channelTurbulence = 'LOW: Gentle flow through passes. Minimal standing wave formation.';
+    nightNavVisibility = 'MODERATE: First quarter moon sets near midnight.';
+    solunarFeedingRating = 'AVERAGE (Finesse Needed)';
+    solunarFeedingScore = 62;
+    nightHandliningCondition = 'Calm drift for precise bottom presentation; fish spread over wider depths.';
+  } else if (phase < 0.46) {
     phaseName = 'Waxing Gibbous';
+    dhivehiName = 'Handhu Fuhkuru';
     phaseIcon = 'fa-solid fa-moon';
-    tideType = 'Moderate Tides';
-    tideImpact = 'Increasing tidal amplitude. Channel currents building towards full moon.';
-  } else if (phase < 0.53) {
+    tideType = 'Building towards Spring Tides';
+    tideImpact = 'Tidal range steadily expanding. Currents accelerating through outer reef passages as Full Moon approaches.';
+    channelCurrentSpeed = '2.2 – 3.2 knots';
+    channelTurbulence = 'MODERATE TO ELEVATED';
+    nightNavVisibility = 'GOOD: Substantial moonlight from late afternoon past midnight.';
+    solunarFeedingRating = 'STRONG (Pre-Full Moon Feeding Build)';
+    solunarFeedingScore = 84;
+    nightHandliningCondition = 'Good night trolling along outer atoll blue water; fish feeding actively on rising tides.';
+  } else if (phase < 0.54) {
     phaseName = 'Full Moon';
+    dhivehiName = 'Handoovaru (Bright Moon)';
     phaseIcon = 'fa-solid fa-circle';
-    tideType = 'Spring Tides (High Range)';
-    tideImpact = 'Full gravitational alignment! Strongest tidal surge and currents of the month. Watch for heavy water exchange through outer passes.';
+    isSpringTide = true;
+    tideType = 'Spring Tides (Bodu Dhiyavaru)';
+    tideImpact = 'Full astronomical opposition! Maximum gravitational amplitude (1.0m – 1.4m tidal variance). Maximum water volume exchange through channels (kandu-olhi). Fast oceanic drift.';
+    channelCurrentSpeed = '3.5 – 5.2 knots';
+    channelTurbulence = 'HIGH: Heavy channel turbulence. Standing waves form when outgoing tidal current collides with monsoon swell.';
+    nightNavVisibility = 'EXCELLENT: Full natural lunar radiance illuminates horizon, breaking reef lines, and channel markers.';
+    solunarFeedingRating = 'SUPER PEAK (Pelagic & Channel Feeding Surge)';
+    solunarFeedingScore = 96;
+    nightHandliningCondition = 'SURFACE FRENZY: Superb for topwater casting, squid jigging, and night trolling. For bottom handlining, use fluorocarbon as fish detect thick monofilament in bright moonlight.';
   } else if (phase < 0.72) {
     phaseName = 'Waning Gibbous';
+    dhivehiName = 'Handhu Emburu';
     phaseIcon = 'fa-solid fa-moon';
-    tideType = 'Moderate Tides';
-    tideImpact = 'Tidal range decreasing from spring peak. Good night visibility under strong moonlight.';
+    tideType = 'Transitioning from Spring to Neap';
+    tideImpact = 'Tidal amplitude easing down from Spring peak. Channel currents remain brisk but steadily declining.';
+    channelCurrentSpeed = '2.2 – 3.2 knots';
+    channelTurbulence = 'MODERATE';
+    nightNavVisibility = 'STRONG: Moon rises in mid-evening and illuminates the pre-dawn hours.';
+    solunarFeedingRating = 'STRONG';
+    solunarFeedingScore = 80;
+    nightHandliningCondition = 'Active pre-dawn bite along outer reef drops.';
   } else if (phase < 0.78) {
     phaseName = 'Last Quarter';
+    dhivehiName = 'Handhu Bahkulhi (Fas)';
     phaseIcon = 'fa-solid fa-circle-half-stroke';
-    tideType = 'Neap Tides (Low Range)';
-    tideImpact = 'Neap tide period. Minimal water velocity across passes. Very favorable for lagoon and channel navigation.';
+    isNeapTide = true;
+    tideType = 'Neap Tides (Kuda Dhiyavaru)';
+    tideImpact = 'Quadrature neap tide period. Minimal water variance across coral flats. Calmest channel transitions for low-draft craft.';
+    channelCurrentSpeed = '0.8 – 1.6 knots';
+    channelTurbulence = 'LOW: Favorable, non-turbulent pass navigation.';
+    nightNavVisibility = 'LATE NIGHT: Moon rises after midnight.';
+    solunarFeedingRating = 'AVERAGE';
+    solunarFeedingScore = 60;
+    nightHandliningCondition = 'Gentle drift speeds favor deep drop handlining with light sinkers.';
   } else {
     phaseName = 'Waning Crescent';
+    dhivehiName = 'Handhu Falhi (Uthuru)';
     phaseIcon = 'fa-solid fa-moon';
     tideType = 'Approaching Spring Tides';
-    tideImpact = 'Tidal amplitude rising. High water variance expected.';
+    tideImpact = 'Tidal variance beginning to rise towards New Moon spring cycle. Night skies grow darker.';
+    channelCurrentSpeed = '1.8 – 2.8 knots';
+    channelTurbulence = 'MODERATE';
+    nightNavVisibility = 'DARK NIGHTS: Crescent visible only shortly before dawn.';
+    solunarFeedingRating = 'BUILDING (Pre-New Moon Surge)';
+    solunarFeedingScore = 82;
+    nightHandliningCondition = 'Dark nights trigger reef predator feeding on shallow flats.';
   }
 
   // Days until next Full or New moon
@@ -70,14 +141,78 @@ export function getMoonPhaseInfo(date = new Date()) {
     daysToSpring = Math.round((1.0 - phase) * synodicMonth);
   }
 
+  // -------------------------------------------------------------
+  // Solunar Major & Minor Feeding Windows Calculation (Maldives UTC+5)
+  // -------------------------------------------------------------
+  // At New Moon (phase ~0.0), Moon transits overhead near 12:00 local solar noon.
+  // At Full Moon (phase ~0.5), Moon transits overhead near 00:00 midnight.
+  const transitDecimal = ((phase * 24 + 12) % 24);
+  const underfootDecimal = ((transitDecimal + 12) % 24);
+  const moonriseDecimal = ((transitDecimal + 18) % 24);
+  const moonsetDecimal = ((transitDecimal + 6) % 24);
+
+  function formatDecimalToTime(dec) {
+    const totalMinutes = Math.round(dec * 60) % 1440;
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function makeWindow(centerDecimal, halfDurationMinutes, label) {
+    const startDec = (centerDecimal - (halfDurationMinutes / 60) + 24) % 24;
+    const endDec = (centerDecimal + (halfDurationMinutes / 60)) % 24;
+    return {
+      startTime: formatDecimalToTime(startDec),
+      endTime: formatDecimalToTime(endDec),
+      centerTime: formatDecimalToTime(centerDecimal),
+      centerDecimal,
+      label
+    };
+  }
+
+  const majorWindow1 = makeWindow(transitDecimal, 60, 'Major 1 (Moon Overhead / Culmination)');
+  const majorWindow2 = makeWindow(underfootDecimal, 60, 'Major 2 (Moon Underfoot / Antitransit)');
+  const minorWindow1 = makeWindow(moonriseDecimal, 45, 'Minor 1 (Moonrise)');
+  const minorWindow2 = makeWindow(moonsetDecimal, 45, 'Minor 2 (Moonset)');
+
+  function checkSolunarSlot(hourDecimal) {
+    function inWin(w, halfMinutes) {
+      let diff = Math.abs(hourDecimal - w.centerDecimal);
+      if (diff > 12) diff = 24 - diff;
+      return diff <= (halfMinutes / 60);
+    }
+    if (inWin(majorWindow1, 65)) return { isMajor: true, isMinor: false, label: 'LUNAR MAJOR (Overhead)' };
+    if (inWin(majorWindow2, 65)) return { isMajor: true, isMinor: false, label: 'LUNAR MAJOR (Underfoot)' };
+    if (inWin(minorWindow1, 50)) return { isMajor: false, isMinor: true, label: 'LUNAR MINOR (Moonrise)' };
+    if (inWin(minorWindow2, 50)) return { isMajor: false, isMinor: true, label: 'LUNAR MINOR (Moonset)' };
+    return { isMajor: false, isMinor: false, label: null };
+  }
+
   return {
     phase: parseFloat(phase.toFixed(3)),
+    moonAgeDays,
     phaseName,
+    dhivehiName,
     phaseIcon,
     illumination,
+    isSpringTide,
+    isNeapTide,
     tideType,
     tideImpact,
-    daysToSpring
+    channelCurrentSpeed,
+    channelTurbulence,
+    nightNavVisibility,
+    solunarFeedingRating,
+    solunarFeedingScore,
+    nightHandliningCondition,
+    daysToSpring,
+    solunarWindows: {
+      major1: majorWindow1,
+      major2: majorWindow2,
+      minor1: minorWindow1,
+      minor2: minorWindow2
+    },
+    checkSolunarSlot
   };
 }
 

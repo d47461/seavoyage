@@ -1,5 +1,6 @@
 // Maritime Travel Safety Assessment Engine with Maldives Meteorological Service (MMS) Integration
 import { getRelativeSeaAspect } from './marine-api.js?v=20260912-v7';
+import { getMoonPhaseInfo } from './tide-lunar.js?v=20260912-v8';
 
 export const VESSEL_PROFILES = {
   maldives_speedboat: {
@@ -98,9 +99,9 @@ export function getDouglasSeaState(waveMeters) {
 }
 
 /**
- * Evaluates sea travel safety factoring in marine weather, Maldives Meteorological Service alerts, and voyage route
+ * Evaluates sea travel safety factoring in marine weather, Maldives Meteorological Service alerts, voyage route, and Astronomical Moon phase
  */
-export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_speedboat', mmsAlert = null, route = null, tidePrediction = null) {
+export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_speedboat', mmsAlert = null, route = null, tidePrediction = null, moonPhase = null) {
   const vessel = VESSEL_PROFILES[vesselProfileKey] || VESSEL_PROFILES.maldives_speedboat;
   const current = marineReport.current || {};
 
@@ -349,6 +350,39 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
     }
   }
 
+  // ==========================================
+  // 7. ASTRONOMICAL LUNAR & SPRING/NEAP TIDAL FLOW
+  // ==========================================
+  const effectiveMoon = moonPhase || getMoonPhaseInfo(new Date());
+  if (effectiveMoon) {
+    if (effectiveMoon.isSpringTide) {
+      if (windSpeed >= 12 || waveHeight >= 1.0) {
+        score -= (vessel.id === 'maldives_speedboat' ? 10 : 6);
+        hazards.push({
+          level: 'caution',
+          text: `Spring Tide Channel Surge (${effectiveMoon.phaseName}, ${effectiveMoon.dhivehiName}): Gravitational peak drives rapid 3.5–5.0+ kn tidal streams through atoll channels (kandu-olhi). Collision between tidal flow and ${Math.round(windSpeed)} kn wind produces steep standing chop (Gudhu-gudhu).`
+        });
+      } else {
+        positiveFactors.push(`Spring Tide High Water Clearance (${effectiveMoon.phaseName}): Deepest channel water levels (+${effectiveMoon.tideType}). Favorable keel clearance across shallow inner reef heads.`);
+      }
+    } else if (effectiveMoon.isNeapTide) {
+      score += 4;
+      positiveFactors.push(`Neap Tide Gentle Passage (${effectiveMoon.phaseName}, ${effectiveMoon.dhivehiName}): Quadrature alignment dampens tidal flow to < 1.6 kn. Minimal channel turbulence and lowest risk of standing chop.`);
+    }
+
+    // Nighttime passage lunar illumination factor
+    if (routeMetrics && routeMetrics.transitMinutes > 75) {
+      if (effectiveMoon.illumination >= 70) {
+        positiveFactors.push(`Lunar Night Visibility (${effectiveMoon.phaseName}, ${effectiveMoon.illumination}% illumination): Strong natural moonlight illuminates breaking barrier reef crests and aids optical horizon navigation.`);
+      } else if (effectiveMoon.illumination < 25) {
+        hazards.push({
+          level: 'warning',
+          text: `Dark Moonless Night (${effectiveMoon.phaseName}, ${effectiveMoon.illumination}% illumination): Pitch-black visibility after sunset. Radar, GPS, and heightened visual lookout required to identify unlit dhonis, fishing buoys, and shallow reef margins.`
+        });
+      }
+    }
+  }
+
   // Bound score between 0 and 100
   score = Math.max(0, Math.min(100, Math.round(score)));
 
@@ -383,6 +417,7 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
     positiveFactors,
     mmsAlert,
     routeMetrics,
+    moonPhase: effectiveMoon,
     beaufort: getBeaufortScale(windSpeed),
     seaState: getDouglasSeaState(waveHeight),
     timelineWindows
@@ -431,10 +466,11 @@ function analyzeDepartureWindows(timeline, vessel, route = null) {
 }
 
 /**
- * Evaluates trip planning feasibility and safety for a specific forecast day
+ * Evaluates full-day environmental marine predictions and suitability for day-trip travel
  */
-export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedboat', route = null, mmsAlert = null) {
+export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedboat', route = null, mmsAlert = null, moonPhase = null) {
   const vessel = VESSEL_PROFILES[vesselProfileKey] || VESSEL_PROFILES.maldives_speedboat;
+  const dayMoon = moonPhase || getMoonPhaseInfo(new Date(day.date + 'T12:00:00Z'));
 
   let score = 100;
   const hazards = [];
@@ -579,6 +615,23 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
     }
   }
 
+  // 8. Astronomical Moon Phase & Spring/Neap Tide Cycle
+  if (dayMoon) {
+    if (dayMoon.isSpringTide) {
+      if (waveMax >= 0.9 || windMax >= 13) {
+        score -= 6;
+        hazards.push({
+          level: 'caution',
+          text: `Spring Tide Currents (${dayMoon.phaseName}, ${dayMoon.dhivehiName}): Intense channel flow (${dayMoon.channelCurrentSpeed}). Elevated standing chop when tidal surge opposes waves.`
+        });
+      } else {
+        positiveFactors.push(`Spring Tide Deep Water (${dayMoon.phaseName}): High water levels provide generous keel clearance over shallow coral shoals.`);
+      }
+    } else if (dayMoon.isNeapTide) {
+      positiveFactors.push(`Neap Tide Low Current (${dayMoon.phaseName}, ${dayMoon.dhivehiName}): Minimal water velocity (< 1.6 kn) through channel passes.`);
+    }
+  }
+
   score = Math.max(0, Math.min(100, Math.round(score)));
 
   let status = 'GO';
@@ -661,6 +714,7 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
     relativeAspect,
     bestWindow,
     verdictSummary,
+    moonPhase: dayMoon,
     beaufort: getBeaufortScale(windMax),
     seaState: getDouglasSeaState(waveMax)
   };
@@ -688,6 +742,19 @@ export function generateTenDayTripSummary(evaluatedDays, vessel, route) {
   } else {
     strategicPassageAdvice = `Unsettled maritime patterns dominant across the 10-day period with only ${goDaysCount} limited clear windows. Peak seas reach ${roughestDay.waveHeightMax}m with gusts to ${roughestDay.windGustsMax} kn on ${roughestDay.dayLabel}. Exercise extreme vigilance; schedule passage strictly during morning micro-windows.`;
   }
+
+  // Lunar cycle integration
+  const springDays = evaluatedDays.filter(d => d.moonPhase && d.moonPhase.isSpringTide);
+  const neapDays = evaluatedDays.filter(d => d.moonPhase && d.moonPhase.isNeapTide);
+  let lunarAdvice = '';
+  if (springDays.length > 0) {
+    const springLabels = springDays.map(d => d.dayLabel).join(', ');
+    lunarAdvice = ` Note: Spring Tides (Bodu Dhiyavaru) peak around ${springLabels}, driving powerful 3.5–5.0 kn currents in atoll channels (kandu).`;
+  } else if (neapDays.length > 0) {
+    const neapLabels = neapDays.map(d => d.dayLabel).join(', ');
+    lunarAdvice = ` Note: Gentle Neap Tides (Kuda Dhiyavaru) prevail around ${neapLabels} with minimal channel turbulence.`;
+  }
+  strategicPassageAdvice += lunarAdvice;
 
   return {
     topDays,

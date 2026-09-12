@@ -4,6 +4,7 @@
 // Provides Single-Location / Atoll Sportfishing Intelligence, Spot Discovery, Modality Ranking & Best Times of Day
 
 import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v7';
+import { getMoonPhaseInfo } from './tide-lunar.js?v=20260912-v8';
 
 export const MALDIVES_ATOLL_LIST = [
   { code: 'Lh', key: 'Lhaviyani', name: 'Lhaviyani Atoll (Faadhippolhu)', shortName: 'Lh. Atoll', lat: 5.365, lon: 73.435, region: 'Northern Atolls' },
@@ -721,9 +722,10 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     return null;
   }
 
-  // Active Nakaiy
+  // Active Nakaiy & Moon Phase
   const nakaiy = nakaiyData || getCurrentNakaiy(new Date());
   const nakaiyMods = nakaiy.scoreModifiers || { jigging: 15, casting: 15, trolling: 15, nightFishing: 15 };
+  const effectiveMoon = moonPhase || getMoonPhaseInfo(new Date());
 
   const timeline = marineReport.timeline;
   const current = marineReport.current;
@@ -777,17 +779,21 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       }
     }
 
-    // Solunar factor from Moon Phase
+    // Solunar factor from Astronomical Moon Phase
     let solunarBonus = 12;
-    if (moonPhase) {
-      if (moonPhase.tideType?.includes('Spring') || moonPhase.phase < 0.05 || (moonPhase.phase > 0.45 && moonPhase.phase < 0.55)) {
-        solunarBonus = 22; // High feeding surge around New and Full Moon
-      } else if (moonPhase.tideType?.includes('Neap')) {
-        solunarBonus = 6;
+    if (effectiveMoon) {
+      if (effectiveMoon.isSpringTide || effectiveMoon.phase < 0.05 || (effectiveMoon.phase > 0.45 && effectiveMoon.phase < 0.55)) {
+        solunarBonus = 24; // High feeding surge around New and Full Moon (Bodu Dhiyavaru)
+      } else if (effectiveMoon.isNeapTide) {
+        solunarBonus = 8; // Slower current dispersal (Kuda Dhiyavaru)
       } else {
-        solunarBonus = 14;
+        solunarBonus = 16;
       }
     }
+
+    // Check Solunar Major / Minor Window for this specific hour
+    const solunarCheck = effectiveMoon?.checkSolunarSlot ? effectiveMoon.checkSolunarSlot(hour) : { isMajor: false, isMinor: false, label: null };
+    const solunarHourlyBurst = solunarCheck.isMajor ? 14 : (solunarCheck.isMinor ? 8 : 0);
 
     // -------------------------------------------------------------
     // 1. JIGGING BITE SCORE (Channels, Kandus, Thilas, Deep Ledges)
@@ -812,7 +818,7 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     if (pressure >= 1010 && pressure <= 1014) jigScore += 8;
     else if (pressure < 1008) jigScore -= 8;
 
-    jigScore += (solunarBonus * 0.5);
+    jigScore += (solunarBonus * 0.5) + solunarHourlyBurst;
     if (precip > 2.0) jigScore -= 10;
     jigScore = Math.max(15, Math.min(99, Math.round(jigScore)));
 
@@ -836,7 +842,7 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     if (windSpeed >= 6 && windSpeed <= 16 && windGusts < 22) castScore += 10;
     else if (windSpeed > 20) castScore -= 10;
 
-    castScore += (solunarBonus * 0.5);
+    castScore += (solunarBonus * 0.5) + solunarHourlyBurst;
     if (precip > 2.0) castScore -= 8;
     castScore = Math.max(15, Math.min(99, Math.round(castScore)));
 
@@ -849,7 +855,7 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     else if (isDay) trollScore += 10;
     if (windSpeed >= 8 && windSpeed <= 18) trollScore += 14; // Good surface chop
     if (waveH >= 0.8 && waveH <= 1.8) trollScore += 12;
-    trollScore += (solunarBonus * 0.4);
+    trollScore += (solunarBonus * 0.4) + (solunarHourlyBurst * 0.8);
     if (precip > 3.0) trollScore -= 14;
     trollScore = Math.max(15, Math.min(99, Math.round(trollScore)));
 
@@ -858,12 +864,25 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     // -------------------------------------------------------------
     let nightScore = 40;
     nightScore += nakaiyMods.nightFishing;
-    if (isNight) nightScore += 22;
-    else if (isDusk || isDawn) nightScore += 12;
-    else nightScore -= 15; // Day bottom fishing less productive on shallow reefs
+    if (isNight) {
+      nightScore += 22;
+      // Traditional Maldivian Wisdom ("Dhuvassvee Massverin Bunaa Gothun"):
+      // Dark moon nights (Kaluvara / low illumination) make bottom reef fish feed boldly on shallow shoals
+      if (effectiveMoon.illumination <= 25) {
+        nightScore += 18; // Peak bottom bite
+      } else if (effectiveMoon.illumination >= 75) {
+        nightScore -= 8; // Line-shy under bright moon, fish drop deeper
+      } else {
+        nightScore += 8;
+      }
+    } else if (isDusk || isDawn) {
+      nightScore += 12;
+    } else {
+      nightScore -= 15; // Day bottom fishing less productive on shallow reefs
+    }
     if (currentSpeedKnots <= 1.0) nightScore += 14; // Gentle drift for handline
     else nightScore -= 10;
-    nightScore += (solunarBonus * 0.4);
+    nightScore += (solunarBonus * 0.4) + (solunarHourlyBurst * 0.7);
     nightScore = Math.max(15, Math.min(98, Math.round(nightScore)));
 
     const slotInfo = {
@@ -877,6 +896,9 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
       trollScore,
       nightScore,
       bestScore: Math.max(jigScore, castScore, trollScore, nightScore),
+      isSolunarMajor: solunarCheck.isMajor,
+      isSolunarMinor: solunarCheck.isMinor,
+      solunarLabel: solunarCheck.label,
       waveH,
       swellH,
       windSpeed,
@@ -956,6 +978,26 @@ export function evaluateFishingConditions(marineReport, tideData, moonPhase, loc
     nakaiy,
     hotspots,
     hourlyScores,
+    moonPhase: effectiveMoon,
+    solunarData: {
+      phaseName: effectiveMoon.phaseName,
+      dhivehiName: effectiveMoon.dhivehiName,
+      phaseIcon: effectiveMoon.phaseIcon,
+      illumination: effectiveMoon.illumination,
+      moonAgeDays: effectiveMoon.moonAgeDays,
+      isSpringTide: effectiveMoon.isSpringTide,
+      isNeapTide: effectiveMoon.isNeapTide,
+      tideType: effectiveMoon.tideType,
+      solunarRating: effectiveMoon.solunarFeedingRating,
+      solunarScore: effectiveMoon.solunarFeedingScore,
+      nightHandliningCondition: effectiveMoon.nightHandliningCondition,
+      solunarWindows: effectiveMoon.solunarWindows,
+      elderLore: effectiveMoon.isSpringTide
+        ? 'Dhuvassvee massverin bunaa gothun: Bodu dhiyavaru (Spring Tides) gai kandu-olhithakugai kanneli, kalhubilamas, faana adhi handhi dhiya-kandeh dheyrehgai vakee baarah heylavaa fashaa.'
+        : (effectiveMoon.isNeapTide
+          ? 'Dhuvassvee massverin bunaa gothun: Kuda dhiyavaru (Neap Tides) gai oiyaa vayi thunivalhumun, eitholhi thilathakah fothikandibalaigen eitholhi massverikan kuraanama faana adhi filolhu nagaafaavey.'
+          : 'Dhuvassvee massverin bunaa gothun: Handhuvaraa kaluvaruge badhaluvunthakuge thereygai dhiyavaru heylavaa vaguthuthakugai massverikan rangalhuvegen dhaane.')
+    },
     bestTimeOfDay: {
       primaryWindow: `${topRecommended.win.startTime} – ${topRecommended.win.endTime}`,
       modality: topRecommended.label,

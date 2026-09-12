@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>SeaVoyage • Safety First, Travel with Confidence</title>
+  <title>SeaVoyage • Maldives Sea Travel Advisory for Your Safety</title>
   <meta name="description"
     content="Intelligent sea travel safety advisories and marine weather analysis integrated with Maldives Meteorological Service (MMS) alerts.">
 
@@ -186,7 +186,7 @@
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span>
                 <span class="tab-label">
-                  <span class="tab-label-full">Weather & Marine</span>
+                  <span class="tab-label-full">Weather and Tides</span>
                   <span class="tab-label-short">Weather</span>
                 </span>
               </span>
@@ -222,7 +222,7 @@
               <span class="tab-title-row">
                 <span class="tab-icon"><i class="fa-solid fa-fish-fins"></i></span>
                 <span class="tab-label">
-                  <span class="tab-label-full">Sportfishing</span>
+                  <span class="tab-label-full">Sports Fishing</span>
                   <span class="tab-label-short">Fishing</span>
                 </span>
               </span>
@@ -334,7 +334,7 @@
                 Operations.
               </span>
               <span v-else>
-                <strong>COAST GUARD ADVISORY:</strong> Normal sea navigation permitted across atolls. Always maintain
+                <strong>COAST GUARD ADVISORY:</strong> Normal sea navigation permitted across atolls. Alway take safety Measures maintain
                 bridge watch and monitor VHF Ch 16.
               </span>
             </div>
@@ -524,7 +524,7 @@
             <div class="footer-brand">
               <img src="favicon.svg?v=20260912-v7" alt="SeaVoyage" class="footer-brand-logo" width="16" height="16" />
               <span>SEAVOYAGE</span>
-              <span class="footer-tagline">• Safe Maritime Passage</span>
+              <span class="footer-tagline">• Safety First</span>
             </div>
             <div class="footer-concept-card">
               <span class="concept-pre">Concept by</span>
@@ -624,7 +624,7 @@
               <div class="nakaiy-info-card lore-box">
                 <div class="nakaiy-box-title">
                   <i class="fa-solid fa-compass" style="color: #10b981;"></i>
-                  <span>Elder Seafarers' Maritime Wisdom ("Kanduvikun")</span>
+                  <span>Elder Seafarers' Maritime Wisdom ("Dhuvassvee Massverin Bunaa Gothun")</span>
                 </div>
                 <p class="nakaiy-box-desc">{{ currentNakaiy.fishingLore }}</p>
                 <div class="nakaiy-metric-tag">
@@ -797,6 +797,13 @@
                   <span class="metric-v">{{ formatPrecipitation(day.precipitationSum) }} <small>({{
                       day.precipitationProbabilityMax }}%)</small></span>
                 </div>
+                <div class="day-metric-row" title="Astronomical Lunar Phase & Tidal Amplitude" v-if="day.moonPhase">
+                  <span class="metric-k"><i :class="day.moonPhase.phaseIcon" style="color: #ffd768;"></i> Moon:</span>
+                  <span class="metric-v">
+                    <strong>{{ day.moonPhase.phaseName }}</strong>
+                    <small>({{ day.moonPhase.illumination }}%)</small>
+                  </span>
+                </div>
               </div>
 
               <!-- Best Departure Window Tag -->
@@ -917,6 +924,13 @@
                 </div>
                 <div class="d-tel-val">{{ formatPressure(selectedDayForecast.surfacePressureAvg) }}</div>
                 <div class="d-tel-note">Tropical maritime gradient</div>
+              </div>
+
+              <div class="detail-tel-box" v-if="selectedDayForecast.moonPhase">
+                <div class="d-tel-label"><i :class="selectedDayForecast.moonPhase.phaseIcon" style="color: #ffd768;"></i> Astronomical Moon & Tides
+                </div>
+                <div class="d-tel-val" style="color: #ffd768;">{{ selectedDayForecast.moonPhase.phaseName }} <span class="d-tel-sub">{{ selectedDayForecast.moonPhase.illumination }}%</span></div>
+                <div class="d-tel-note">{{ selectedDayForecast.moonPhase.tideType }} • {{ selectedDayForecast.moonPhase.dhivehiName }}</div>
               </div>
             </div>
 
@@ -1268,6 +1282,47 @@
             </div>
           </div>
 
+          <!-- Astronomical Lunar Orbit & Channel Flow Dynamics Widget -->
+          <div class="lunar-orbit-card" v-if="moonPhase">
+            <div class="lunar-card-left">
+              <div class="moon-phase-box">
+                <div class="moon-face-icon" :title="moonPhase.phaseName">
+                  <i :class="moonPhase.phaseIcon"></i>
+                </div>
+                <div class="moon-details">
+                  <div class="moon-name">
+                    {{ moonPhase.phaseName }}
+                    <span class="moon-dhivehi-tag">{{ moonPhase.dhivehiName }}</span>
+                  </div>
+                  <div class="moon-sub">
+                    <span><strong>{{ moonPhase.illumination }}%</strong> Illumination</span>
+                    <span class="lunar-dot">•</span>
+                    <span>Age: <strong>{{ moonPhase.moonAgeDays }}</strong> days</span>
+                    <span class="lunar-dot">•</span>
+                    <span class="tide-spring-badge" :class="moonPhase.isSpringTide ? 'badge-spring' : (moonPhase.isNeapTide ? 'badge-neap' : 'badge-mod')">
+                      <i :class="moonPhase.isSpringTide ? 'fa-solid fa-water' : 'fa-solid fa-arrows-left-right'"></i>
+                      {{ moonPhase.tideType }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lunar-card-right">
+              <div class="lunar-impact-item">
+                <span class="lunar-impact-k"><i class="fa-solid fa-gauge-high" style="color: #00f0ff;"></i> Channel Currents:</span>
+                <span class="lunar-impact-v">{{ moonPhase.channelCurrentSpeed }}</span>
+              </div>
+              <div class="lunar-impact-item">
+                <span class="lunar-impact-k"><i class="fa-solid fa-eye" style="color: #ffd768;"></i> Night Horizon:</span>
+                <span class="lunar-impact-v">{{ moonPhase.nightNavVisibility.split(':')[0] }}</span>
+              </div>
+              <div class="lunar-impact-item">
+                <span class="lunar-impact-k"><i class="fa-solid fa-fish-fins" style="color: #10b981;"></i> Solunar Surge:</span>
+                <span class="lunar-impact-v">{{ moonPhase.solunarFeedingRating }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Real-Time Tidal Telemetry HUD -->
           <div class="tide-telemetry-hud">
             <div class="tide-telemetry-item">
@@ -1437,7 +1492,7 @@
             <div class="footer-brand">
               <img src="favicon.svg?v=20260912-v7" alt="SeaVoyage" class="footer-brand-logo" width="16" height="16" />
               <span>SEAVOYAGE</span>
-              <span class="footer-tagline">• Safe Maritime Passage</span>
+              <span class="footer-tagline">• Safety First</span>
             </div>
             <div class="footer-concept-card">
               <span class="concept-pre">Concept by</span>
@@ -1726,7 +1781,7 @@
           <div class="footer-brand">
             <img src="favicon.svg?v=20260912-v7" alt="SeaVoyage" class="footer-brand-logo" width="16" height="16" />
             <span>SEAVOYAGE</span>
-            <span class="footer-tagline">• Safe Maritime Passage</span>
+            <span class="footer-tagline">• Safety First</span>
           </div>
           <div class="footer-concept-card">
             <span class="concept-pre">Concept by</span>
@@ -1848,9 +1903,74 @@
                 </div>
                 <div class="kanduvikun-box" style="border-left-color: var(--cyan-primary);">
                   <div class="kanduvikun-label" style="color: var(--cyan-primary);">
-                    <i class="fa-solid fa-anchor"></i> Maldivian Elder Fishing Wisdom ("Kanduvikun")
+                    <i class="fa-solid fa-anchor"></i> Maldivian Elder Fishing Wisdom ("Dhuvassvee Massverin")
                   </div>
                   <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">{{ currentNakaiy.fishingLore }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Solunar Major & Minor Feeding Windows Card -->
+            <div class="solunar-intel-card" v-if="fishingReport && fishingReport.solunarData" style="margin-bottom: 1rem;">
+              <div class="solunar-card-header">
+                <div class="solunar-title-group">
+                  <div class="solunar-icon-box">
+                    <i :class="fishingReport.solunarData.phaseIcon"></i>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: #ffd768; font-weight: 700;">
+                      Astronomical Solunar Feeding Theory & Lunar Orbit
+                    </div>
+                    <div class="solunar-phase-title">
+                      <span>{{ fishingReport.solunarData.phaseName }}</span>
+                      <span class="solunar-dhivehi">({{ fishingReport.solunarData.dhivehiName }})</span>
+                      <span class="solunar-badge-score">{{ fishingReport.solunarData.solunarScore }}/100</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="solunar-header-badges">
+                  <span class="solunar-status-pill">
+                    <i class="fa-solid fa-bolt" style="color: #ffd768;"></i> {{ fishingReport.solunarData.solunarRating }}
+                  </span>
+                  <span class="solunar-illum-pill">
+                    <i class="fa-regular fa-lightbulb"></i> {{ fishingReport.solunarData.illumination }}% Illumination
+                  </span>
+                </div>
+              </div>
+
+              <!-- 4 Solunar Daily Feeding Windows -->
+              <div class="solunar-windows-grid">
+                <div class="solunar-win-box major">
+                  <div class="solunar-win-type"><i class="fa-solid fa-star"></i> MAJOR WINDOW 1</div>
+                  <div class="solunar-win-time">{{ fishingReport.solunarData.solunarWindows.major1.startTime }} – {{ fishingReport.solunarData.solunarWindows.major1.endTime }}</div>
+                  <div class="solunar-win-desc">Moon Overhead (Peak Pelagic Frenzy)</div>
+                </div>
+                <div class="solunar-win-box major">
+                  <div class="solunar-win-type"><i class="fa-solid fa-star"></i> MAJOR WINDOW 2</div>
+                  <div class="solunar-win-time">{{ fishingReport.solunarData.solunarWindows.major2.startTime }} – {{ fishingReport.solunarData.solunarWindows.major2.endTime }}</div>
+                  <div class="solunar-win-desc">Moon Underfoot (Channel Drop Ambush)</div>
+                </div>
+                <div class="solunar-win-box minor">
+                  <div class="solunar-win-type"><i class="fa-solid fa-circle-dot"></i> MINOR WINDOW 1</div>
+                  <div class="solunar-win-time">{{ fishingReport.solunarData.solunarWindows.minor1.startTime }} – {{ fishingReport.solunarData.solunarWindows.minor1.endTime }}</div>
+                  <div class="solunar-win-desc">Moonrise Feeding Burst</div>
+                </div>
+                <div class="solunar-win-box minor">
+                  <div class="solunar-win-type"><i class="fa-solid fa-circle-dot"></i> MINOR WINDOW 2</div>
+                  <div class="solunar-win-time">{{ fishingReport.solunarData.solunarWindows.minor2.startTime }} – {{ fishingReport.solunarData.solunarWindows.minor2.endTime }}</div>
+                  <div class="solunar-win-desc">Moonset Feeding Burst</div>
+                </div>
+              </div>
+
+              <!-- Traditional Dhivehi Lunar Fishing Lore -->
+              <div class="solunar-lore-strip">
+                <i class="fa-solid fa-quote-left" style="color: #ffd768; opacity: 0.8; font-size: 1rem;"></i>
+                <div>
+                  <strong>Dhuvassvee Massverin Bunaa Gothun (Elder Seafarers' Moon Wisdom):</strong>
+                  <span>{{ fishingReport.solunarData.elderLore }}</span>
+                  <div style="margin-top: 0.25rem; font-size: 0.8rem; color: #00f0ff;">
+                    <i class="fa-solid fa-moon"></i> <strong>Night Reef Handlining Advisory:</strong> {{ fishingReport.solunarData.nightHandliningCondition }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1943,6 +2063,12 @@
                   </div>
                   <div v-if="slot.jigScore >= 85 || slot.castScore >= 85" class="f-hot-pill">
                     PRIME
+                  </div>
+                  <div v-if="slot.isSolunarMajor" class="f-solunar-major-tag" title="Major Solunar Peak (Moon Overhead / Underfoot)">
+                    ★ MAJOR
+                  </div>
+                  <div v-else-if="slot.isSolunarMinor" class="f-solunar-minor-tag" title="Minor Solunar Surge (Moonrise / Moonset)">
+                    ● MINOR
                   </div>
                 </div>
               </div>
@@ -2128,6 +2254,9 @@
                   <span class="window-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">
                     <i class="fa-solid fa-moon"></i> NIGHT REEF HANDLINING WINDOW
                   </span>
+                  <span class="window-tag" v-if="fishingReport && fishingReport.solunarData" style="background: rgba(255, 215, 104, 0.15); color: #ffd768; border: 1px solid rgba(255, 215, 104, 0.35);">
+                    <i :class="fishingReport.solunarData.phaseIcon"></i> {{ fishingReport.solunarData.phaseName }} ({{ fishingReport.solunarData.illumination }}% Light)
+                  </span>
                   <span class="window-hours">{{ fishingReport.bestNightWindow.startTime }} – {{ fishingReport.bestNightWindow.endTime }}</span>
                 </div>
                 <div class="window-score-badge">
@@ -2235,7 +2364,7 @@
             <div class="footer-brand">
               <img src="favicon.svg?v=20260912-v7" alt="SeaVoyage" class="footer-brand-logo" width="16" height="16" />
               <span>SEAVOYAGE</span>
-              <span class="footer-tagline">• Safe Maritime Passage</span>
+              <span class="footer-tagline">• Safety First</span>
             </div>
             <div class="footer-concept-card">
               <span class="concept-pre">Concept by</span>
@@ -2592,7 +2721,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v9"></script>
+  <script type="module" src="src/js/app.js?v=20260912-v10"></script>
 </body>
 
 </html>
