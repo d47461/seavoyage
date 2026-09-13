@@ -23,7 +23,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './marine-api.js?v=20260913-v1';
+} from './marine-api.js?v=20260913-v4';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 

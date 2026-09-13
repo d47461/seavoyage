@@ -69,6 +69,7 @@ export const MALDIVES_ISLANDS_DATABASE = [
   { name: 'Thulusdhoo (Capital • Kaafu Atoll)', island: 'Thulusdhoo', atoll: 'Kaafu', atollCode: 'K', latitude: 4.3736, longitude: 73.6494, country: 'Maldives', type: 'Atoll Capital / Surf' },
   { name: 'Dhiffushi (Kaafu Atoll)', island: 'Dhiffushi', atoll: 'Kaafu', atollCode: 'K', latitude: 4.4417, longitude: 73.7139, country: 'Maldives', type: 'Easternmost Inhabited' },
   { name: 'Himmafushi (Kaafu Atoll)', island: 'Himmafushi', atoll: 'Kaafu', atollCode: 'K', latitude: 4.3106, longitude: 73.5722, country: 'Maldives', type: 'Surf & Marine Hub' },
+  { name: 'Girifushi (Kaafu Atoll)', island: 'Girifushi', atoll: 'Kaafu', atollCode: 'K', latitude: 4.3167, longitude: 73.5833, country: 'Maldives', type: 'MNDF Training Base / Marine Centre' },
   { name: 'Huraa (Kaafu Atoll)', island: 'Huraa', atoll: 'Kaafu', atollCode: 'K', latitude: 4.3339, longitude: 73.6006, country: 'Maldives', type: 'Inhabited Island' },
   { name: 'Kaashidhoo (Channel Island)', island: 'Kaashidhoo', atoll: 'Kaafu', atollCode: 'K', latitude: 4.9583, longitude: 73.4625, country: 'Maldives', type: 'Ocean Channel Island' },
   { name: 'Gaafaru (Kaafu Atoll)', island: 'Gaafaru', atoll: 'Kaafu', atollCode: 'K', latitude: 4.7389, longitude: 73.5000, country: 'Maldives', type: 'Single-Island Atoll' },

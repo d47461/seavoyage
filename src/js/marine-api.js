@@ -5,7 +5,7 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './locations.js?v=20260912-v7';
+} from './locations.js?v=20260913-v4';
 
 export {
   MALDIVES_ISLANDS_DATABASE,
@@ -43,61 +43,72 @@ export const FAMOUS_PORTS = [
   { name: 'Galle & Southern Coast', country: 'Sri Lanka', latitude: 6.0535, longitude: 80.2210, region: 'Indian Ocean' }
 ];
 
+const getPort = (islandName, fallbackIndex = 0) => 
+  MALDIVES_PORTS.find(p => p.island === islandName || p.name.includes(islandName)) || MALDIVES_PORTS[fallbackIndex];
+
 export const POPULAR_ROUTES = [
+  {
+    id: 'male_girifushi',
+    title: 'Malé ➔ Girifushi (North Malé)',
+    description: '9.2 NM coastal channel passage across North Malé Atoll lagoon to MNDF Training Base & Marine Centre',
+    departure: getPort('Malé City'),
+    destination: getPort('Girifushi'),
+    channelName: 'North Malé Lagoon Pass'
+  },
   {
     id: 'maafilaafushi_hanimaadhoo',
     title: 'Maafilaafushi ➔ Hanimaadhoo (Haa Dhaalu)',
     description: '84 NM northern passage from Faadhippolhu across to Hanimaadhoo International Port',
-    departure: MALDIVES_PORTS[0], // Maafilaafushi
-    destination: HANIMAADHOO_PORT, // Hanimaadhoo
+    departure: getPort('Maafilaafushi', 0),
+    destination: HANIMAADHOO_PORT,
     channelName: 'Northern Inter-Atoll Channel'
   },
   {
     id: 'maafilaafushi_dharavandhoo',
     title: 'Maafilaafushi ➔ Dharavandhoo (Baa Atoll)',
     description: '21 NM northern inter-atoll deep passage from Lhaviyani across to Baa Atoll & Hanifaru Bay',
-    departure: MALDIVES_PORTS[0], // Maafilaafushi
-    destination: MALDIVES_PORTS[5], // Dharavandhoo
+    departure: getPort('Maafilaafushi', 0),
+    destination: getPort('Dharavandhoo'),
     channelName: 'Faadhippolhu - Maalhosmadulu Channel'
   },
   {
     id: 'male_rasdhoo',
     title: 'Malé ➔ Rasdhoo (Ari Channel)',
     description: '33 NM inter-atoll deep channel crossing across the Gaadhoo / Ari Channel (kandu)',
-    departure: MALDIVES_PORTS[2], // Malé
-    destination: MALDIVES_PORTS[4], // Rasdhoo
+    departure: getPort('Malé City'),
+    destination: getPort('Rasdhoo'),
     channelName: 'Ari Channel (Gaadhoo Kandu)'
   },
   {
     id: 'male_maafushi',
     title: 'Malé ➔ Maafushi (South Malé)',
     description: '15 NM lagoon & Vaadhoo channel passage to popular guest house hub',
-    departure: MALDIVES_PORTS[2], // Malé
-    destination: MALDIVES_PORTS[3], // Maafushi
+    departure: getPort('Malé City'),
+    destination: getPort('Maafushi'),
     channelName: 'Vaadhoo Kandu'
   },
   {
     id: 'male_baa',
     title: 'Malé ➔ Dharavandhoo (Baa Atoll)',
     description: '63 NM northern passage to UNESCO Biosphere Reserve & Hanifaru Bay',
-    departure: MALDIVES_PORTS[2], // Malé
-    destination: MALDIVES_PORTS[5], // Dharavandhoo
+    departure: getPort('Malé City'),
+    destination: getPort('Dharavandhoo'),
     channelName: 'Kaashidhoo Channel (Kardiva Channel)'
   },
   {
     id: 'rasdhoo_ukulhas',
     title: 'Rasdhoo ➔ Ukulhas (North Ari)',
     description: '8.5 NM protected atoll rim crossing inside North Ari lagoon waters',
-    departure: MALDIVES_PORTS[4], // Rasdhoo
-    destination: { name: 'Ukulhas Island (North Ari)', country: 'Maldives', latitude: 4.2144, longitude: 72.8639, atoll: 'Alif Alif', region: 'Ari Atoll Rim', isMaldives: true },
+    departure: getPort('Rasdhoo'),
+    destination: getPort('Ukulhas') || { name: 'Ukulhas Island (North Ari)', country: 'Maldives', latitude: 4.2144, longitude: 72.8639, atoll: 'Alif Alif', region: 'Ari Atoll Rim', isMaldives: true },
     channelName: 'Ari Inner Lagoon Pass'
   },
   {
     id: 'male_dhigurah',
     title: 'Malé ➔ Dhigurah (South Ari)',
     description: '56 NM passage south-west to whale shark sanctuary waters',
-    departure: MALDIVES_PORTS[2], // Malé
-    destination: MALDIVES_PORTS[10], // Dhigurah
+    departure: getPort('Malé City'),
+    destination: getPort('Dhigurah'),
     channelName: 'Ari Ocean Pass'
   }
 ];
