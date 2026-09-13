@@ -38,7 +38,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260913-v1" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260913-v3" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -1748,7 +1748,7 @@
                       <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 16" text-anchor="middle"
                         :fill="pt.isTravelDay ? 'var(--cyan-primary)' : 'var(--text-main)'"
                         font-size="11" :font-weight="pt.isTravelDay ? '800' : '600'">
-                        {{ pt.shortLabel }}
+                        {{ pt.dateLabel }}
                       </text>
                       <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 30" text-anchor="middle"
                         fill="var(--text-muted)" font-size="9" font-weight="500">
@@ -1759,51 +1759,161 @@
                 </div>
               </div>
 
-              <!-- 7-Day Interactive Comparative Cards Carousel / Grid -->
-              <div class="seven-day-cards-grid">
-                <div v-for="day in sevenDaySafetyTrend.days" :key="'card_' + day.date"
-                  class="trend-day-card" :class="[{ 'active-travel-day': day.isTravelDay }, 'card-status-' + day.status]"
-                  @click="setTravelDate(day.date)" title="Click to set this day as your planned voyage departure date">
-                  
-                  <div class="trend-card-top">
-                    <span class="trend-card-rel-pill" :class="{ 'pill-travel-day': day.isTravelDay }">
-                      {{ day.relativeLabel }}
-                    </span>
-                    <span class="trend-card-score-pill" :class="'slot-' + day.status">
-                      {{ day.score }}% {{ day.status }}
-                    </span>
-                  </div>
+              <!-- WINDY-STYLE MARITIME CORRIDOR METEOGRAM (Multi-Axis Parameter Matrix) -->
+              <div class="windy-meteogram-wrap">
+                <div class="windy-meteogram-scroll">
+                  <table class="windy-meteogram-table">
+                    <!-- Column Header: Dates on X-Axis -->
+                    <thead>
+                      <tr>
+                        <th class="windy-th-metric">
+                          <div class="metric-th-inner">
+                            <i class="fa-solid fa-layer-group" style="color: var(--cyan-primary);"></i>
+                            <span>PARAMETERS</span>
+                          </div>
+                        </th>
+                        <th v-for="day in sevenDaySafetyTrend.days" :key="'th_' + day.date"
+                          class="windy-th-day" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)" title="Click to set this day as your planned voyage departure date">
+                          <div class="th-day-badge" v-if="day.isTravelDay">
+                            <i class="fa-solid fa-anchor"></i> SELECTED
+                          </div>
+                          <div class="th-day-weekday">{{ day.weekdayShort }}</div>
+                          <div class="th-day-date">{{ day.dayNum }} {{ day.monthShort }}</div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Row 1: Sea Safety Score -->
+                      <tr class="windy-row-score">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--cyan-primary);"></i>
+                            <span>Safety Score</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'score_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <span class="windy-status-pill" :class="'slot-' + day.status">
+                            {{ day.score }}% {{ day.status }}
+                          </span>
+                        </td>
+                      </tr>
 
-                  <div class="trend-card-date-row">
-                    <div class="trend-card-day">{{ day.shortLabel }}</div>
-                    <div class="trend-card-weather-icon" :title="day.weatherCondition.label">
-                      <i :class="day.weatherCondition.icon"></i>
-                    </div>
-                  </div>
+                      <!-- Row 2: Sky & Weather Condition -->
+                      <tr class="windy-row-weather">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-cloud-sun" style="color: #38bdf8;"></i>
+                            <span>Sky & Weather</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wx_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-wx-wrap" :title="day.weatherCondition.label">
+                            <i :class="day.weatherCondition.icon" class="windy-wx-icon"></i>
+                            <span class="windy-wx-text">{{ day.weatherCondition.label }}</span>
+                          </div>
+                        </td>
+                      </tr>
 
-                  <div class="trend-card-metrics">
-                    <div class="tc-metric">
-                      <span class="tc-metric-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Waves</span>
-                      <span class="tc-metric-val">{{ formatWave(day.waveHeightMax) }}</span>
-                    </div>
-                    <div class="tc-metric">
-                      <span class="tc-metric-label"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Wind</span>
-                      <span class="tc-metric-val">{{ formatWind(day.windSpeedMax) }}</span>
-                    </div>
-                  </div>
+                      <!-- Row 3: Wave Height & Swell -->
+                      <tr class="windy-row-wave">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-water" style="color: #0284c7;"></i>
+                            <span>Wave & Swell</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wv_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-metric-val wave-val">{{ formatWave(day.waveHeightMax) }}</div>
+                          <div class="windy-sub-val">{{ day.wavePeriodMax || 7 }}s • {{ day.waveCardinal || 'S' }}</div>
+                        </td>
+                      </tr>
 
-                  <div class="trend-card-best-slot" v-if="day.bestWindow">
-                    <i class="fa-solid fa-clock"></i> Best: {{ day.bestWindow.startTime }}
-                  </div>
+                      <!-- Row 4: Wind Speed & Direction (Windy-style Rotating Nautical Arrow) -->
+                      <tr class="windy-row-wind">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-wind" style="color: #38bdf8;"></i>
+                            <span>Wind & Direction</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wnd_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-wind-box">
+                            <div class="windy-arrow-circle" :title="'Wind heading: ' + (day.windDirectionDominant || 0) + '° ' + (day.windCardinal || '')">
+                              <i class="fa-solid fa-arrow-down" :style="{ transform: 'rotate(' + ((day.windDirectionDominant || 0) + 180) + 'deg)' }"></i>
+                            </div>
+                            <div class="windy-metric-val wind-val">{{ formatWind(day.windSpeedMax) }}</div>
+                            <div class="windy-sub-val">{{ day.windCardinal }}</div>
+                          </div>
+                        </td>
+                      </tr>
 
-                  <div class="trend-card-action">
-                    <span v-if="day.isTravelDay" class="active-indicator">
-                      <i class="fa-solid fa-circle-dot"></i> Selected Date
-                    </span>
-                    <span v-else class="select-hint">
-                      Select This Date ➔
-                    </span>
-                  </div>
+                      <!-- Row 5: Wind Gusts -->
+                      <tr class="windy-row-gusts">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-bolt" style="color: #ffb830;"></i>
+                            <span>Peak Gusts</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'gst_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-metric-val gust-val">{{ formatWind(day.windGustsMax) }}</div>
+                        </td>
+                      </tr>
+
+                      <!-- Row 6: Best Daylight Departure Window -->
+                      <tr class="windy-row-window">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-clock" style="color: #10b981;"></i>
+                            <span>Best Window</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'win_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-window-pill" v-if="day.bestWindow">
+                            <i class="fa-regular fa-sun" style="color: #ffb830;"></i>
+                            <span>{{ day.bestWindow.startTime }}</span>
+                          </div>
+                          <div class="windy-window-pill" v-else>
+                            <span>06:00</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Row 7: Maldivian Nakaiy & Moon Phase -->
+                      <tr class="windy-row-nakaiy">
+                        <td class="windy-td-label">
+                          <div class="param-label-cell">
+                            <i class="fa-solid fa-moon" style="color: #c084fc;"></i>
+                            <span>Moon & Nakaiy</span>
+                          </div>
+                        </td>
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'nak_' + day.date"
+                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
+                          @click="setTravelDate(day.date)">
+                          <div class="windy-nakaiy-meta" v-if="day.nakaiy">
+                            <span class="nakaiy-name" :title="day.nakaiy.weatherPattern">{{ day.nakaiy.name }}</span>
+                          </div>
+                          <div class="windy-moon-meta" v-if="day.moonPhase">
+                            <i :class="day.moonPhase.icon" style="color: #e2e8f0; font-size: 0.75rem;"></i>
+                            <span>{{ day.moonPhase.phaseName }}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </section>
@@ -3260,7 +3370,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260913-v2"></script>
+  <script type="module" src="src/js/app.js?v=20260913-v3"></script>
 </body>
 
 </html>

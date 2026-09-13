@@ -853,15 +853,6 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
   }
 
   const offsets = [-3, -2, -1, 0, 1, 2, 3];
-  const offsetLabels = {
-    '-3': '-3 Days',
-    '-2': '-2 Days',
-    '-1': '-1 Day',
-    '0': 'Selected Date',
-    '1': '+1 Day',
-    '2': '+2 Days',
-    '3': '+3 Days'
-  };
 
   const recordsMap = new Map();
   if (Array.isArray(allDailyRecords)) {
@@ -900,6 +891,11 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
         waveHeightAvg: existing.waveHeightAvg || 0.7,
         windSpeedMax: existing.windSpeedMax || 12,
         windGustsMax: existing.windGustsMax || 16,
+        windDirectionDominant: existing.windDirectionDominant || 240,
+        windCardinal: existing.windCardinal || 'WSW',
+        wavePeriodMax: existing.wavePeriodMax || 7,
+        waveDirectionDominant: existing.waveDirectionDominant || 180,
+        waveCardinal: existing.waveCardinal || 'S',
         weatherCode: existing.weatherCode || 0,
         weatherCondition: existing.weatherCondition || { label: 'Partly Cloudy', icon: 'fa-solid fa-cloud-sun' },
         hours: existing.hours || []
@@ -911,19 +907,35 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
     const isToday = curIso === (new Date()).toISOString().slice(0, 10);
     const dayEval = evaluateDayTripPlanning(rawDay, vesselProfileKey, route, (isToday ? mmsAlert : null), dayMoon, dayNakaiy);
 
-    const relLabel = offsetLabels[String(offset)] || `${offset > 0 ? '+' : ''}${offset}d`;
-    const shortLabel = curDate.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+    const weekdayShort = curDate.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayNum = curDate.getDate();
+    const monthShort = curDate.toLocaleDateString('en-US', { month: 'short' });
+    const dateLabel = `${weekdayShort}, ${dayNum} ${monthShort}`;
+    const shortLabel = `${weekdayShort} ${dayNum}`;
 
     const evaluatedDay = {
       ...dayEval,
       offset,
       date: curIso,
-      relativeLabel: relLabel,
+      dateLabel,
+      weekdayShort,
+      dayNum,
+      monthShort,
       shortLabel,
+      fullDateLabel: dateLabel,
       isTravelDay: offset === 0,
       weekdayName: curDate.toLocaleDateString([], { weekday: 'long' }),
       moonPhase: dayMoon,
-      nakaiy: dayNakaiy
+      nakaiy: dayNakaiy,
+      // Telemetry for Windy-style Corridor Matrix
+      windDirectionDominant: rawDay.windDirectionDominant ?? (dayEval.windDirectionDominant || 240),
+      windCardinal: rawDay.windCardinal ?? (dayEval.windCardinal || 'SW'),
+      windSpeedMax: dayEval.windSpeedMax ?? rawDay.windSpeedMax ?? 12,
+      windGustsMax: dayEval.windGustsMax ?? rawDay.windGustsMax ?? 16,
+      waveHeightMax: dayEval.waveHeightMax ?? rawDay.waveHeightMax ?? 0.8,
+      wavePeriodMax: rawDay.wavePeriodMax ?? 7,
+      waveCardinal: rawDay.waveCardinal ?? 'S',
+      waveDirectionDominant: rawDay.waveDirectionDominant ?? 180
     };
 
     days.push(evaluatedDay);
@@ -938,7 +950,7 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
       offset,
       date: curIso,
       shortLabel,
-      relativeLabel: relLabel,
+      dateLabel,
       isTravelDay: offset === 0,
       waveHeightMax: evaluatedDay.waveHeightMax,
       windSpeedMax: evaluatedDay.windSpeedMax,
@@ -964,18 +976,18 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
   let trendInsight = '';
   if (travelDay.score >= 75) {
     if (travelDay.score >= highestScoreDay.score) {
-      trendInsight = `The selected date (${travelDay.shortLabel}) is the optimal passage window in this 7-day corridor with a ${travelDay.score}% safety score.`;
+      trendInsight = `The selected date (${travelDay.dateLabel}) is the optimal passage window in this 7-day corridor with a ${travelDay.score}% safety score.`;
     } else {
-      trendInsight = `Safe passage conditions prevailing on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Sea conditions remain well within vessel seaworthiness limits.`;
+      trendInsight = `Safe passage conditions prevailing on ${travelDay.dateLabel} (${travelDay.score}% Safety Score). Sea conditions remain well within vessel seaworthiness limits.`;
     }
   } else if (travelDay.score >= 50) {
     if (highestScoreDay.score > travelDay.score + 10) {
-      trendInsight = `Moderate chop on the selected date (${travelDay.shortLabel}, ${travelDay.score}% Safety Score). Consider ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}) which offers calmer ${highestScoreDay.waveHeightMax}m seas (${highestScoreDay.score}% score).`;
+      trendInsight = `Moderate chop on the selected date (${travelDay.dateLabel}, ${travelDay.score}% Safety Score). Consider ${highestScoreDay.dateLabel} which offers calmer ${highestScoreDay.waveHeightMax}m seas (${highestScoreDay.score}% score).`;
     } else {
-      trendInsight = `Caution advised on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Inter-atoll channel crossings will experience elevated wave action.`;
+      trendInsight = `Caution advised on ${travelDay.dateLabel} (${travelDay.score}% Safety Score). Inter-atoll channel crossings will experience elevated wave action.`;
     }
   } else {
-    trendInsight = `Adverse maritime conditions on the selected date (${travelDay.shortLabel}, ${travelDay.score}% Safety Score, ${travelDay.waveHeightMax}m waves). High swamping and squall hazard; consider rescheduling to ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}, ${highestScoreDay.score}% score).`;
+    trendInsight = `Adverse maritime conditions on the selected date (${travelDay.dateLabel}, ${travelDay.score}% Safety Score, ${travelDay.waveHeightMax}m waves). High swamping and squall hazard; consider rescheduling to ${highestScoreDay.dateLabel} (${highestScoreDay.score}% score).`;
   }
 
   return {

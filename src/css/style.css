@@ -10088,168 +10088,449 @@ button, a, input, select, textarea {
   animation: nodePulseAnim 2.2s infinite ease-in-out;
 }
 
-/* 7-Day Comparative Cards Grid */
-.seven-day-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.65rem;
+/* ==========================================================================
+   WINDY-STYLE MARITIME CORRIDOR METEOGRAM (Multi-Axis Matrix)
+   ========================================================================== */
+.windy-meteogram-wrap {
+  margin-top: 1.25rem;
+  background: rgba(6, 14, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+.windy-meteogram-scroll {
+  width: 100%;
   overflow-x: auto;
-  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 240, 255, 0.3) rgba(4, 10, 22, 0.5);
 }
 
-@media (max-width: 1024px) {
-  .seven-day-cards-grid {
-    grid-template-columns: repeat(7, minmax(130px, 1fr));
-  }
+.windy-meteogram-scroll::-webkit-scrollbar {
+  height: 6px;
 }
 
-.trend-day-card {
-  background: rgba(11, 23, 46, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 0.75rem 0.65rem;
+.windy-meteogram-scroll::-webkit-scrollbar-track {
+  background: rgba(4, 10, 22, 0.5);
+}
+
+.windy-meteogram-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.35);
+  border-radius: 3px;
+}
+
+.windy-meteogram-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  text-align: center;
+}
+
+/* Header Row (Parameters Label on Left, Dates on Top X-Axis) */
+.windy-th-metric {
+  width: 165px;
+  min-width: 165px;
+  padding: 0.85rem 0.95rem;
+  background: rgba(4, 10, 22, 0.96);
+  position: sticky;
+  left: 0;
+  z-index: 12;
+  border-right: 1px solid rgba(0, 240, 255, 0.22);
+  border-bottom: 2px solid rgba(0, 240, 255, 0.35);
+  text-align: left;
+}
+
+.metric-th-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #cbd5e1;
+}
+
+.windy-th-day {
+  padding: 0.75rem 0.4rem;
+  background: rgba(8, 18, 36, 0.85);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+}
+
+.windy-th-day:hover {
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.windy-th-day.active-travel-col {
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.22) 0%, rgba(8, 24, 48, 0.95) 100%);
+  border-bottom: 3px solid var(--cyan-primary);
+  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.th-day-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--cyan-primary);
+  color: #040813;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.th-day-weekday {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.th-day-date {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--cyan-primary);
+  margin-top: 1px;
+}
+
+.windy-th-day.active-travel-col .th-day-date {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Left Sticky Parameter Cells (Y-Axis) */
+.windy-td-label {
+  padding: 0.65rem 0.95rem;
+  background: rgba(4, 10, 22, 0.94);
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  border-right: 1px solid rgba(0, 240, 255, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  user-select: none;
+}
+
+.param-label-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.param-label-cell i {
+  width: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Table Data Cells */
+.windy-td-cell {
+  padding: 0.65rem 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.18s ease;
+  vertical-align: middle;
+}
+
+.windy-td-cell:hover {
+  background: rgba(0, 240, 255, 0.06);
+}
+
+.windy-td-cell.active-travel-col {
+  background: rgba(0, 240, 255, 0.08);
+  border-left: 1px solid rgba(0, 240, 255, 0.35);
+  border-right: 1px solid rgba(0, 240, 255, 0.35);
+}
+
+/* Row Specific Components */
+.windy-status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.windy-status-pill.slot-GO {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.windy-status-pill.slot-CAUTION {
+  background: rgba(255, 184, 48, 0.25);
+  color: #ffb830;
+  border: 1px solid rgba(255, 184, 48, 0.45);
+}
+
+.windy-status-pill.slot-NO-GO {
+  background: rgba(255, 51, 102, 0.25);
+  color: #ff6b8b;
+  border: 1px solid rgba(255, 51, 102, 0.45);
+}
+
+.windy-wx-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.5rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.trend-day-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(0, 240, 255, 0.4);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-  background: rgba(16, 34, 68, 0.9);
-}
-
-.trend-day-card.active-travel-day {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(11, 23, 46, 0.95) 100%);
-  border: 2px solid var(--cyan-primary);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
-  transform: translateY(-2px);
-}
-
-.trend-card-top {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
-.trend-card-rel-pill {
+.windy-wx-icon {
+  font-size: 1.35rem;
+  color: var(--cyan-primary);
+  filter: drop-shadow(0 2px 6px rgba(0, 240, 255, 0.3));
+}
+
+.windy-wx-text {
   font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.trend-card-rel-pill.pill-travel-day {
-  color: #ffb830;
-  font-weight: 800;
-}
-
-.trend-card-score-pill {
-  font-size: 0.65rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.3px;
-}
-
-.trend-card-score-pill.slot-GO {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-
-.trend-card-score-pill.slot-CAUTION {
-  background: rgba(255, 184, 48, 0.2);
-  color: #ffb830;
-}
-
-.trend-card-score-pill.slot-NO-GO {
-  background: rgba(255, 51, 102, 0.2);
-  color: #ff6b8b;
-}
-
-.trend-card-date-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.trend-card-day {
-  font-size: 0.92rem;
+.windy-metric-val {
+  font-size: 0.9rem;
   font-weight: 800;
   color: #ffffff;
   font-family: var(--font-heading);
 }
 
-.trend-card-weather-icon {
-  font-size: 1.15rem;
-  color: var(--cyan-primary);
+.windy-metric-val.wave-val {
+  color: #38bdf8;
 }
 
-.trend-card-metrics {
+.windy-metric-val.wind-val {
+  color: #00f0ff;
+}
+
+.windy-metric-val.gust-val {
+  color: #ffb830;
+}
+
+.windy-sub-val {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+/* Windy True Direction Rotating Arrow */
+.windy-wind-box {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.35rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.tc-metric {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.74rem;
+  gap: 0.2rem;
 }
 
-.tc-metric-label {
-  color: var(--text-muted);
+.windy-arrow-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  color: var(--cyan-primary);
+  font-size: 0.8rem;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
 }
 
-.tc-metric-val {
+.windy-arrow-circle i {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.windy-window-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
-.trend-card-best-slot {
-  font-size: 0.68rem;
+.windy-nakaiy-meta {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+.windy-moon-meta {
+  font-size: 0.66rem;
   color: #cbd5e1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
+  margin-top: 2px;
 }
 
-.trend-card-action {
-  font-size: 0.66rem;
-  text-align: center;
-  padding-top: 0.2rem;
+/* Light Theme Overrides for Windy Meteogram */
+[data-theme="light"] .windy-meteogram-wrap {
+  background: #ffffff;
+  border-color: rgba(14, 116, 144, 0.22);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 }
 
-.active-indicator {
-  color: var(--cyan-primary);
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+[data-theme="light"] .windy-th-metric,
+[data-theme="light"] .windy-td-label {
+  background: #f8fafc;
+  border-right-color: #cbd5e1;
 }
 
-.select-hint {
-  color: var(--text-dim);
-  transition: color 0.2s ease;
+[data-theme="light"] .metric-th-inner {
+  color: #475569;
 }
 
-.trend-day-card:hover .select-hint {
-  color: var(--cyan-primary);
+[data-theme="light"] .windy-th-day {
+  background: #ffffff;
+  border-bottom-color: #e2e8f0;
+  border-right-color: #f1f5f9;
+}
+
+[data-theme="light"] .windy-th-day:hover {
+  background: rgba(2, 132, 199, 0.06);
+}
+
+[data-theme="light"] .windy-th-day.active-travel-col {
+  background: #f0f9ff;
+  border-bottom-color: #0284c7;
+}
+
+[data-theme="light"] .th-day-weekday {
+  color: #0f172a;
+}
+
+[data-theme="light"] .th-day-date {
+  color: #0284c7;
+}
+
+[data-theme="light"] .windy-th-day.active-travel-col .th-day-date {
+  color: #0369a1;
+}
+
+[data-theme="light"] .param-label-cell {
+  color: #1e293b;
+}
+
+[data-theme="light"] .windy-metric-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .windy-metric-val.wave-val {
+  color: #0369a1;
+}
+
+[data-theme="light"] .windy-metric-val.wind-val {
+  color: #0284c7;
+}
+
+[data-theme="light"] .windy-metric-val.gust-val {
+  color: #d97706;
+}
+
+[data-theme="light"] .windy-wx-text {
+  color: #475569;
+}
+
+[data-theme="light"] .windy-sub-val {
+  color: #64748b;
+}
+
+[data-theme="light"] .windy-td-cell {
+  border-bottom-color: #f1f5f9;
+  border-right-color: #f1f5f9;
+}
+
+[data-theme="light"] .windy-td-cell:hover {
+  background: rgba(2, 132, 199, 0.04);
+}
+
+[data-theme="light"] .windy-td-cell.active-travel-col {
+  background: rgba(2, 132, 199, 0.05);
+  border-left-color: rgba(2, 132, 199, 0.25);
+  border-right-color: rgba(2, 132, 199, 0.25);
+}
+
+[data-theme="light"] .windy-arrow-circle {
+  background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.25);
+  color: #0284c7;
+}
+
+[data-theme="light"] .windy-window-pill {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme="light"] .windy-nakaiy-meta {
+  color: #0284c7;
+}
+
+[data-theme="light"] .windy-moon-meta {
+  color: #475569;
+}
+
+/* Dark (Pure Black) Theme Overrides */
+[data-theme="dark"] .windy-meteogram-wrap {
+  background: #09090b;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .windy-th-metric,
+[data-theme="dark"] .windy-td-label {
+  background: #000000;
+  border-right-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .windy-th-day.active-travel-col {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom-color: #ffffff;
+}
+
+[data-theme="dark"] .th-day-badge {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] .windy-td-cell.active-travel-col {
+  background: rgba(255, 255, 255, 0.06);
+  border-left-color: rgba(255, 255, 255, 0.25);
+  border-right-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Selected Travel Day Scorecard */
