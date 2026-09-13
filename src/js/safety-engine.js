@@ -6,8 +6,8 @@ import { getCurrentNakaiy } from './nakaiy-engine.js?v=20260912-v10';
 export const VESSEL_PROFILES = {
   maldives_speedboat: {
     id: 'maldives_speedboat',
-    name: 'Maldivian Speedboat (Island / Transfer)',
-    subtitle: '24 - 38ft • Highly sensitive to channel chop (kandu)',
+    name: 'Speedboat small (18 ft - 36 ft)',
+    subtitle: '18 - 36ft • Highly sensitive to channel chop (kandu)',
     icon: 'fa-solid fa-bolt',
     cruisingSpeedKnots: 30, // Twin 250HP outboards
     maxSafeWave: 0.9,     // meters

@@ -32,7 +32,7 @@ import {
   evaluateDayTripPlanning,
   generateTenDayTripSummary,
   generate7DaySafetyTrend
-} from './safety-engine.js?v=20260913-v1';
+} from './safety-engine.js?v=20260913-v2';
 import { 
   generateCaptainAdvisory 
 } from './ai-advisory.js?v=20260912-v7';
