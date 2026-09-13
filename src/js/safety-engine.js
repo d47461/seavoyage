@@ -817,3 +817,185 @@ export function generateTenDayTripSummary(evaluatedDays, vessel, route) {
   };
 }
 
+/**
+ * Generates the 7-day comparative safety trend (-3 days to +3 days) centered around a target travel date
+ */
+export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselProfileKey = 'maldives_speedboat', route = null, mmsAlert = null) {
+  if (!targetDateStr) {
+    targetDateStr = (new Date()).toISOString().slice(0, 10);
+  }
+
+  let baseDate;
+  try {
+    baseDate = new Date(targetDateStr + 'T12:00:00Z');
+    if (isNaN(baseDate.getTime())) baseDate = new Date();
+  } catch (e) {
+    baseDate = new Date();
+  }
+
+  const offsets = [-3, -2, -1, 0, 1, 2, 3];
+  const offsetLabels = {
+    '-3': '-3 Days',
+    '-2': '-2 Days',
+    '-1': 'Yesterday',
+    '0': '★ TRAVEL DAY',
+    '1': 'Tomorrow',
+    '2': '+2 Days',
+    '3': '+3 Days'
+  };
+
+  const recordsMap = new Map();
+  if (Array.isArray(allDailyRecords)) {
+    allDailyRecords.forEach(r => {
+      if (r && r.date) recordsMap.set(r.date, r);
+    });
+  }
+
+  const days = [];
+  const svgPoints = [];
+  const svgW = 720;
+  const svgH = 240;
+  const padLeft = 55;
+  const padRight = 55;
+  const padTop = 40;
+  const padBottom = 45;
+  const usableW = svgW - padLeft - padRight;
+  const usableH = svgH - padTop - padBottom;
+  const dx = usableW / (offsets.length - 1);
+
+  offsets.forEach((offset, idx) => {
+    const curDate = new Date(baseDate.getTime() + (offset * 24 * 60 * 60 * 1000));
+    const curIso = curDate.toISOString().slice(0, 10);
+    let rawDay = recordsMap.get(curIso);
+
+    // Fallback if date is slightly beyond preloaded cache
+    if (!rawDay) {
+      const existing = Array.from(recordsMap.values())[0] || {};
+      rawDay = {
+        ...existing,
+        date: curIso,
+        dayLabel: curDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }),
+        fullDate: curDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+        weekdayName: curDate.toLocaleDateString([], { weekday: 'long' }),
+        waveHeightMax: existing.waveHeightMax || 0.9,
+        waveHeightAvg: existing.waveHeightAvg || 0.7,
+        windSpeedMax: existing.windSpeedMax || 12,
+        windGustsMax: existing.windGustsMax || 16,
+        weatherCode: existing.weatherCode || 0,
+        weatherCondition: existing.weatherCondition || { label: 'Partly Cloudy', icon: 'fa-solid fa-cloud-sun' },
+        hours: existing.hours || []
+      };
+    }
+
+    const dayMoon = getMoonPhaseInfo(new Date(curIso + 'T12:00:00Z'));
+    const dayNakaiy = getCurrentNakaiy(new Date(curIso + 'T12:00:00Z'));
+    const isToday = curIso === (new Date()).toISOString().slice(0, 10);
+    const dayEval = evaluateDayTripPlanning(rawDay, vesselProfileKey, route, (isToday ? mmsAlert : null), dayMoon, dayNakaiy);
+
+    const relLabel = offsetLabels[String(offset)] || `${offset > 0 ? '+' : ''}${offset}d`;
+    const shortLabel = curDate.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+
+    const evaluatedDay = {
+      ...dayEval,
+      offset,
+      date: curIso,
+      relativeLabel: relLabel,
+      shortLabel,
+      isTravelDay: offset === 0,
+      weekdayName: curDate.toLocaleDateString([], { weekday: 'long' }),
+      moonPhase: dayMoon,
+      nakaiy: dayNakaiy
+    };
+
+    days.push(evaluatedDay);
+
+    const px = padLeft + (idx * dx);
+    const py = padTop + usableH - ((evaluatedDay.score / 100) * usableH);
+    svgPoints.push({
+      x: px,
+      y: py,
+      score: evaluatedDay.score,
+      status: evaluatedDay.status,
+      offset,
+      date: curIso,
+      shortLabel,
+      relativeLabel: relLabel,
+      isTravelDay: offset === 0,
+      waveHeightMax: evaluatedDay.waveHeightMax,
+      windSpeedMax: evaluatedDay.windSpeedMax,
+      weatherCondition: evaluatedDay.weatherCondition
+    });
+  });
+
+  // SVG smooth paths
+  const lineD = getSmoothSvgPath(svgPoints);
+  const bottomY = padTop + usableH;
+  const areaD = `${lineD} L ${svgPoints[svgPoints.length - 1].x.toFixed(1)} ${bottomY.toFixed(1)} L ${svgPoints[0].x.toFixed(1)} ${bottomY.toFixed(1)} Z`;
+
+  // Guide lines
+  const y75 = padTop + usableH * (1 - 0.75); // GO threshold
+  const y50 = padTop + usableH * (1 - 0.50); // CAUTION threshold
+
+  const travelDay = days[3] || days[0];
+  const sortedDays = [...days].sort((a, b) => b.score - a.score);
+  const highestScoreDay = sortedDays[0];
+  const avgScore = Math.round(days.reduce((acc, d) => acc + d.score, 0) / days.length);
+
+  // Strategic Trend Analysis sentence
+  let trendInsight = '';
+  if (travelDay.score >= 75) {
+    if (travelDay.score >= highestScoreDay.score) {
+      trendInsight = `Your planned travel day (${travelDay.shortLabel}) is the optimal passage window in this 7-day period with a ${travelDay.score}% safety score.`;
+    } else {
+      trendInsight = `Safe passage conditions prevailing on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Sea conditions remain well within vessel seaworthiness limits.`;
+    }
+  } else if (travelDay.score >= 50) {
+    if (highestScoreDay.score > travelDay.score + 10) {
+      trendInsight = `Moderate chop on your planned travel day (${travelDay.score}% Safety Score). Consider ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}) which offers calmer ${highestScoreDay.waveHeightMax}m seas (${highestScoreDay.score}% score).`;
+    } else {
+      trendInsight = `Caution advised on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Inter-atoll channel crossings will experience elevated wave action.`;
+    }
+  } else {
+    trendInsight = `Adverse maritime conditions on your planned travel day (${travelDay.score}% Safety Score, ${travelDay.waveHeightMax}m waves). High swamping and squall hazard; consider rescheduling to ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}, ${highestScoreDay.score}% score).`;
+  }
+
+  return {
+    days,
+    travelDay,
+    svgWidth: svgW,
+    svgHeight: svgH,
+    linePath: lineD,
+    areaPath: areaD,
+    points: svgPoints,
+    threshold75Y: y75,
+    threshold50Y: y50,
+    bottomY,
+    padLeft,
+    padRight,
+    averageScore: avgScore,
+    highestScoreDay,
+    trendInsight
+  };
+}
+
+function getSmoothSvgPath(points) {
+  if (!points || points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? 0 : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 >= points.length ? points.length - 1 : i + 2];
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+

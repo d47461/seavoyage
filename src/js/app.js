@@ -23,15 +23,16 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll
-} from './marine-api.js?v=20260912-v7';
+} from './marine-api.js?v=20260913-v1';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
   getBeaufortScale, 
   getDouglasSeaState,
   evaluateDayTripPlanning,
-  generateTenDayTripSummary
-} from './safety-engine.js?v=20260912-v7';
+  generateTenDayTripSummary,
+  generate7DaySafetyTrend
+} from './safety-engine.js?v=20260913-v1';
 import { 
   generateCaptainAdvisory 
 } from './ai-advisory.js?v=20260912-v7';
@@ -126,7 +127,7 @@ const app = createApp({
     // Single-Screen Sub-Navigation States (Default: Safety Verdict & MMS)
     const activeAdvisorySubTab = ref('verdict'); // 'verdict', 'chart', 'hazards'
     const activeWeatherSubTab = ref('nakaiy'); // 'nakaiy', 'telemetry', 'forecast', 'tides'
-    const activePlanningSubTab = ref('best-window'); // 'best-window', 'hourly', 'briefing', 'corridor'
+    const activePlanningSubTab = ref('travel-date'); // 'travel-date', 'best-window', 'hourly', 'briefing', 'corridor'
     const activeFishingSubTab = ref('intel'); // 'intel', 'jigging', 'casting', 'trolling', 'spots'
     const showRoutePlannerModal = ref(false);
 
@@ -238,6 +239,104 @@ const app = createApp({
       selectedDayIndex.value = day.dayIndex;
       const el = document.getElementById('ten-day-detail-panel');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Dedicated Trip Planning Calendar & 7-Day Sea Travel Safety Trend State
+    const selectedTravelDate = ref((new Date()).toISOString().slice(0, 10));
+
+    const calendarMinDate = computed(() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 4);
+      return d.toISOString().slice(0, 10);
+    });
+
+    const calendarMaxDate = computed(() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 14);
+      return d.toISOString().slice(0, 10);
+    });
+
+    const sevenDaySafetyTrend = computed(() => {
+      if (!marineReport.value) return null;
+      const allRecords = marineReport.value.allDailyRecords || marineReport.value.tenDays || [];
+      const vessel = selectedVesselKey.value;
+      const route = routeData.value;
+      const alert = currentMmsAlert.value;
+      return generate7DaySafetyTrend(
+        selectedTravelDate.value,
+        allRecords,
+        vessel,
+        route,
+        alert
+      );
+    });
+
+    const travelDateSafetyReport = computed(() => {
+      if (sevenDaySafetyTrend.value && sevenDaySafetyTrend.value.travelDay) {
+        return sevenDaySafetyTrend.value.travelDay;
+      }
+      return null;
+    });
+
+    const travelDateNakaiy = computed(() => {
+      try {
+        const d = new Date(selectedTravelDate.value + 'T12:00:00Z');
+        return getCurrentNakaiy(d);
+      } catch (e) {
+        return currentNakaiy.value;
+      }
+    });
+
+    const travelDateMoon = computed(() => {
+      try {
+        const d = new Date(selectedTravelDate.value + 'T12:00:00Z');
+        return getMoonPhaseInfo(d);
+      } catch (e) {
+        return moonPhase.value;
+      }
+    });
+
+    function setTravelDate(dateStr) {
+      if (!dateStr) return;
+      selectedTravelDate.value = dateStr;
+    }
+
+    function stepTravelDate(deltaDays) {
+      try {
+        const cur = new Date(selectedTravelDate.value + 'T12:00:00Z');
+        cur.setDate(cur.getDate() + deltaDays);
+        selectedTravelDate.value = cur.toISOString().slice(0, 10);
+      } catch (e) {
+        console.warn('stepTravelDate error:', e);
+      }
+    }
+
+    function setTravelDatePreset(preset) {
+      const now = new Date();
+      if (preset === 'today') {
+        selectedTravelDate.value = now.toISOString().slice(0, 10);
+      } else if (preset === 'tomorrow') {
+        const tom = new Date(now.getTime() + 86400000);
+        selectedTravelDate.value = tom.toISOString().slice(0, 10);
+      } else if (preset === 'plus2') {
+        const p2 = new Date(now.getTime() + 2 * 86400000);
+        selectedTravelDate.value = p2.toISOString().slice(0, 10);
+      } else if (preset === 'weekend') {
+        const day = now.getDay();
+        const daysUntilFri = (5 - day + 7) % 7 || 7;
+        const fri = new Date(now.getTime() + daysUntilFri * 86400000);
+        selectedTravelDate.value = fri.toISOString().slice(0, 10);
+      }
+    }
+
+    function formatTravelDateFull(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const d = new Date(dateStr + 'T12:00:00Z');
+        return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
     }
 
     // AI Chief Mate Advisory
@@ -472,10 +571,15 @@ const app = createApp({
     const bestTravelWindow = computed(() => {
       if (!marineReport.value || !marineReport.value.timeline) return null;
       const vessel = vesselProfiles.value[selectedVesselKey.value];
+      let timelineToUse = marineReport.value.timeline;
+      const isToday = selectedTravelDate.value === (new Date()).toISOString().slice(0, 10);
+      if (!isToday && travelDateSafetyReport.value && travelDateSafetyReport.value.hours && travelDateSafetyReport.value.hours.length >= 3) {
+        timelineToUse = travelDateSafetyReport.value.hours;
+      }
       return findBestTravelWindow(
-        marineReport.value.timeline,
+        timelineToUse,
         vessel,
-        currentMmsAlert.value,
+        (isToday ? currentMmsAlert.value : null),
         tideData.value,
         routeData.value
       );
@@ -1348,7 +1452,18 @@ const app = createApp({
       setDestinationIsland,
       themeMode,
       currentEffectiveTheme,
-      setTheme
+      setTheme,
+      selectedTravelDate,
+      calendarMinDate,
+      calendarMaxDate,
+      sevenDaySafetyTrend,
+      travelDateSafetyReport,
+      travelDateNakaiy,
+      travelDateMoon,
+      formatTravelDateFull,
+      setTravelDate,
+      stepTravelDate,
+      setTravelDatePreset
     };
   }
 });

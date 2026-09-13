@@ -9638,4 +9638,862 @@ button, a, input, select, textarea {
   color: #334155;
 }
 
+/* ==========================================================================
+   TRIP PLANNING CALENDAR & 7-DAY SAFETY SCORE GRAPHICAL REPRESENTATION
+   ========================================================================== */
+
+/* Voyage Departure Date & Calendar Strip */
+.trip-calendar-strip {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  background: linear-gradient(135deg, rgba(10, 22, 45, 0.92) 0%, rgba(5, 14, 30, 0.96) 100%);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.calendar-strip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.calendar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--cyan-primary);
+  text-transform: uppercase;
+}
+
+.calendar-date-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--font-heading);
+}
+
+.calendar-day-relative {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffb830;
+  background: rgba(255, 184, 48, 0.12);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 184, 48, 0.25);
+}
+
+.calendar-sub-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cal-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.cal-meta-pill.nakaiy-pill {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: var(--cyan-primary);
+}
+
+.cal-meta-pill.moon-pill {
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  color: #c4b5fd;
+}
+
+.calendar-controls-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .calendar-controls-group {
+    align-items: stretch;
+    width: 100%;
+  }
+}
+
+.date-stepper-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.cal-step-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+
+.cal-step-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan-primary);
+  border-color: var(--cyan-primary);
+}
+
+.calendar-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-input-wrapper:hover {
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.calendar-native-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.calendar-input-text {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.date-presets-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.date-preset-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-preset-pill:hover {
+  color: #ffffff;
+  border-color: var(--cyan-primary);
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.date-preset-pill.active {
+  background: var(--cyan-primary);
+  color: #040813;
+  font-weight: 800;
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+/* 7-Day Safety Trend Section */
+.seven-day-trend-section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: linear-gradient(135deg, rgba(8, 18, 38, 0.95) 0%, rgba(4, 10, 24, 0.98) 100%);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-deep);
+}
+
+.trend-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.trend-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--cyan-primary);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.trend-headline {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-heading);
+}
+
+.trend-subtext {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.trend-day-badge {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  letter-spacing: 0.5px;
+}
+
+.trend-day-badge.slot-GO {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #34d399;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+}
+
+.trend-day-badge.slot-CAUTION {
+  background: rgba(255, 184, 48, 0.15);
+  border: 1px solid #ffb830;
+  color: #ffb830;
+  box-shadow: 0 0 15px rgba(255, 184, 48, 0.25);
+}
+
+.trend-day-badge.slot-NO-GO {
+  background: rgba(255, 51, 102, 0.15);
+  border: 1px solid var(--storm-red);
+  color: #ff6b8b;
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.25);
+}
+
+.trend-insight-banner {
+  background: rgba(0, 240, 255, 0.07);
+  border-left: 3px solid var(--cyan-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: #e0f2fe;
+  line-height: 1.45;
+  margin-bottom: 1.25rem;
+}
+
+/* SVG Chart Container & Wrapper */
+.seven-day-chart-container {
+  background: rgba(4, 10, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem 0.5rem 0.5rem;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.chart-legend-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  padding: 0 1rem 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-line {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.legend-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chart-svg-scroll-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.seven-day-svg {
+  min-width: 640px;
+  width: 100%;
+  height: 250px;
+  display: block;
+}
+
+@keyframes nodePulseAnim {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 0.25; }
+  100% { transform: scale(0.85); opacity: 0.8; }
+}
+
+.pulsing-node-ring {
+  transform-origin: center;
+  animation: nodePulseAnim 2.2s infinite ease-in-out;
+}
+
+/* 7-Day Comparative Cards Grid */
+.seven-day-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .seven-day-cards-grid {
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
+  }
+}
+
+.trend-day-card {
+  background: rgba(11, 23, 46, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.75rem 0.65rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.trend-day-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  background: rgba(16, 34, 68, 0.9);
+}
+
+.trend-day-card.active-travel-day {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(11, 23, 46, 0.95) 100%);
+  border: 2px solid var(--cyan-primary);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.trend-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.trend-card-rel-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.trend-card-rel-pill.pill-travel-day {
+  color: #ffb830;
+  font-weight: 800;
+}
+
+.trend-card-score-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.trend-card-score-pill.slot-GO {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.trend-card-score-pill.slot-CAUTION {
+  background: rgba(255, 184, 48, 0.2);
+  color: #ffb830;
+}
+
+.trend-card-score-pill.slot-NO-GO {
+  background: rgba(255, 51, 102, 0.2);
+  color: #ff6b8b;
+}
+
+.trend-card-date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trend-card-day {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--font-heading);
+}
+
+.trend-card-weather-icon {
+  font-size: 1.15rem;
+  color: var(--cyan-primary);
+}
+
+.trend-card-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tc-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+}
+
+.tc-metric-label {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tc-metric-val {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.trend-card-best-slot {
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trend-card-action {
+  font-size: 0.66rem;
+  text-align: center;
+  padding-top: 0.2rem;
+}
+
+.active-indicator {
+  color: var(--cyan-primary);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.select-hint {
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+
+.trend-day-card:hover .select-hint {
+  color: var(--cyan-primary);
+}
+
+/* Selected Travel Day Scorecard */
+.travel-day-scorecard {
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  background: linear-gradient(135deg, rgba(8, 18, 38, 0.95) 0%, rgba(5, 12, 28, 0.98) 100%);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-deep);
+}
+
+.travel-scorecard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scorecard-title-col {
+  flex: 1;
+  min-width: 260px;
+}
+
+.scorecard-date-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0.25rem 0;
+  font-family: var(--font-heading);
+}
+
+.scorecard-route-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.scorecard-verdict-pill {
+  padding: 0.45rem 1.1rem;
+  border-radius: 20px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.scorecard-verdict-pill.slot-GO {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid #10b981;
+  color: #34d399;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+}
+
+.scorecard-verdict-pill.slot-CAUTION {
+  background: rgba(255, 184, 48, 0.18);
+  border: 1px solid #ffb830;
+  color: #ffb830;
+  box-shadow: 0 0 16px rgba(255, 184, 48, 0.3);
+}
+
+.scorecard-verdict-pill.slot-NO-GO {
+  background: rgba(255, 51, 102, 0.18);
+  border: 1px solid var(--storm-red);
+  color: #ff6b8b;
+  box-shadow: 0 0 16px rgba(255, 51, 102, 0.3);
+}
+
+.travel-verdict-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  border: 1px solid transparent;
+}
+
+.travel-verdict-box.verdict-GO {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.travel-verdict-box.verdict-CAUTION {
+  background: rgba(255, 184, 48, 0.1);
+  border-color: rgba(255, 184, 48, 0.35);
+}
+
+.travel-verdict-box.verdict-NO-GO {
+  background: rgba(255, 51, 102, 0.1);
+  border-color: rgba(255, 51, 102, 0.35);
+}
+
+.verdict-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verdict-body {
+  flex: 1;
+}
+
+.verdict-summary-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.45;
+  margin-bottom: 0.35rem;
+}
+
+.verdict-best-window {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #ffb830;
+  background: rgba(255, 184, 48, 0.12);
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-top: 0.25rem;
+}
+
+/* 6-Metric Telemetry Grid */
+.travel-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.tel-card {
+  background: rgba(11, 23, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+.tel-card:hover {
+  border-color: rgba(0, 240, 255, 0.3);
+  background: rgba(16, 34, 68, 0.85);
+}
+
+.tel-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.tel-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--font-heading);
+}
+
+.tel-sub {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.tel-note {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+/* Positive Factors & Hazards Lists */
+.travel-factors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.factors-col {
+  background: rgba(11, 23, 46, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+}
+
+.factors-col.hazards-col {
+  border-left: 3px solid var(--storm-red);
+}
+
+.factors-col.positives-col {
+  border-left: 3px solid var(--sea-green);
+}
+
+.factors-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 0.65rem;
+}
+
+.factors-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.factor-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.factor-item.hazard-item i {
+  color: var(--storm-red);
+  margin-top: 2px;
+}
+
+.factor-item.positive-item i {
+  color: var(--sea-green);
+  margin-top: 2px;
+}
+
+/* Light Theme Adjustments */
+[data-theme="light"] .trip-calendar-strip {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .calendar-date-display {
+  color: #0f172a;
+}
+
+[data-theme="light"] .calendar-native-input,
+[data-theme="light"] .calendar-input-text {
+  color: #0f172a;
+}
+
+[data-theme="light"] .calendar-input-wrapper {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .cal-step-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .date-preset-pill {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+[data-theme="light"] .date-preset-pill.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+[data-theme="light"] .seven-day-trend-section,
+[data-theme="light"] .travel-day-scorecard {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .trend-headline,
+[data-theme="light"] .scorecard-date-title,
+[data-theme="light"] .verdict-summary-title,
+[data-theme="light"] .tel-value,
+[data-theme="light"] .trend-card-day,
+[data-theme="light"] .tc-metric-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .trend-subtext,
+[data-theme="light"] .scorecard-route-sub,
+[data-theme="light"] .tel-label,
+[data-theme="light"] .tc-metric-label,
+[data-theme="light"] .chart-legend-row {
+  color: #475569;
+}
+
+[data-theme="light"] .trend-insight-banner {
+  background: #f0f9ff;
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
+[data-theme="light"] .seven-day-chart-container {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .trend-day-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .trend-day-card:hover {
+  background: #f8fafc;
+  border-color: #0284c7;
+}
+
+[data-theme="light"] .trend-day-card.active-travel-day {
+  background: #f0fdfa;
+  border-color: #0284c7;
+  box-shadow: 0 0 15px rgba(2, 132, 199, 0.2);
+}
+
+[data-theme="light"] .tel-card,
+[data-theme="light"] .factors-col {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .tel-card:hover {
+  background: #ffffff;
+  border-color: #0284c7;
+}
+
+
 

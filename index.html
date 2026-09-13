@@ -38,7 +38,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260912-v8" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260913-v1" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -1512,7 +1512,12 @@
         <!-- TAB PANE 3: TRIP PLANNING & VOYAGE TIMING -->
         <div class="tab-content-pane single-screen-pane tab-pane-planning" v-show="activeMainTab === 'planning'">
           <!-- Segmented Sub-Navigation for Trip Planning -->
+          <!-- Segmented Sub-Navigation for Trip Planning -->
           <div class="segmented-sub-nav">
+            <button class="sub-nav-btn" :class="{ active: activePlanningSubTab === 'travel-date' }"
+              @click="setPlanningSubTab('travel-date')">
+              <i class="fa-solid fa-calendar-day"></i> <span>Travel Date & 7-Day Safety</span>
+            </button>
             <button class="sub-nav-btn" :class="{ active: activePlanningSubTab === 'best-window' }"
               @click="setPlanningSubTab('best-window')">
               <i class="fa-solid fa-clock"></i> <span>Best Time of the Day</span>
@@ -1552,6 +1557,377 @@
                 <i class="fa-solid fa-sliders"></i> Modify Route / Ports
               </button>
             </div>
+          </div>
+
+          <!-- Voyage Departure Calendar & Travel Date Selection Strip -->
+          <div class="trip-calendar-strip glass-panel">
+            <div class="calendar-strip-header">
+              <div class="calendar-title-group">
+                <div class="calendar-badge">
+                  <i class="fa-solid fa-calendar-days" style="color: var(--cyan-primary);"></i>
+                  <span>VOYAGE DEPARTURE DATE</span>
+                </div>
+                <div class="calendar-date-display">
+                  <strong>{{ formatTravelDateFull(selectedTravelDate) }}</strong>
+                  <span class="calendar-day-relative" v-if="selectedTravelDate === (new Date()).toISOString().slice(0, 10)">
+                    (Today)
+                  </span>
+                  <span class="calendar-day-relative" v-else-if="travelDateSafetyReport">
+                    ({{ travelDateSafetyReport.relativeLabel }})
+                  </span>
+                </div>
+                <div class="calendar-sub-meta" v-if="travelDateNakaiy || travelDateMoon">
+                  <span v-if="travelDateNakaiy" class="cal-meta-pill nakaiy-pill" :title="travelDateNakaiy.weatherPattern">
+                    <i class="fa-solid fa-wind"></i> {{ travelDateNakaiy.name }} Nakaiy ({{ travelDateNakaiy.thaana }})
+                  </span>
+                  <span v-if="travelDateMoon" class="cal-meta-pill moon-pill" :title="travelDateMoon.dhivehiName">
+                    <i class="fa-solid fa-moon"></i> {{ travelDateMoon.phaseName }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Calendar Interactive Picker & Date Controls -->
+              <div class="calendar-controls-group">
+                <div class="date-stepper-btn-group">
+                  <button class="cal-step-btn" @click="stepTravelDate(-1)" title="Previous Day">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <label class="calendar-input-wrapper" title="Click to choose a date from calendar">
+                    <i class="fa-regular fa-calendar" style="color: var(--cyan-primary);"></i>
+                    <input type="date" class="calendar-native-input" v-model="selectedTravelDate"
+                      :min="calendarMinDate" :max="calendarMaxDate" @change="setTravelDate(selectedTravelDate)" />
+                    <span class="calendar-input-text">{{ selectedTravelDate }}</span>
+                  </label>
+                  <button class="cal-step-btn" @click="stepTravelDate(1)" title="Next Day">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+
+                <!-- Quick Date Preset Buttons -->
+                <div class="date-presets-row">
+                  <button class="date-preset-pill"
+                    :class="{ active: selectedTravelDate === (new Date()).toISOString().slice(0, 10) }"
+                    @click="setTravelDatePreset('today')">Today</button>
+                  <button class="date-preset-pill"
+                    :class="{ active: selectedTravelDate === (new Date(Date.now() + 86400000)).toISOString().slice(0, 10) }"
+                    @click="setTravelDatePreset('tomorrow')">Tomorrow</button>
+                  <button class="date-preset-pill"
+                    :class="{ active: selectedTravelDate === (new Date(Date.now() + 172800000)).toISOString().slice(0, 10) }"
+                    @click="setTravelDatePreset('plus2')">+2 Days</button>
+                  <button class="date-preset-pill" @click="setTravelDatePreset('weekend')">Weekend</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW 0: TRAVEL DATE & 7-DAY SAFETY SCORE TREND -->
+          <div v-show="activePlanningSubTab === 'travel-date'" class="sub-view-group">
+            <section class="glass-panel seven-day-trend-section" v-if="sevenDaySafetyTrend">
+              <div class="trend-section-header">
+                <div>
+                  <div class="trend-title-badge">
+                    <i class="fa-solid fa-chart-area" style="color: var(--cyan-primary);"></i>
+                    <span>7-DAY COMPARATIVE SEA TRAVEL SAFETY WINDOW</span>
+                  </div>
+                  <h3 class="trend-headline">Previous 3 Days ➔ Traveling Day ➔ Next 3 Days</h3>
+                  <p class="trend-subtext">
+                    Evaluates sea travel safety scores across the 7-day corridor window for <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                  </p>
+                </div>
+                
+                <div class="trend-stat-pills" v-if="travelDateSafetyReport">
+                  <div class="trend-day-badge" :class="'slot-' + travelDateSafetyReport.status">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>{{ travelDateSafetyReport.score }}% {{ travelDateSafetyReport.status }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Strategic Insight Banner -->
+              <div class="trend-insight-banner" v-if="sevenDaySafetyTrend.trendInsight">
+                <i class="fa-solid fa-compass" style="color: var(--cyan-primary); font-size: 1.1rem;"></i>
+                <span>{{ sevenDaySafetyTrend.trendInsight }}</span>
+              </div>
+
+              <!-- High-Definition Responsive SVG Safety Trend Chart -->
+              <div class="seven-day-chart-container">
+                <div class="chart-legend-row">
+                  <div class="chart-legend-item">
+                    <span class="legend-line" style="background: var(--sea-green);"></span>
+                    <span>GO Threshold (≥ 75%)</span>
+                  </div>
+                  <div class="chart-legend-item">
+                    <span class="legend-line" style="background: var(--amber-caution);"></span>
+                    <span>Caution Threshold (≥ 50%)</span>
+                  </div>
+                  <div class="chart-legend-item">
+                    <span class="legend-circle" style="background: var(--cyan-primary); box-shadow: 0 0 10px var(--cyan-primary);"></span>
+                    <span>Selected Traveling Day</span>
+                  </div>
+                </div>
+
+                <div class="chart-svg-scroll-wrap">
+                  <svg class="seven-day-svg" viewBox="0 0 720 250" preserveAspectRatio="none" role="img" aria-label="7-Day Sea Travel Safety Score Chart">
+                    <defs>
+                      <linearGradient id="safetyAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(0, 240, 255, 0.45)" />
+                        <stop offset="40%" stop-color="rgba(16, 185, 129, 0.25)" />
+                        <stop offset="85%" stop-color="rgba(255, 184, 48, 0.08)" />
+                        <stop offset="100%" stop-color="rgba(4, 8, 19, 0.0)" />
+                      </linearGradient>
+                      <linearGradient id="safetyLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#38bdf8" />
+                        <stop offset="50%" stop-color="#00f0ff" />
+                        <stop offset="100%" stop-color="#10b981" />
+                      </linearGradient>
+                      <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                      </filter>
+                    </defs>
+
+                    <!-- Background Grid & Threshold Lines -->
+                    <line x1="55" :y1="sevenDaySafetyTrend.threshold75Y" x2="665" :y2="sevenDaySafetyTrend.threshold75Y"
+                      stroke="rgba(16, 185, 129, 0.35)" stroke-dasharray="4 4" stroke-width="1.2" />
+                    <text x="668" :y="sevenDaySafetyTrend.threshold75Y + 3.5" fill="rgba(16, 185, 129, 0.75)" font-size="9" font-weight="700">75% GO</text>
+
+                    <line x1="55" :y1="sevenDaySafetyTrend.threshold50Y" x2="665" :y2="sevenDaySafetyTrend.threshold50Y"
+                      stroke="rgba(255, 184, 48, 0.35)" stroke-dasharray="4 4" stroke-width="1.2" />
+                    <text x="668" :y="sevenDaySafetyTrend.threshold50Y + 3.5" fill="rgba(255, 184, 48, 0.75)" font-size="9" font-weight="700">50% CAUTION</text>
+
+                    <!-- Vertical Gridlines for each day -->
+                    <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'grid_' + idx">
+                      <line :x1="pt.x" y1="30" :x2="pt.x" :y2="sevenDaySafetyTrend.bottomY"
+                        :stroke="pt.isTravelDay ? 'rgba(0, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.08)'"
+                        :stroke-width="pt.isTravelDay ? 2 : 1"
+                        :stroke-dasharray="pt.isTravelDay ? 'none' : '2 3'" />
+                      
+                      <!-- Spotlight beam behind Travel Day -->
+                      <rect v-if="pt.isTravelDay" :x="pt.x - 30" y="25" width="60" :height="sevenDaySafetyTrend.bottomY - 20"
+                        fill="rgba(0, 240, 255, 0.07)" rx="8" />
+                    </g>
+
+                    <!-- Area Under Curve -->
+                    <path :d="sevenDaySafetyTrend.areaPath" fill="url(#safetyAreaGrad)" />
+
+                    <!-- Smooth Safety Score Trend Polyline -->
+                    <path :d="sevenDaySafetyTrend.linePath" fill="none" stroke="url(#safetyLineGrad)"
+                      stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowCyan)" />
+
+                    <!-- Interactive Data Nodes & Score Badges -->
+                    <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'node_' + idx"
+                      style="cursor: pointer;" @click="setTravelDate(pt.date)">
+                      
+                      <!-- Travel Day Outer Pulsing Ring -->
+                      <circle v-if="pt.isTravelDay" :cx="pt.x" :cy="pt.y" r="16"
+                        fill="rgba(0, 240, 255, 0.2)" stroke="var(--cyan-primary)" stroke-width="1.5" class="pulsing-node-ring" />
+                      
+                      <!-- Main Score Node Circle -->
+                      <circle :cx="pt.x" :cy="pt.y" :r="pt.isTravelDay ? 7 : 5.5"
+                        :fill="pt.status === 'GO' ? '#10b981' : (pt.status === 'CAUTION' ? '#ffb830' : '#ff3366')"
+                        stroke="#ffffff" stroke-width="2" />
+
+                      <!-- Score Pill Badge Above Node -->
+                      <g :transform="'translate(' + pt.x + ',' + (pt.y - (pt.isTravelDay ? 22 : 17)) + ')'">
+                        <rect x="-20" y="-11" width="40" height="18" rx="9"
+                          :fill="pt.isTravelDay ? '#00f0ff' : 'rgba(10, 25, 50, 0.92)'"
+                          :stroke="pt.isTravelDay ? '#ffffff' : (pt.status === 'GO' ? '#10b981' : (pt.status === 'CAUTION' ? '#ffb830' : '#ff3366'))"
+                          stroke-width="1.2" />
+                        <text x="0" y="2" text-anchor="middle" font-size="10.5" font-weight="800"
+                          :fill="pt.isTravelDay ? '#040813' : '#ffffff'">
+                          {{ pt.score }}%
+                        </text>
+                      </g>
+
+                      <!-- Travel Day Floating Pin Banner -->
+                      <g v-if="pt.isTravelDay" :transform="'translate(' + pt.x + ', 15)'">
+                        <rect x="-42" y="-10" width="84" height="18" rx="9" fill="#ffb830" />
+                        <text x="0" y="2.5" text-anchor="middle" fill="#000" font-size="8.5" font-weight="900" letter-spacing="0.5">
+                          ★ TRAVEL DAY
+                        </text>
+                      </g>
+
+                      <!-- X-Axis Day & Weather Conditions Info -->
+                      <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 16" text-anchor="middle"
+                        :fill="pt.isTravelDay ? 'var(--cyan-primary)' : 'var(--text-main)'"
+                        font-size="11" :font-weight="pt.isTravelDay ? '800' : '600'">
+                        {{ pt.shortLabel }}
+                      </text>
+                      <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 30" text-anchor="middle"
+                        fill="var(--text-muted)" font-size="9" font-weight="500">
+                        {{ pt.waveHeightMax }}m • {{ pt.windSpeedMax }}kn
+                      </text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- 7-Day Interactive Comparative Cards Carousel / Grid -->
+              <div class="seven-day-cards-grid">
+                <div v-for="day in sevenDaySafetyTrend.days" :key="'card_' + day.date"
+                  class="trend-day-card" :class="[{ 'active-travel-day': day.isTravelDay }, 'card-status-' + day.status]"
+                  @click="setTravelDate(day.date)" title="Click to set this day as your planned voyage departure date">
+                  
+                  <div class="trend-card-top">
+                    <span class="trend-card-rel-pill" :class="{ 'pill-travel-day': day.isTravelDay }">
+                      {{ day.relativeLabel }}
+                    </span>
+                    <span class="trend-card-score-pill" :class="'slot-' + day.status">
+                      {{ day.score }}% {{ day.status }}
+                    </span>
+                  </div>
+
+                  <div class="trend-card-date-row">
+                    <div class="trend-card-day">{{ day.shortLabel }}</div>
+                    <div class="trend-card-weather-icon" :title="day.weatherCondition.label">
+                      <i :class="day.weatherCondition.icon"></i>
+                    </div>
+                  </div>
+
+                  <div class="trend-card-metrics">
+                    <div class="tc-metric">
+                      <span class="tc-metric-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Waves</span>
+                      <span class="tc-metric-val">{{ formatWave(day.waveHeightMax) }}</span>
+                    </div>
+                    <div class="tc-metric">
+                      <span class="tc-metric-label"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Wind</span>
+                      <span class="tc-metric-val">{{ formatWind(day.windSpeedMax) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="trend-card-best-slot" v-if="day.bestWindow">
+                    <i class="fa-solid fa-clock"></i> Best: {{ day.bestWindow.startTime }}
+                  </div>
+
+                  <div class="trend-card-action">
+                    <span v-if="day.isTravelDay" class="active-indicator">
+                      <i class="fa-solid fa-circle-dot"></i> Planned Travel Day
+                    </span>
+                    <span v-else class="select-hint">
+                      Select This Date ➔
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- SELECTED TRAVELING DAY COMPREHENSIVE SAFETY SCORECARD -->
+            <section v-if="travelDateSafetyReport" class="travel-day-scorecard glass-panel">
+              <div class="travel-scorecard-header">
+                <div class="scorecard-title-col">
+                  <div class="best-window-badge">
+                    <i class="fa-solid fa-ship" style="color: var(--cyan-primary);"></i>
+                    <span>TRAVEL DAY SEA SAFETY SCORE & ROUTE TELEMETRY</span>
+                  </div>
+                  <h2 class="scorecard-date-title">{{ formatTravelDateFull(selectedTravelDate) }}</h2>
+                  <p class="scorecard-route-sub">
+                    Passage Corridor: <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> • {{ selectedVessel?.name }} Profile
+                  </p>
+                </div>
+
+                <div class="scorecard-verdict-pill" :class="'slot-' + travelDateSafetyReport.status">
+                  <i :class="travelDateSafetyReport.status === 'GO' ? 'fa-solid fa-circle-check' : (travelDateSafetyReport.status === 'CAUTION' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-xmark')"></i>
+                  <span>{{ travelDateSafetyReport.qualityRating }} ({{ travelDateSafetyReport.score }}% Safety Score)</span>
+                </div>
+              </div>
+
+              <!-- Verdict & Daylight Departure Window Banner -->
+              <div class="travel-verdict-box" :class="'verdict-' + travelDateSafetyReport.status">
+                <div class="verdict-icon-box">
+                  <i v-if="travelDateSafetyReport.status === 'GO'" class="fa-solid fa-circle-check" style="color: var(--sea-green); font-size: 2rem;"></i>
+                  <i v-else-if="travelDateSafetyReport.status === 'CAUTION'" class="fa-solid fa-triangle-exclamation" style="color: #ffb830; font-size: 2rem;"></i>
+                  <i v-else class="fa-solid fa-triangle-exclamation" style="color: var(--storm-red); font-size: 2rem;"></i>
+                </div>
+                <div class="verdict-body">
+                  <div class="verdict-summary-title">{{ travelDateSafetyReport.verdictSummary }}</div>
+                  <div class="verdict-best-window" v-if="travelDateSafetyReport.bestWindow">
+                    <i class="fa-solid fa-star" style="color: #ffb830;"></i>
+                    <span>Recommended departure window for {{ travelDateSafetyReport.shortLabel }}: <strong>{{ travelDateSafetyReport.bestWindow.startTime }} – {{ travelDateSafetyReport.bestWindow.endTime }}</strong> (Avg wave: {{ formatWave(travelDateSafetyReport.bestWindow.avgWave) }}, Wind: {{ formatWind(travelDateSafetyReport.bestWindow.avgWind) }})</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6-Metric Environmental & Route Telemetry Grid -->
+              <div class="travel-telemetry-grid">
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Wave Heights (Avg / Peak)</div>
+                  <div class="tel-value">{{ formatWave(travelDateSafetyReport.waveHeightAvg) }} <span class="tel-sub">(Max {{ formatWave(travelDateSafetyReport.waveHeightMax) }})</span></div>
+                  <div class="tel-note" v-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.maxSafeWave" style="color: var(--sea-green);">
+                    ✓ Within safe limit ({{ selectedVessel?.maxSafeWave }}m)
+                  </div>
+                  <div class="tel-note" v-else-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.cautionWave" style="color: #ffb830;">
+                    ⚠ Approaching limit ({{ selectedVessel?.cautionWave }}m)
+                  </div>
+                  <div class="tel-note" v-else style="color: var(--storm-red);">
+                    ✕ Exceeds seaworthiness limit
+                  </div>
+                </div>
+
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Sustained Wind & Squall Gusts</div>
+                  <div class="tel-value">{{ formatWind(travelDateSafetyReport.windSpeedMax) }} <span class="tel-sub" style="color: #ffb830;">(Gusts {{ formatWind(travelDateSafetyReport.windGustsMax) }})</span></div>
+                  <div class="tel-note">{{ travelDateSafetyReport.windCardinal }} winds along passage corridor</div>
+                </div>
+
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Ocean Current in Passes</div>
+                  <div class="tel-value">{{ formatCurrentSpeed(travelDateSafetyReport.oceanCurrentSpeedMaxKnots) }} <span class="tel-sub">{{ travelDateSafetyReport.oceanCurrentCardinal }}</span></div>
+                  <div class="tel-note">Inter-atoll kandu current velocity</div>
+                </div>
+
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-cloud-rain" style="color: #60a5fa;"></i> Precipitation & Squalls</div>
+                  <div class="tel-value">{{ formatPrecipitation(travelDateSafetyReport.precipitationSum) }} <span class="tel-sub">({{ travelDateSafetyReport.precipitationProbabilityMax }}% prob)</span></div>
+                  <div class="tel-note">{{ travelDateSafetyReport.weatherCondition.label }}</div>
+                </div>
+
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-arrows-left-right" style="color: var(--cyan-primary);"></i> Relative Sea Aspect</div>
+                  <div class="tel-value" style="font-size: 1.05rem;">
+                    <span v-if="routeData && routeData.windAspect" class="aspect-pill" :class="'aspect-' + routeData.windAspect.type">
+                      <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
+                    </span>
+                    <span v-else>Corridor Aligned</span>
+                  </div>
+                  <div class="tel-note">Vessel course {{ routeData ? routeData.cardinal : 'Passage' }}</div>
+                </div>
+
+                <div class="tel-card">
+                  <div class="tel-label"><i class="fa-solid fa-eye" style="color: #a78bfa;"></i> Navigational Visibility</div>
+                  <div class="tel-value">{{ travelDateSafetyReport.visibilityMinKm }} <span class="tel-sub">km</span></div>
+                  <div class="tel-note">Atmospheric clarity on water</div>
+                </div>
+              </div>
+
+              <!-- Positive Factors & Hazards Lists -->
+              <div class="travel-factors-grid" v-if="(travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0) || (travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0)">
+                <div class="factors-col hazards-col" v-if="travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0">
+                  <div class="factors-title" style="color: var(--storm-red);">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Identified Passage Hazards ({{ travelDateSafetyReport.hazards.length }})</span>
+                  </div>
+                  <ul class="factors-list">
+                    <li v-for="(h, hIdx) in travelDateSafetyReport.hazards" :key="'hz_' + hIdx" class="factor-item hazard-item">
+                      <i class="fa-solid fa-circle-exclamation"></i>
+                      <span>{{ h.text }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="factors-col positives-col" v-if="travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0">
+                  <div class="factors-title" style="color: var(--sea-green);">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Favorable Conditions ({{ travelDateSafetyReport.positiveFactors.length }})</span>
+                  </div>
+                  <ul class="factors-list">
+                    <li v-for="(p, pIdx) in travelDateSafetyReport.positiveFactors" :key="'pos_' + pIdx" class="factor-item positive-item">
+                      <i class="fa-solid fa-check"></i>
+                      <span>{{ p }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </section>
           </div>
 
           <!-- SUB-VIEW 1: BEST TIME OF THE DAY TO TRAVEL -->
@@ -2887,7 +3263,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260912-v13"></script>
+  <script type="module" src="src/js/app.js?v=20260913-v1"></script>
 </body>
 
 </html>

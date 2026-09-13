@@ -322,8 +322,8 @@ export async function fetchMarineAndWeatherData(lat, lon) {
   const roundedLat = parseFloat(lat).toFixed(4);
   const roundedLon = parseFloat(lon).toFixed(4);
 
-  const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${roundedLat}&longitude=${roundedLon}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,ocean_current_velocity,ocean_current_direction,sea_surface_temperature&daily=wave_height_max,wave_direction_dominant,wave_period_max,wind_wave_height_max,swell_wave_height_max&forecast_days=10&timezone=auto`;
-  const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${roundedLat}&longitude=${roundedLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,surface_pressure,pressure_msl,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,surface_pressure,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&forecast_days=10&wind_speed_unit=kn&timezone=auto`;
+  const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${roundedLat}&longitude=${roundedLon}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,ocean_current_velocity,ocean_current_direction,sea_surface_temperature&daily=wave_height_max,wave_direction_dominant,wave_period_max,wind_wave_height_max,swell_wave_height_max&past_days=4&forecast_days=14&timezone=auto`;
+  const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${roundedLat}&longitude=${roundedLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,surface_pressure,pressure_msl,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,surface_pressure,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&past_days=4&forecast_days=14&wind_speed_unit=kn&timezone=auto`;
 
   try {
     const [marineRes, forecastRes] = await Promise.all([
@@ -367,6 +367,18 @@ function compileMarineReport(lat, lon, forecast, marine) {
   if (hourlyF.time) {
     const idx = hourlyF.time.findIndex(t => t.startsWith(currentIsoPrefix));
     if (idx !== -1) currentHourIdx = idx;
+  }
+
+  const todayIso = now.toISOString().slice(0, 10);
+  let todayIdx = 0;
+  if (dailyF.time) {
+    const foundIdx = dailyF.time.indexOf(todayIso);
+    if (foundIdx !== -1) {
+      todayIdx = foundIdx;
+    } else {
+      const altIdx = dailyF.time.findIndex(t => t >= todayIso);
+      todayIdx = altIdx !== -1 ? altIdx : 0;
+    }
   }
 
   // 1. Waves, Swells & Wind Waves
@@ -534,229 +546,284 @@ function compileMarineReport(lat, lon, forecast, marine) {
       isDay: current.is_day === 1
     },
     daily: {
-      maxWaveHeight: dailyM.wave_height_max ? dailyM.wave_height_max[0] : 1.2,
-      maxWindSpeed: dailyF.wind_speed_10m_max ? dailyF.wind_speed_10m_max[0] : windSpeedKnots,
-      maxWindGusts: dailyF.wind_gusts_10m_max ? dailyF.wind_gusts_10m_max[0] : windGustsKnots,
-      maxUvIndex: dailyF.uv_index_max ? dailyF.uv_index_max[0] : 11
+      maxWaveHeight: dailyM.wave_height_max ? (dailyM.wave_height_max[todayIdx] ?? dailyM.wave_height_max[0] ?? 1.2) : 1.2,
+      maxWindSpeed: dailyF.wind_speed_10m_max ? (dailyF.wind_speed_10m_max[todayIdx] ?? dailyF.wind_speed_10m_max[0] ?? windSpeedKnots) : windSpeedKnots,
+      maxWindGusts: dailyF.wind_gusts_10m_max ? (dailyF.wind_gusts_10m_max[todayIdx] ?? dailyF.wind_gusts_10m_max[0] ?? windGustsKnots) : windGustsKnots,
+      maxUvIndex: dailyF.uv_index_max ? (dailyF.uv_index_max[todayIdx] ?? dailyF.uv_index_max[0] ?? 11) : 11
     },
     timeline,
-    tenDays: compileTenDayForecast(forecast, marine)
+    tenDays: compileTenDayForecast(forecast, marine),
+    allDailyRecords: compileAllDailyRecords(forecast, marine)
+  };
+}
+
+export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM, hourlyM, hasWaveData) {
+  const dateStr = dailyF.time[dayDataIdx];
+  let dayDate;
+  try {
+    dayDate = new Date(dateStr + 'T12:00:00');
+  } catch (e) {
+    dayDate = new Date();
+  }
+
+  const dayOffset = dayDataIdx - todayIdx;
+  let dayLabel = '';
+  if (dayOffset === 0) dayLabel = 'Today';
+  else if (dayOffset === 1) dayLabel = 'Tomorrow';
+  else if (dayOffset === -1) dayLabel = 'Yesterday';
+  else dayLabel = dayDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+
+  const fullDate = dayDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const weekdayName = dayDate.toLocaleDateString([], { weekday: 'long' });
+
+  const weatherCode = dailyF.weather_code ? dailyF.weather_code[dayDataIdx] : 0;
+  const weatherCondition = WMO_CODES[weatherCode] || { label: 'Clear Sky', icon: 'fa-solid fa-sun', severity: 'safe' };
+
+  const tempMax = dailyF.temperature_2m_max ? Math.round(dailyF.temperature_2m_max[dayDataIdx]) : 29;
+  const tempMin = dailyF.temperature_2m_min ? Math.round(dailyF.temperature_2m_min[dayDataIdx]) : 26;
+
+  const windSpeedMax = dailyF.wind_speed_10m_max ? Math.round(dailyF.wind_speed_10m_max[dayDataIdx]) : 12;
+  const windGustsMax = dailyF.wind_gusts_10m_max ? Math.round(dailyF.wind_gusts_10m_max[dayDataIdx]) : windSpeedMax;
+  const windDirectionDominant = dailyF.wind_direction_10m_dominant ? dailyF.wind_direction_10m_dominant[dayDataIdx] : 0;
+  const windCardinal = getWindDirectionCardinal(windDirectionDominant);
+
+  const waveHeightMax = hasWaveData && dailyM.wave_height_max && dailyM.wave_height_max[dayDataIdx] !== null
+    ? parseFloat(dailyM.wave_height_max[dayDataIdx].toFixed(2))
+    : (hasWaveData ? 0.9 : 0.6);
+  const wavePeriodMax = hasWaveData && dailyM.wave_period_max && dailyM.wave_period_max[dayDataIdx] !== null
+    ? Math.round(dailyM.wave_period_max[dayDataIdx])
+    : 7;
+  const waveDirectionDominant = hasWaveData && dailyM.wave_direction_dominant && dailyM.wave_direction_dominant[dayDataIdx] !== null
+    ? dailyM.wave_direction_dominant[dayDataIdx]
+    : 160;
+  const waveCardinal = getWindDirectionCardinal(waveDirectionDominant);
+
+  const swellHeightMax = hasWaveData && dailyM.swell_wave_height_max && dailyM.swell_wave_height_max[dayDataIdx] !== null
+    ? parseFloat(dailyM.swell_wave_height_max[dayDataIdx].toFixed(2))
+    : parseFloat((waveHeightMax * 0.7).toFixed(2));
+  const windWaveHeightMax = hasWaveData && dailyM.wind_wave_height_max && dailyM.wind_wave_height_max[dayDataIdx] !== null
+    ? parseFloat(dailyM.wind_wave_height_max[dayDataIdx].toFixed(2))
+    : parseFloat((waveHeightMax * 0.35).toFixed(2));
+
+  const precipitationSum = dailyF.precipitation_sum ? parseFloat(dailyF.precipitation_sum[dayDataIdx].toFixed(1)) : 0;
+  const precipitationProbabilityMax = dailyF.precipitation_probability_max ? dailyF.precipitation_probability_max[dayDataIdx] : 0;
+
+  const uvVal = dailyF.uv_index_max ? dailyF.uv_index_max[dayDataIdx] : 9;
+  const uvIndexMax = parseFloat(Number(uvVal).toFixed(1));
+  let uvCategory = 'Low';
+  let uvColor = 'var(--sea-green)';
+  if (uvIndexMax >= 11) { uvCategory = 'Extreme'; uvColor = '#9333ea'; }
+  else if (uvIndexMax >= 8) { uvCategory = 'Very High'; uvColor = 'var(--storm-red)'; }
+  else if (uvIndexMax >= 6) { uvCategory = 'High'; uvColor = '#f97316'; }
+  else if (uvIndexMax >= 3) { uvCategory = 'Moderate'; uvColor = '#eab308'; }
+
+  // Aggregate this day's 24 hours
+  let startHourIdx = -1;
+  if (hourlyF.time) {
+    startHourIdx = hourlyF.time.findIndex(t => t.startsWith(dateStr));
+  }
+  if (startHourIdx === -1) {
+    startHourIdx = dayDataIdx * 24;
+  }
+
+  const hours = [];
+  let sumCurrentKnots = 0;
+  let maxCurrentKnots = 0;
+  let maxCurrentKmh = 0;
+  let dominantCurrentDir = 90;
+  let sumWaveH = 0;
+  let countWaveH = 0;
+  let sumWindSpd = 0;
+  let countWindSpd = 0;
+  let minVisibility = 20000;
+  let sumSst = 0;
+  let countSst = 0;
+  let sumPressure = 0;
+  let countPressure = 0;
+
+  for (let h = 0; h < 24; h++) {
+    const idx = startHourIdx + h;
+    if (!hourlyF.time || idx >= hourlyF.time.length) break;
+
+    const timeStr = hourlyF.time[idx];
+    const hourNum = parseInt(timeStr.slice(11, 13), 10);
+    const isDaylight = hourNum >= 6 && hourNum <= 18;
+
+    const waveH = hasWaveData && hourlyM.wave_height && hourlyM.wave_height[idx] !== null
+      ? hourlyM.wave_height[idx]
+      : 0.6;
+    sumWaveH += waveH;
+    countWaveH++;
+
+    const wSpeed = hourlyF.wind_speed_10m ? hourlyF.wind_speed_10m[idx] : 10;
+    sumWindSpd += wSpeed;
+    countWindSpd++;
+
+    const wGusts = hourlyF.wind_gusts_10m ? hourlyF.wind_gusts_10m[idx] : wSpeed;
+    const wDir = hourlyF.wind_direction_10m ? hourlyF.wind_direction_10m[idx] : 0;
+    const code = hourlyF.weather_code ? hourlyF.weather_code[idx] : 0;
+    const vis = hourlyF.visibility ? hourlyF.visibility[idx] : 10000;
+    if (vis < minVisibility) minVisibility = vis;
+
+    const sst = hasWaveData && hourlyM.sea_surface_temperature && hourlyM.sea_surface_temperature[idx] !== null
+      ? hourlyM.sea_surface_temperature[idx]
+      : 29.5;
+    sumSst += sst;
+    countSst++;
+
+    const press = hourlyF.surface_pressure ? hourlyF.surface_pressure[idx] : 1011.5;
+    sumPressure += press;
+    countPressure++;
+
+    // Ocean current
+    const curVelKmh = hasWaveData && hourlyM.ocean_current_velocity && hourlyM.ocean_current_velocity[idx] !== null
+      ? hourlyM.ocean_current_velocity[idx]
+      : 1.0;
+    const curKnots = parseFloat((curVelKmh / 1.852).toFixed(1));
+    if (curKnots > maxCurrentKnots) {
+      maxCurrentKnots = curKnots;
+      maxCurrentKmh = parseFloat(curVelKmh.toFixed(1));
+    }
+    sumCurrentKnots += curKnots;
+    if (h === 12 && hourlyM.ocean_current_direction && hourlyM.ocean_current_direction[idx] !== null) {
+      dominantCurrentDir = hourlyM.ocean_current_direction[idx];
+    }
+
+    const prec = hourlyF.precipitation ? hourlyF.precipitation[idx] : 0;
+    const precP = hourlyF.precipitation_probability ? hourlyF.precipitation_probability[idx] : 0;
+    const uvH = hourlyF.uv_index ? hourlyF.uv_index[idx] : 0;
+
+    hours.push({
+      time: timeStr,
+      displayTime: formatTimeLabel(timeStr),
+      hourNum,
+      isDaylight,
+      waveHeight: waveH,
+      wavePeriod: hasWaveData && hourlyM.wave_period ? hourlyM.wave_period[idx] : 6,
+      waveDirection: hasWaveData && hourlyM.wave_direction ? hourlyM.wave_direction[idx] : null,
+      swellHeight: hasWaveData && hourlyM.swell_wave_height ? hourlyM.swell_wave_height[idx] : (waveH * 0.7),
+      windWaveHeight: hasWaveData && hourlyM.wind_wave_height ? hourlyM.wind_wave_height[idx] : (waveH * 0.35),
+      windSpeed: wSpeed,
+      windGusts: wGusts,
+      windDirection: wDir,
+      windCardinal: getWindDirectionCardinal(wDir),
+      oceanCurrentSpeedKnots: curKnots,
+      oceanCurrentSpeedKmh: parseFloat(curVelKmh.toFixed(1)),
+      oceanCurrentDirection: hasWaveData && hourlyM.ocean_current_direction ? hourlyM.ocean_current_direction[idx] : dominantCurrentDir,
+      precipitation: prec,
+      precipitationProbability: precP,
+      visibility: vis,
+      surfacePressure: press,
+      uvIndex: uvH,
+      weatherCode: code
+    });
+  }
+
+  const waveHeightAvg = countWaveH > 0 ? parseFloat((sumWaveH / countWaveH).toFixed(2)) : waveHeightMax;
+  const windSpeedAvg = countWindSpd > 0 ? Math.round(sumWindSpd / countWindSpd) : Math.round(windSpeedMax * 0.75);
+  const oceanCurrentSpeedAvgKnots = hours.length > 0 ? parseFloat((sumCurrentKnots / hours.length).toFixed(1)) : 0.8;
+  const seaTemperature = countSst > 0 ? parseFloat((sumSst / countSst).toFixed(1)) : 29.5;
+  const surfacePressureAvg = countPressure > 0 ? parseFloat((sumPressure / countPressure).toFixed(1)) : 1011.5;
+  const visibilityMinKm = parseFloat((minVisibility / 1000).toFixed(1));
+  const visibilityMinNm = parseFloat((minVisibility * 0.000539957).toFixed(1));
+
+  return {
+    dayIndex: dayOffset,
+    rawDayIndex: dayDataIdx,
+    date: dateStr,
+    dayLabel,
+    fullDate,
+    weekdayName,
+    weatherCode,
+    weatherCondition,
+    tempMax,
+    tempMin,
+    windSpeedAvg,
+    windSpeedMax,
+    windGustsMax,
+    windDirectionDominant,
+    windCardinal,
+    waveHeightAvg,
+    waveHeightMax,
+    wavePeriodMax,
+    waveDirectionDominant,
+    waveCardinal,
+    swellHeightMax,
+    windWaveHeightMax,
+    oceanCurrentSpeedMaxKnots: maxCurrentKnots || 0.8,
+    oceanCurrentSpeedAvgKnots,
+    oceanCurrentSpeedKmh: maxCurrentKmh || 1.5,
+    oceanCurrentDirection: dominantCurrentDir,
+    oceanCurrentCardinal: getWindDirectionCardinal(dominantCurrentDir),
+    seaTemperature,
+    precipitationSum,
+    precipitationProbabilityMax,
+    visibilityMinKm,
+    visibilityMinNm,
+    surfacePressureAvg,
+    uvIndexMax,
+    uvCategory,
+    uvColor,
+    hours
   };
 }
 
 export function compileTenDayForecast(forecast, marine) {
-  const hourlyF = forecast?.hourly || {};
   const dailyF = forecast?.daily || {};
-  const hourlyM = marine?.hourly || {};
+  const hourlyF = forecast?.hourly || {};
   const dailyM = marine?.daily || {};
+  const hourlyM = marine?.hourly || {};
 
-  const totalDays = Math.min(10, (dailyF.time || []).length);
+  const todayIso = (new Date()).toISOString().slice(0, 10);
+  let todayIdx = 0;
+  if (dailyF.time) {
+    const foundIdx = dailyF.time.indexOf(todayIso);
+    if (foundIdx !== -1) {
+      todayIdx = foundIdx;
+    } else {
+      const altIdx = dailyF.time.findIndex(t => t >= todayIso);
+      todayIdx = altIdx !== -1 ? altIdx : 0;
+    }
+  }
+
+  const totalDays = Math.min(10, (dailyF.time || []).length - todayIdx);
   const tenDays = [];
-
   const hasWaveData = Array.isArray(hourlyM.wave_height) && hourlyM.wave_height.some(v => v !== null);
 
   for (let d = 0; d < totalDays; d++) {
-    const dateStr = dailyF.time[d];
-    let dayDate;
-    try {
-      dayDate = new Date(dateStr + 'T12:00:00');
-    } catch (e) {
-      dayDate = new Date();
+    const rec = compileDailyRecord(todayIdx + d, todayIdx, dailyF, hourlyF, dailyM, hourlyM, hasWaveData);
+    rec.dayIndex = d; // for Tab 2 compatibility, dayIndex is 0 to 9
+    tenDays.push(rec);
+  }
+  return tenDays;
+}
+
+export function compileAllDailyRecords(forecast, marine) {
+  const dailyF = forecast?.daily || {};
+  const hourlyF = forecast?.hourly || {};
+  const dailyM = marine?.daily || {};
+  const hourlyM = marine?.hourly || {};
+
+  const todayIso = (new Date()).toISOString().slice(0, 10);
+  let todayIdx = 0;
+  if (dailyF.time) {
+    const foundIdx = dailyF.time.indexOf(todayIso);
+    if (foundIdx !== -1) {
+      todayIdx = foundIdx;
+    } else {
+      const altIdx = dailyF.time.findIndex(t => t >= todayIso);
+      todayIdx = altIdx !== -1 ? altIdx : 0;
     }
-
-    let dayLabel = '';
-    if (d === 0) dayLabel = 'Today';
-    else if (d === 1) dayLabel = 'Tomorrow';
-    else dayLabel = dayDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-
-    const fullDate = dayDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const weekdayName = dayDate.toLocaleDateString([], { weekday: 'long' });
-
-    const weatherCode = dailyF.weather_code ? dailyF.weather_code[d] : 0;
-    const weatherCondition = WMO_CODES[weatherCode] || { label: 'Clear Sky', icon: 'fa-solid fa-sun', severity: 'safe' };
-
-    const tempMax = dailyF.temperature_2m_max ? Math.round(dailyF.temperature_2m_max[d]) : 29;
-    const tempMin = dailyF.temperature_2m_min ? Math.round(dailyF.temperature_2m_min[d]) : 26;
-
-    const windSpeedMax = dailyF.wind_speed_10m_max ? Math.round(dailyF.wind_speed_10m_max[d]) : 12;
-    const windGustsMax = dailyF.wind_gusts_10m_max ? Math.round(dailyF.wind_gusts_10m_max[d]) : windSpeedMax;
-    const windDirectionDominant = dailyF.wind_direction_10m_dominant ? dailyF.wind_direction_10m_dominant[d] : 0;
-    const windCardinal = getWindDirectionCardinal(windDirectionDominant);
-
-    const waveHeightMax = hasWaveData && dailyM.wave_height_max && dailyM.wave_height_max[d] !== null
-      ? parseFloat(dailyM.wave_height_max[d].toFixed(2))
-      : (hasWaveData ? 0.9 : 0.6);
-    const wavePeriodMax = hasWaveData && dailyM.wave_period_max && dailyM.wave_period_max[d] !== null
-      ? Math.round(dailyM.wave_period_max[d])
-      : 7;
-    const waveDirectionDominant = hasWaveData && dailyM.wave_direction_dominant && dailyM.wave_direction_dominant[d] !== null
-      ? dailyM.wave_direction_dominant[d]
-      : 160;
-    const waveCardinal = getWindDirectionCardinal(waveDirectionDominant);
-
-    const swellHeightMax = hasWaveData && dailyM.swell_wave_height_max && dailyM.swell_wave_height_max[d] !== null
-      ? parseFloat(dailyM.swell_wave_height_max[d].toFixed(2))
-      : parseFloat((waveHeightMax * 0.7).toFixed(2));
-    const windWaveHeightMax = hasWaveData && dailyM.wind_wave_height_max && dailyM.wind_wave_height_max[d] !== null
-      ? parseFloat(dailyM.wind_wave_height_max[d].toFixed(2))
-      : parseFloat((waveHeightMax * 0.35).toFixed(2));
-
-    const precipitationSum = dailyF.precipitation_sum ? parseFloat(dailyF.precipitation_sum[d].toFixed(1)) : 0;
-    const precipitationProbabilityMax = dailyF.precipitation_probability_max ? dailyF.precipitation_probability_max[d] : 0;
-
-    const uvVal = dailyF.uv_index_max ? dailyF.uv_index_max[d] : 9;
-    const uvIndexMax = parseFloat(Number(uvVal).toFixed(1));
-    let uvCategory = 'Low';
-    let uvColor = 'var(--sea-green)';
-    if (uvIndexMax >= 11) { uvCategory = 'Extreme'; uvColor = '#9333ea'; }
-    else if (uvIndexMax >= 8) { uvCategory = 'Very High'; uvColor = 'var(--storm-red)'; }
-    else if (uvIndexMax >= 6) { uvCategory = 'High'; uvColor = '#f97316'; }
-    else if (uvIndexMax >= 3) { uvCategory = 'Moderate'; uvColor = '#eab308'; }
-
-    // Aggregate this day's 24 hours
-    const startHourIdx = d * 24;
-    const hours = [];
-    let sumCurrentKnots = 0;
-    let maxCurrentKnots = 0;
-    let maxCurrentKmh = 0;
-    let dominantCurrentDir = 90;
-    let sumWaveH = 0;
-    let countWaveH = 0;
-    let sumWindSpd = 0;
-    let countWindSpd = 0;
-    let minVisibility = 20000;
-    let sumSst = 0;
-    let countSst = 0;
-    let sumPressure = 0;
-    let countPressure = 0;
-
-    for (let h = 0; h < 24; h++) {
-      const idx = startHourIdx + h;
-      if (!hourlyF.time || idx >= hourlyF.time.length) break;
-
-      const timeStr = hourlyF.time[idx];
-      const hourNum = parseInt(timeStr.slice(11, 13), 10);
-      const isDaylight = hourNum >= 6 && hourNum <= 18;
-
-      const waveH = hasWaveData && hourlyM.wave_height && hourlyM.wave_height[idx] !== null
-        ? hourlyM.wave_height[idx]
-        : 0.6;
-      sumWaveH += waveH;
-      countWaveH++;
-
-      const wSpeed = hourlyF.wind_speed_10m ? hourlyF.wind_speed_10m[idx] : 10;
-      sumWindSpd += wSpeed;
-      countWindSpd++;
-
-      const wGusts = hourlyF.wind_gusts_10m ? hourlyF.wind_gusts_10m[idx] : wSpeed;
-      const wDir = hourlyF.wind_direction_10m ? hourlyF.wind_direction_10m[idx] : 0;
-      const code = hourlyF.weather_code ? hourlyF.weather_code[idx] : 0;
-      const vis = hourlyF.visibility ? hourlyF.visibility[idx] : 10000;
-      if (vis < minVisibility) minVisibility = vis;
-
-      const sst = hasWaveData && hourlyM.sea_surface_temperature && hourlyM.sea_surface_temperature[idx] !== null
-        ? hourlyM.sea_surface_temperature[idx]
-        : 29.5;
-      sumSst += sst;
-      countSst++;
-
-      const press = hourlyF.surface_pressure ? hourlyF.surface_pressure[idx] : 1011.5;
-      sumPressure += press;
-      countPressure++;
-
-      // Ocean current
-      const curVelKmh = hasWaveData && hourlyM.ocean_current_velocity && hourlyM.ocean_current_velocity[idx] !== null
-        ? hourlyM.ocean_current_velocity[idx]
-        : 1.0;
-      const curKnots = parseFloat((curVelKmh / 1.852).toFixed(1));
-      if (curKnots > maxCurrentKnots) {
-        maxCurrentKnots = curKnots;
-        maxCurrentKmh = parseFloat(curVelKmh.toFixed(1));
-      }
-      sumCurrentKnots += curKnots;
-      if (h === 12 && hourlyM.ocean_current_direction && hourlyM.ocean_current_direction[idx] !== null) {
-        dominantCurrentDir = hourlyM.ocean_current_direction[idx];
-      }
-
-      const prec = hourlyF.precipitation ? hourlyF.precipitation[idx] : 0;
-      const precP = hourlyF.precipitation_probability ? hourlyF.precipitation_probability[idx] : 0;
-      const uvH = hourlyF.uv_index ? hourlyF.uv_index[idx] : 0;
-
-      hours.push({
-        time: timeStr,
-        displayTime: formatTimeLabel(timeStr),
-        hourNum,
-        isDaylight,
-        waveHeight: waveH,
-        wavePeriod: hasWaveData && hourlyM.wave_period ? hourlyM.wave_period[idx] : 6,
-        waveDirection: hasWaveData && hourlyM.wave_direction ? hourlyM.wave_direction[idx] : null,
-        swellHeight: hasWaveData && hourlyM.swell_wave_height ? hourlyM.swell_wave_height[idx] : (waveH * 0.7),
-        windWaveHeight: hasWaveData && hourlyM.wind_wave_height ? hourlyM.wind_wave_height[idx] : (waveH * 0.35),
-        windSpeed: wSpeed,
-        windGusts: wGusts,
-        windDirection: wDir,
-        windCardinal: getWindDirectionCardinal(wDir),
-        oceanCurrentSpeedKnots: curKnots,
-        oceanCurrentSpeedKmh: parseFloat(curVelKmh.toFixed(1)),
-        oceanCurrentDirection: hasWaveData && hourlyM.ocean_current_direction ? hourlyM.ocean_current_direction[idx] : dominantCurrentDir,
-        precipitation: prec,
-        precipitationProbability: precP,
-        visibility: vis,
-        surfacePressure: press,
-        uvIndex: uvH,
-        weatherCode: code
-      });
-    }
-
-    const waveHeightAvg = countWaveH > 0 ? parseFloat((sumWaveH / countWaveH).toFixed(2)) : waveHeightMax;
-    const windSpeedAvg = countWindSpd > 0 ? Math.round(sumWindSpd / countWindSpd) : Math.round(windSpeedMax * 0.75);
-    const oceanCurrentSpeedAvgKnots = hours.length > 0 ? parseFloat((sumCurrentKnots / hours.length).toFixed(1)) : 0.8;
-    const seaTemperature = countSst > 0 ? parseFloat((sumSst / countSst).toFixed(1)) : 29.5;
-    const surfacePressureAvg = countPressure > 0 ? parseFloat((sumPressure / countPressure).toFixed(1)) : 1011.5;
-    const visibilityMinKm = parseFloat((minVisibility / 1000).toFixed(1));
-    const visibilityMinNm = parseFloat((minVisibility * 0.000539957).toFixed(1));
-
-    tenDays.push({
-      dayIndex: d,
-      date: dateStr,
-      dayLabel,
-      fullDate,
-      weekdayName,
-      weatherCode,
-      weatherCondition,
-      tempMax,
-      tempMin,
-      windSpeedAvg,
-      windSpeedMax,
-      windGustsMax,
-      windDirectionDominant,
-      windCardinal,
-      waveHeightAvg,
-      waveHeightMax,
-      wavePeriodMax,
-      waveDirectionDominant,
-      waveCardinal,
-      swellHeightMax,
-      windWaveHeightMax,
-      oceanCurrentSpeedMaxKnots: maxCurrentKnots || 0.8,
-      oceanCurrentSpeedAvgKnots,
-      oceanCurrentSpeedKmh: maxCurrentKmh || 1.5,
-      oceanCurrentDirection: dominantCurrentDir,
-      oceanCurrentCardinal: getWindDirectionCardinal(dominantCurrentDir),
-      seaTemperature,
-      precipitationSum,
-      precipitationProbabilityMax,
-      visibilityMinKm,
-      visibilityMinNm,
-      surfacePressureAvg,
-      uvIndexMax,
-      uvCategory,
-      uvColor,
-      hours
-    });
   }
 
-  return tenDays;
+  const totalDays = (dailyF.time || []).length;
+  const allRecords = [];
+  const hasWaveData = Array.isArray(hourlyM.wave_height) && hourlyM.wave_height.some(v => v !== null);
+
+  for (let i = 0; i < totalDays; i++) {
+    allRecords.push(compileDailyRecord(i, todayIdx, dailyF, hourlyF, dailyM, hourlyM, hasWaveData));
+  }
+  return allRecords;
 }
 
 function formatTimeLabel(isoStr) {
