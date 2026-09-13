@@ -38,7 +38,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260913-v4" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260914-v1" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -128,9 +128,39 @@
       </nav>
 
       <!-- Sticky Quick Route & Vessel Header Bar (Single-Screen Navigation) -->
-      <div class="sticky-route-bar" @click="showRoutePlannerModal = true" role="button" tabindex="0"
-        title="Click to adjust departure, destination, or vessel profile">
-        <div class="route-bar-pill">
+      <div class="sticky-route-bar" @click="showRoutePlannerModal = true; modalLocationTab = locationMode" role="button" tabindex="0"
+        :title="locationMode === 'single' ? 'Click to change island forecast' : 'Click to adjust departure, destination, or vessel profile'">
+        
+        <!-- Mode Switcher in Sticky Bar -->
+        <div class="route-bar-mode-switch" @click.stop>
+          <button type="button" class="top-mode-btn" :class="{ active: locationMode === 'single' }"
+            @click="setLocationMode('single')" title="Single Island Weather Mode">
+            <i class="fa-solid fa-location-dot"></i> <span>Single</span>
+          </button>
+          <button type="button" class="top-mode-btn" :class="{ active: locationMode === 'route' }"
+            @click="setLocationMode('route')" title="Inter-Atoll Passage Route Mode">
+            <i class="fa-solid fa-route"></i> <span>Route</span>
+          </button>
+        </div>
+
+        <!-- Single Island Mode Display -->
+        <div class="route-bar-pill single-mode-pill" v-if="locationMode === 'single'">
+          <span class="route-point dep">
+            <i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i>
+            <span>{{ singleLocation ? singleLocation.name : 'Select Island' }}</span>
+          </span>
+          <span class="route-meta-badge" v-if="singleLocation && singleLocation.atoll">
+            <i class="fa-solid fa-map-pin"></i>
+            <span>{{ singleLocation.atoll }} Atoll</span>
+          </span>
+          <span class="route-meta-badge" v-if="marineReport && marineReport.current">
+            <i class="fa-solid fa-wind"></i>
+            <span>{{ formatWind(marineReport.current.windSpeed) }} {{ windCardinal }} • {{ formatWave(marineReport.current.waveHeight) }}</span>
+          </span>
+        </div>
+
+        <!-- Passage Route Mode Display -->
+        <div class="route-bar-pill" v-else>
           <span class="route-point dep">
             <i class="fa-solid fa-anchor"></i>
             <span>{{ departureLocation ? departureLocation.name : 'Select Departure' }}</span>
@@ -149,10 +179,11 @@
             <span>{{ routeData.distanceNm }} NM • {{ routeData.transitTimeStr }}</span>
           </span>
         </div>
-        <button class="route-modify-btn" @click.stop="showRoutePlannerModal = true"
-          title="Configure Departure, Destination & Vessel Profile">
-          <i class="fa-solid fa-sliders"></i>
-          <span>Change Route</span>
+
+        <button class="route-modify-btn" @click.stop="showRoutePlannerModal = true; modalLocationTab = locationMode"
+          :title="locationMode === 'single' ? 'Select Island or Location' : 'Configure Departure, Destination & Vessel Profile'">
+          <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-sliders'"></i>
+          <span>{{ locationMode === 'single' ? 'Change Island' : 'Change Route' }}</span>
         </button>
       </div>
 
@@ -182,8 +213,7 @@
             </button>
 
             <!-- Tab 2: Satellite Map (Esri & Bing Basemaps + Zoom Earth) -->
-            <button class="main-tab-btn" :class="{ active: activeMainTab === 'map' }"
-              @click="setMainTab('map')"
+            <button class="main-tab-btn" :class="{ active: activeMainTab === 'map' }" @click="setMainTab('map')"
               title="Interactive Satellite Basemap Imagery (Free Esri & Bing Maps) with Zoom Earth Live Weather Services">
               <span class="tab-btn-inner">
                 <span class="tab-title-row">
@@ -193,7 +223,8 @@
                     <span class="tab-label-short">Sat Map</span>
                   </span>
                 </span>
-                <span class="tab-badge tab-badge-map" style="background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.3);">
+                <span class="tab-badge tab-badge-map"
+                  style="background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.3);">
                   <i class="fa-solid fa-earth-asia"></i>
                   <span>Esri & Zoom</span>
                 </span>
@@ -366,17 +397,24 @@
 
               <div class="advisory-main-content">
                 <div class="advisory-location-tag">
-                  <span><i class="fa-solid fa-anchor" style="color: #10b981; margin-right: 0.35rem;"></i>{{
-                    departureLocation.name }}</span>
-                  <span style="color: var(--cyan-primary); font-weight: 700; margin: 0 0.35rem;"><i
-                      class="fa-solid fa-arrow-right-long"></i></span>
-                  <span><i class="fa-solid fa-flag-checkered" style="color: #00f0ff; margin-right: 0.35rem;"></i>{{
-                    destinationLocation.name }}</span>
-                  <span v-if="routeData" style="color: var(--text-muted);">({{ routeData.distanceNm }} NM • Heading {{
-                    routeData.cardinal }})</span>
+                  <template v-if="locationMode === 'single'">
+                    <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary); margin-right: 0.35rem;"></i>{{
+                      singleLocation.name }}</span>
+                    <span v-if="singleLocation.atoll" style="color: var(--text-muted);">({{ singleLocation.atoll }} Atoll • Local Waters)</span>
+                  </template>
+                  <template v-else>
+                    <span><i class="fa-solid fa-anchor" style="color: #10b981; margin-right: 0.35rem;"></i>{{
+                      departureLocation.name }}</span>
+                    <span style="color: var(--cyan-primary); font-weight: 700; margin: 0 0.35rem;"><i
+                        class="fa-solid fa-arrow-right-long"></i></span>
+                    <span><i class="fa-solid fa-flag-checkered" style="color: #00f0ff; margin-right: 0.35rem;"></i>{{
+                      destinationLocation.name }}</span>
+                    <span v-if="routeData" style="color: var(--text-muted);">({{ routeData.distanceNm }} NM • Heading {{
+                      routeData.cardinal }})</span>
+                  </template>
                   <button @click="toggleFavorite"
                     style="background: none; border: none; cursor: pointer; font-size: 0.95rem; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 0.3rem;"
-                    :title="isFavorite ? 'Remove from favorites' : 'Bookmark this route'">
+                    :title="isFavorite ? 'Remove from favorites' : 'Bookmark this location'">
                     <span v-if="isFavorite" style="color: #ffb830;"><i class="fa-solid fa-star"></i> Bookmarked</span>
                     <span v-else style="color: var(--text-muted);"><i class="fa-regular fa-star"></i> Bookmark</span>
                   </button>
@@ -459,28 +497,39 @@
           <!-- Top Context & Quick Controls Strip -->
           <div class="compact-loc-strip">
             <div class="compact-loc-info">
-              <span class="compact-loc-tag"><i class="fa-solid fa-satellite"></i> Satellite Nav:</span>
-              <span class="compact-loc-name dep" title="Departure Port">
-                <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
-              </span>
-              <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
-              <span class="compact-loc-name dest" title="Destination Port">
-                <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
-              </span>
-              <span class="compact-loc-meta" v-if="routeData">
-                • {{ routeData.distanceNm }} NM (Course {{ routeData.cardinal }} • {{ routeData.transitTimeStr }})
-              </span>
+              <span class="compact-loc-tag"><i class="fa-solid fa-satellite"></i> Map Location:</span>
+              <template v-if="locationMode === 'single'">
+                <span class="compact-loc-name dep" :title="singleLocation.name">
+                  <i class="fa-solid fa-location-dot" style="color: #00f0ff;"></i> {{ singleLocation.name }}
+                </span>
+                <span class="compact-loc-meta" v-if="singleLocation.atoll">
+                  • {{ singleLocation.atoll }} Atoll
+                </span>
+              </template>
+              <template v-else>
+                <span class="compact-loc-name dep" title="Departure Port">
+                  <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
+                </span>
+                <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
+                <span class="compact-loc-name dest" title="Destination Port">
+                  <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
+                </span>
+                <span class="compact-loc-meta" v-if="routeData">
+                  • {{ routeData.distanceNm }} NM (Course {{ routeData.cardinal }} • {{ routeData.transitTimeStr }})
+                </span>
+              </template>
             </div>
             <div class="compact-loc-actions">
               <button class="loc-mini-btn" @click="detectDeviceLocation(true)" title="Use physical GPS coordinates">
                 <i class="fa-solid fa-location-crosshairs"></i> GPS
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true"
-                title="Change Passage Route & Ports">
-                <i class="fa-solid fa-route"></i> Change Route
+              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+                :title="locationMode === 'single' ? 'Select Island or Location' : 'Change Passage Route & Ports'">
+                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
+                <span>{{ locationMode === 'single' ? 'Change Island' : 'Change Route' }}</span>
               </button>
-              <button class="loc-mini-btn" @click="fitRouteBounds" title="Center map on voyage route">
-                <i class="fa-solid fa-compress"></i> Fit Route
+              <button class="loc-mini-btn" @click="fitRouteBounds" title="Center map on selected location or route">
+                <i class="fa-solid fa-compress"></i> {{ locationMode === 'single' ? 'Center Map' : 'Fit Route' }}
               </button>
             </div>
           </div>
@@ -502,7 +551,8 @@
                     <i class="fa-solid fa-map"></i> Bing Aerial
                   </button>
                   <button class="basemap-pill-btn" :class="{ active: activeBasemap === 'esri_ocean' }"
-                    @click="setBasemap('esri_ocean')" title="Esri Ocean Bathymetric Contours, Soundings & Trench Depths">
+                    @click="setBasemap('esri_ocean')"
+                    title="Esri Ocean Bathymetric Contours, Soundings & Trench Depths">
                     <i class="fa-solid fa-water"></i> Ocean Bathymetry
                   </button>
                   <button class="basemap-pill-btn seamarks-toggle" :class="{ active: showSeamarks }"
@@ -538,7 +588,8 @@
                     <span class="ze-title">Zoom Earth Live Satellite & Radar Services</span>
                     <span class="ze-badge">Free EUMETSAT & DWD ICON Engine</span>
                   </div>
-                  <span class="ze-sub">Live synchronized corridor scanner at {{ departureLocation.latitude.toFixed(2) }}°N, {{ departureLocation.longitude.toFixed(2) }}°E</span>
+                  <span class="ze-sub">Live synchronized corridor scanner at {{ departureLocation.latitude.toFixed(2)
+                    }}°N, {{ departureLocation.longitude.toFixed(2) }}°E</span>
                 </div>
                 <div class="zoom-earth-actions-grid">
                   <button class="ze-action-chip" @click="openZoomEarth('satellite')"
@@ -637,9 +688,41 @@
           </div>
 
           <!-- Sleek Compact Route & Location Context Strip for Weather -->
-          <div class="compact-loc-strip">
-            <div class="compact-loc-info">
-              <span class="compact-loc-tag"><i class="fa-solid fa-cloud-sun"></i> Weather Location:</span>
+          <div class="compact-loc-strip weather-loc-strip">
+            <!-- Mode Switcher -->
+            <div class="loc-mode-toggle-group" role="group" aria-label="Forecast Mode">
+              <button type="button" class="loc-mode-btn" :class="{ active: locationMode === 'single' }"
+                @click="setLocationMode('single')" title="Check weather forecast for any single island in Maldives">
+                <i class="fa-solid fa-location-dot"></i>
+                <span>Single Island</span>
+              </button>
+              <button type="button" class="loc-mode-btn" :class="{ active: locationMode === 'route' }"
+                @click="setLocationMode('route')" title="Check passage corridor weather between two ports">
+                <i class="fa-solid fa-route"></i>
+                <span>Passage Route</span>
+              </button>
+            </div>
+
+            <!-- Single Location Info Display -->
+            <div class="compact-loc-info" v-if="locationMode === 'single'">
+              <span class="compact-loc-tag"><i class="fa-solid fa-cloud-sun"></i> Island Forecast:</span>
+              <span class="compact-loc-name dep" :title="singleLocation.name">
+                <i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i> {{ singleLocation.name }}
+              </span>
+              <span class="compact-loc-meta" v-if="singleLocation.atoll">
+                • {{ singleLocation.atoll }} Atoll
+              </span>
+              <span class="compact-loc-meta" v-if="isMaafilaafushiSingle" style="color: var(--cyan-primary);">
+                • (Default)
+              </span>
+              <span class="compact-loc-meta" v-else-if="singleLocation.isDeviceLocation" style="color: #10b981;">
+                • (Live GPS)
+              </span>
+            </div>
+
+            <!-- Passage Route Info Display -->
+            <div class="compact-loc-info" v-else>
+              <span class="compact-loc-tag"><i class="fa-solid fa-cloud-sun"></i> Passage Route:</span>
               <span class="compact-loc-name dep" title="Departure Port">
                 <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
               </span>
@@ -651,13 +734,33 @@
                 • {{ routeData.distanceNm }} NM ({{ routeData.transitTimeStr }})
               </span>
             </div>
+
             <div class="compact-loc-actions">
-              <button class="loc-mini-btn" @click="detectDeviceLocation(true)" :title="'Use physical GPS coordinates'">
+              <button class="loc-mini-btn" @click="detectDeviceLocation(true)" title="Use physical GPS coordinates">
                 <i class="fa-solid fa-location-crosshairs"></i> GPS
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true"
-                title="Open Route Passage Planner to adjust ports or vessel">
-                <i class="fa-solid fa-route"></i> Change Route / Ports
+              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+                :title="locationMode === 'single' ? 'Choose any island or location in the Maldives' : 'Open Route Passage Planner to adjust ports or vessel'">
+                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
+                <span>{{ locationMode === 'single' ? 'Change Island' : 'Change Route' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Popular Islands Selector Tray (Visible when in Single Island Mode) -->
+          <div class="single-island-quick-tray" v-if="locationMode === 'single'">
+            <div class="quick-tray-label">
+              <i class="fa-solid fa-bolt" style="color: var(--cyan-primary);"></i>
+              <span>Quick Island:</span>
+            </div>
+            <div class="quick-tray-chips">
+              <button type="button" class="quick-island-chip"
+                v-for="isl in popularSingleIslands" :key="'quick_' + isl.name"
+                :class="{ active: singleLocation.name === isl.name }"
+                @click="setSingleIsland(isl)">
+                <i class="fa-solid fa-map-pin"></i>
+                <span>{{ isl.island || isl.name.split('(')[0].trim() }}</span>
+                <span class="chip-atoll">{{ isl.atollCode || isl.atoll }}</span>
               </button>
             </div>
           </div>
@@ -745,9 +848,14 @@
                     10-Day Weather Predictions & Voyage Trip Planner
                   </div>
                   <div class="ten-day-subtitle">
-                    Comprehensive 10-day environmental & marine forecast for <strong>{{ getFirstName(departureLocation.name) }} ➔ {{ getFirstName(destinationLocation.name) }}</strong> • Evaluates Waves, Wind, Gusts,
-                    Currents,
-                    Swells, Rain & Passage Feasibility
+                    <span v-if="locationMode === 'single'">
+                      Comprehensive 10-day environmental & marine forecast for <strong>{{ singleLocation.name }}</strong> ({{ singleLocation.atoll ? singleLocation.atoll + ' Atoll' : 'Maldives' }}) • Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Island Conditions
+                    </span>
+                    <span v-else>
+                      Comprehensive 10-day environmental & marine forecast for <strong>{{
+                        getFirstName(departureLocation.name) }} ➔ {{ getFirstName(destinationLocation.name) }}</strong> •
+                      Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Passage Feasibility
+                    </span>
                   </div>
                 </div>
 
@@ -1601,15 +1709,21 @@
           <div class="weather-route-context-strip">
             <div class="route-context-left">
               <div class="route-context-badge">
-                <i class="fa-solid fa-route"></i>
-                <span>Voyage Corridor:</span>
+                <i :class="locationMode === 'single' ? 'fa-solid fa-location-dot' : 'fa-solid fa-route'"></i>
+                <span>{{ locationMode === 'single' ? 'Forecast Location:' : 'Voyage Corridor:' }}</span>
               </div>
               <div class="route-context-names">
-                <strong>{{ departureLocation.name }}</strong>
-                <i class="fa-solid fa-arrow-right-long" style="color: var(--cyan-primary);"></i>
-                <strong>{{ destinationLocation.name }}</strong>
-                <span v-if="routeData" class="route-context-nm">({{ routeData.distanceNm }} NM • {{
-                  routeData.transitTimeStr }})</span>
+                <template v-if="locationMode === 'single'">
+                  <strong>{{ singleLocation.name }}</strong>
+                  <span v-if="singleLocation.atoll" class="route-context-nm">({{ singleLocation.atoll }} Atoll • Local Waters)</span>
+                </template>
+                <template v-else>
+                  <strong>{{ departureLocation.name }}</strong>
+                  <i class="fa-solid fa-arrow-right-long" style="color: var(--cyan-primary);"></i>
+                  <strong>{{ destinationLocation.name }}</strong>
+                  <span v-if="routeData" class="route-context-nm">({{ routeData.distanceNm }} NM • {{
+                    routeData.transitTimeStr }})</span>
+                </template>
               </div>
             </div>
             <div class="route-context-actions">
@@ -1617,9 +1731,10 @@
                 title="View interactive satellite passage map with Esri & Zoom Earth">
                 <i class="fa-solid fa-satellite"></i> Satellite Map
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true"
-                title="Open Route Passage Planner to adjust ports or vessel">
-                <i class="fa-solid fa-sliders"></i> Modify Route / Ports
+              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+                :title="locationMode === 'single' ? 'Change single location' : 'Open Route Passage Planner to adjust ports or vessel'">
+                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-sliders'"></i>
+                <span>{{ locationMode === 'single' ? 'Change Island' : 'Modify Route / Ports' }}</span>
               </button>
             </div>
           </div>
@@ -1634,12 +1749,14 @@
                 </div>
                 <div class="calendar-date-display">
                   <strong>{{ formatTravelDateFull(selectedTravelDate) }}</strong>
-                  <span class="calendar-day-relative" v-if="selectedTravelDate === (new Date()).toISOString().slice(0, 10)">
+                  <span class="calendar-day-relative"
+                    v-if="selectedTravelDate === (new Date()).toISOString().slice(0, 10)">
                     (Today)
                   </span>
                 </div>
                 <div class="calendar-sub-meta" v-if="travelDateNakaiy || travelDateMoon">
-                  <span v-if="travelDateNakaiy" class="cal-meta-pill nakaiy-pill" :title="travelDateNakaiy.weatherPattern">
+                  <span v-if="travelDateNakaiy" class="cal-meta-pill nakaiy-pill"
+                    :title="travelDateNakaiy.weatherPattern">
                     <i class="fa-solid fa-wind"></i> {{ travelDateNakaiy.name }} Nakaiy ({{ travelDateNakaiy.thaana }})
                   </span>
                   <span v-if="travelDateMoon" class="cal-meta-pill moon-pill" :title="travelDateMoon.dhivehiName">
@@ -1656,8 +1773,8 @@
                   </button>
                   <label class="calendar-input-wrapper" title="Click to choose a date from calendar">
                     <i class="fa-regular fa-calendar" style="color: var(--cyan-primary);"></i>
-                    <input type="date" class="calendar-native-input" v-model="selectedTravelDate"
-                      :min="calendarMinDate" :max="calendarMaxDate" @change="setTravelDate(selectedTravelDate)" />
+                    <input type="date" class="calendar-native-input" v-model="selectedTravelDate" :min="calendarMinDate"
+                      :max="calendarMaxDate" @change="setTravelDate(selectedTravelDate)" />
                     <span class="calendar-input-text">{{ selectedTravelDate }}</span>
                   </label>
                   <button class="cal-step-btn" @click="stepTravelDate(1)" title="Next Day">
@@ -1693,10 +1810,16 @@
                   </div>
                   <h3 class="trend-headline">Previous 3 Days ➔ Selected Date ➔ Next 3 Days</h3>
                   <p class="trend-subtext">
-                    Evaluates sea travel safety scores across the 7-day corridor window for <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                    <span v-if="locationMode === 'single'">
+                      Evaluates sea travel safety scores across the 7-day window for <strong>{{ singleLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                    </span>
+                    <span v-else>
+                      Evaluates sea travel safety scores across the 7-day corridor window for <strong>{{
+                        departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                    </span>
                   </p>
                 </div>
-                
+
                 <div class="trend-stat-pills" v-if="travelDateSafetyReport">
                   <div class="trend-day-badge" :class="'slot-' + travelDateSafetyReport.status">
                     <i class="fa-solid fa-shield-halved"></i>
@@ -1723,13 +1846,15 @@
                     <span>Caution Threshold (≥ 50%)</span>
                   </div>
                   <div class="chart-legend-item">
-                    <span class="legend-circle" style="background: var(--cyan-primary); box-shadow: 0 0 10px var(--cyan-primary);"></span>
+                    <span class="legend-circle"
+                      style="background: var(--cyan-primary); box-shadow: 0 0 10px var(--cyan-primary);"></span>
                     <span>Selected Date</span>
                   </div>
                 </div>
 
                 <div class="chart-svg-scroll-wrap">
-                  <svg class="seven-day-svg" viewBox="0 0 720 250" preserveAspectRatio="none" role="img" aria-label="7-Day Sea Travel Safety Score Chart">
+                  <svg class="seven-day-svg" viewBox="0 0 720 250" preserveAspectRatio="none" role="img"
+                    aria-label="7-Day Sea Travel Safety Score Chart">
                     <defs>
                       <linearGradient id="safetyAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stop-color="rgba(0, 240, 255, 0.45)" />
@@ -1751,39 +1876,40 @@
                     <!-- Background Grid & Threshold Lines -->
                     <line x1="55" :y1="sevenDaySafetyTrend.threshold75Y" x2="665" :y2="sevenDaySafetyTrend.threshold75Y"
                       stroke="rgba(16, 185, 129, 0.35)" stroke-dasharray="4 4" stroke-width="1.2" />
-                    <text x="668" :y="sevenDaySafetyTrend.threshold75Y + 3.5" fill="rgba(16, 185, 129, 0.75)" font-size="9" font-weight="700">75% GO</text>
+                    <text x="668" :y="sevenDaySafetyTrend.threshold75Y + 3.5" fill="rgba(16, 185, 129, 0.75)"
+                      font-size="9" font-weight="700">75% GO</text>
 
                     <line x1="55" :y1="sevenDaySafetyTrend.threshold50Y" x2="665" :y2="sevenDaySafetyTrend.threshold50Y"
                       stroke="rgba(255, 184, 48, 0.35)" stroke-dasharray="4 4" stroke-width="1.2" />
-                    <text x="668" :y="sevenDaySafetyTrend.threshold50Y + 3.5" fill="rgba(255, 184, 48, 0.75)" font-size="9" font-weight="700">50% CAUTION</text>
+                    <text x="668" :y="sevenDaySafetyTrend.threshold50Y + 3.5" fill="rgba(255, 184, 48, 0.75)"
+                      font-size="9" font-weight="700">50% CAUTION</text>
 
                     <!-- Vertical Gridlines for each day -->
                     <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'grid_' + idx">
                       <line :x1="pt.x" y1="30" :x2="pt.x" :y2="sevenDaySafetyTrend.bottomY"
                         :stroke="pt.isTravelDay ? 'rgba(0, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.08)'"
-                        :stroke-width="pt.isTravelDay ? 2 : 1"
-                        :stroke-dasharray="pt.isTravelDay ? 'none' : '2 3'" />
-                      
+                        :stroke-width="pt.isTravelDay ? 2 : 1" :stroke-dasharray="pt.isTravelDay ? 'none' : '2 3'" />
+
                       <!-- Spotlight beam behind Selected Date -->
-                      <rect v-if="pt.isTravelDay" :x="pt.x - 30" y="25" width="60" :height="sevenDaySafetyTrend.bottomY - 20"
-                        fill="rgba(0, 240, 255, 0.07)" rx="8" />
+                      <rect v-if="pt.isTravelDay" :x="pt.x - 30" y="25" width="60"
+                        :height="sevenDaySafetyTrend.bottomY - 20" fill="rgba(0, 240, 255, 0.07)" rx="8" />
                     </g>
 
                     <!-- Area Under Curve -->
                     <path :d="sevenDaySafetyTrend.areaPath" fill="url(#safetyAreaGrad)" />
 
                     <!-- Smooth Safety Score Trend Polyline -->
-                    <path :d="sevenDaySafetyTrend.linePath" fill="none" stroke="url(#safetyLineGrad)"
-                      stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowCyan)" />
+                    <path :d="sevenDaySafetyTrend.linePath" fill="none" stroke="url(#safetyLineGrad)" stroke-width="3.5"
+                      stroke-linecap="round" stroke-linejoin="round" filter="url(#glowCyan)" />
 
                     <!-- Interactive Data Nodes & Score Badges -->
-                    <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'node_' + idx"
-                      style="cursor: pointer;" @click="setTravelDate(pt.date)">
-                      
+                    <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'node_' + idx" style="cursor: pointer;"
+                      @click="setTravelDate(pt.date)">
+
                       <!-- Selected Date Outer Pulsing Ring -->
-                      <circle v-if="pt.isTravelDay" :cx="pt.x" :cy="pt.y" r="16"
-                        fill="rgba(0, 240, 255, 0.2)" stroke="var(--cyan-primary)" stroke-width="1.5" class="pulsing-node-ring" />
-                      
+                      <circle v-if="pt.isTravelDay" :cx="pt.x" :cy="pt.y" r="16" fill="rgba(0, 240, 255, 0.2)"
+                        stroke="var(--cyan-primary)" stroke-width="1.5" class="pulsing-node-ring" />
+
                       <!-- Main Score Node Circle -->
                       <circle :cx="pt.x" :cy="pt.y" :r="pt.isTravelDay ? 7 : 5.5"
                         :fill="pt.status === 'GO' ? '#10b981' : (pt.status === 'CAUTION' ? '#ffb830' : '#ff3366')"
@@ -1804,15 +1930,16 @@
                       <!-- Selected Date Floating Pin Banner -->
                       <g v-if="pt.isTravelDay" :transform="'translate(' + pt.x + ', 15)'">
                         <rect x="-46" y="-10" width="92" height="18" rx="9" fill="var(--cyan-primary)" />
-                        <text x="0" y="2.5" text-anchor="middle" fill="#040813" font-size="8.5" font-weight="900" letter-spacing="0.5">
+                        <text x="0" y="2.5" text-anchor="middle" fill="#040813" font-size="8.5" font-weight="900"
+                          letter-spacing="0.5">
                           ★ SELECTED DATE
                         </text>
                       </g>
 
                       <!-- X-Axis Day & Weather Conditions Info -->
                       <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 16" text-anchor="middle"
-                        :fill="pt.isTravelDay ? 'var(--cyan-primary)' : 'var(--text-main)'"
-                        font-size="11" :font-weight="pt.isTravelDay ? '800' : '600'">
+                        :fill="pt.isTravelDay ? 'var(--cyan-primary)' : 'var(--text-main)'" font-size="11"
+                        :font-weight="pt.isTravelDay ? '800' : '600'">
                         {{ pt.dateLabel }}
                       </text>
                       <text :x="pt.x" :y="sevenDaySafetyTrend.bottomY + 30" text-anchor="middle"
@@ -1837,9 +1964,9 @@
                             <span>PARAMETERS</span>
                           </div>
                         </th>
-                        <th v-for="day in sevenDaySafetyTrend.days" :key="'th_' + day.date"
-                          class="windy-th-day" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)" title="Click to set this day as your planned voyage departure date">
+                        <th v-for="day in sevenDaySafetyTrend.days" :key="'th_' + day.date" class="windy-th-day"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)"
+                          title="Click to set this day as your planned voyage departure date">
                           <div class="th-day-badge" v-if="day.isTravelDay">
                             <i class="fa-solid fa-anchor"></i> SELECTED
                           </div>
@@ -1857,9 +1984,8 @@
                             <span>Safety Score</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'score_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'score_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <span class="windy-status-pill" :class="'slot-' + day.status">
                             {{ day.score }}% {{ day.status }}
                           </span>
@@ -1874,9 +2000,8 @@
                             <span>Sky & Weather</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wx_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wx_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-wx-wrap" :title="day.weatherCondition.label">
                             <i :class="day.weatherCondition.icon" class="windy-wx-icon"></i>
                             <span class="windy-wx-text">{{ day.weatherCondition.label }}</span>
@@ -1892,9 +2017,8 @@
                             <span>Wave & Swell</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wv_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wv_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-metric-val wave-val">{{ formatWave(day.waveHeightMax) }}</div>
                           <div class="windy-sub-val">{{ day.wavePeriodMax || 7 }}s • {{ day.waveCardinal || 'S' }}</div>
                         </td>
@@ -1908,12 +2032,13 @@
                             <span>Wind & Direction</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wnd_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'wnd_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-wind-box">
-                            <div class="windy-arrow-circle" :title="'Wind heading: ' + (day.windDirectionDominant || 0) + '° ' + (day.windCardinal || '')">
-                              <i class="fa-solid fa-arrow-down" :style="{ transform: 'rotate(' + ((day.windDirectionDominant || 0) + 180) + 'deg)' }"></i>
+                            <div class="windy-arrow-circle"
+                              :title="'Wind heading: ' + (day.windDirectionDominant || 0) + '° ' + (day.windCardinal || '')">
+                              <i class="fa-solid fa-arrow-down"
+                                :style="{ transform: 'rotate(' + ((day.windDirectionDominant || 0) + 180) + 'deg)' }"></i>
                             </div>
                             <div class="windy-metric-val wind-val">{{ formatWind(day.windSpeedMax) }}</div>
                             <div class="windy-sub-val">{{ day.windCardinal }}</div>
@@ -1929,9 +2054,8 @@
                             <span>Peak Gusts</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'gst_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'gst_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-metric-val gust-val">{{ formatWind(day.windGustsMax) }}</div>
                         </td>
                       </tr>
@@ -1944,9 +2068,8 @@
                             <span>Best Window</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'win_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'win_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-window-pill" v-if="day.bestWindow">
                             <i class="fa-regular fa-sun" style="color: #ffb830;"></i>
                             <span>{{ day.bestWindow.startTime }}</span>
@@ -1965,9 +2088,8 @@
                             <span>Moon & Nakaiy</span>
                           </div>
                         </td>
-                        <td v-for="day in sevenDaySafetyTrend.days" :key="'nak_' + day.date"
-                          class="windy-td-cell" :class="{ 'active-travel-col': day.isTravelDay }"
-                          @click="setTravelDate(day.date)">
+                        <td v-for="day in sevenDaySafetyTrend.days" :key="'nak_' + day.date" class="windy-td-cell"
+                          :class="{ 'active-travel-col': day.isTravelDay }" @click="setTravelDate(day.date)">
                           <div class="windy-nakaiy-meta" v-if="day.nakaiy">
                             <span class="nakaiy-name" :title="day.nakaiy.weatherPattern">{{ day.nakaiy.name }}</span>
                           </div>
@@ -1993,28 +2115,42 @@
                   </div>
                   <h2 class="scorecard-date-title">{{ formatTravelDateFull(selectedTravelDate) }}</h2>
                   <p class="scorecard-route-sub">
-                    Passage Corridor: <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> • {{ selectedVessel?.name }} Profile
+                    <span v-if="locationMode === 'single'">
+                      Location: <strong>{{ singleLocation.name }}</strong> • {{ selectedVessel?.name }} Profile
+                    </span>
+                    <span v-else>
+                      Passage Corridor: <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> •
+                      {{ selectedVessel?.name }} Profile
+                    </span>
                   </p>
                 </div>
 
                 <div class="scorecard-verdict-pill" :class="'slot-' + travelDateSafetyReport.status">
-                  <i :class="travelDateSafetyReport.status === 'GO' ? 'fa-solid fa-circle-check' : (travelDateSafetyReport.status === 'CAUTION' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-xmark')"></i>
-                  <span>{{ travelDateSafetyReport.qualityRating }} ({{ travelDateSafetyReport.score }}% Safety Score)</span>
+                  <i
+                    :class="travelDateSafetyReport.status === 'GO' ? 'fa-solid fa-circle-check' : (travelDateSafetyReport.status === 'CAUTION' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-xmark')"></i>
+                  <span>{{ travelDateSafetyReport.qualityRating }} ({{ travelDateSafetyReport.score }}% Safety
+                    Score)</span>
                 </div>
               </div>
 
               <!-- Verdict & Daylight Departure Window Banner -->
               <div class="travel-verdict-box" :class="'verdict-' + travelDateSafetyReport.status">
                 <div class="verdict-icon-box">
-                  <i v-if="travelDateSafetyReport.status === 'GO'" class="fa-solid fa-circle-check" style="color: var(--sea-green); font-size: 2rem;"></i>
-                  <i v-else-if="travelDateSafetyReport.status === 'CAUTION'" class="fa-solid fa-triangle-exclamation" style="color: #ffb830; font-size: 2rem;"></i>
-                  <i v-else class="fa-solid fa-triangle-exclamation" style="color: var(--storm-red); font-size: 2rem;"></i>
+                  <i v-if="travelDateSafetyReport.status === 'GO'" class="fa-solid fa-circle-check"
+                    style="color: var(--sea-green); font-size: 2rem;"></i>
+                  <i v-else-if="travelDateSafetyReport.status === 'CAUTION'" class="fa-solid fa-triangle-exclamation"
+                    style="color: #ffb830; font-size: 2rem;"></i>
+                  <i v-else class="fa-solid fa-triangle-exclamation"
+                    style="color: var(--storm-red); font-size: 2rem;"></i>
                 </div>
                 <div class="verdict-body">
                   <div class="verdict-summary-title">{{ travelDateSafetyReport.verdictSummary }}</div>
                   <div class="verdict-best-window" v-if="travelDateSafetyReport.bestWindow">
                     <i class="fa-solid fa-star" style="color: #ffb830;"></i>
-                    <span>Recommended departure window for {{ travelDateSafetyReport.shortLabel }}: <strong>{{ travelDateSafetyReport.bestWindow.startTime }} – {{ travelDateSafetyReport.bestWindow.endTime }}</strong> (Avg wave: {{ formatWave(travelDateSafetyReport.bestWindow.avgWave) }}, Wind: {{ formatWind(travelDateSafetyReport.bestWindow.avgWind) }})</span>
+                    <span>Recommended departure window for {{ travelDateSafetyReport.shortLabel }}: <strong>{{
+                        travelDateSafetyReport.bestWindow.startTime }} – {{ travelDateSafetyReport.bestWindow.endTime
+                        }}</strong> (Avg wave: {{ formatWave(travelDateSafetyReport.bestWindow.avgWave) }}, Wind: {{
+                      formatWind(travelDateSafetyReport.bestWindow.avgWind) }})</span>
                   </div>
                 </div>
               </div>
@@ -2022,12 +2158,16 @@
               <!-- 6-Metric Environmental & Route Telemetry Grid -->
               <div class="travel-telemetry-grid">
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Wave Heights (Avg / Peak)</div>
-                  <div class="tel-value">{{ formatWave(travelDateSafetyReport.waveHeightAvg) }} <span class="tel-sub">(Max {{ formatWave(travelDateSafetyReport.waveHeightMax) }})</span></div>
-                  <div class="tel-note" v-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.maxSafeWave" style="color: var(--sea-green);">
+                  <div class="tel-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Wave Heights (Avg /
+                    Peak)</div>
+                  <div class="tel-value">{{ formatWave(travelDateSafetyReport.waveHeightAvg) }} <span
+                      class="tel-sub">(Max {{ formatWave(travelDateSafetyReport.waveHeightMax) }})</span></div>
+                  <div class="tel-note" v-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.maxSafeWave"
+                    style="color: var(--sea-green);">
                     ✓ Within safe limit ({{ selectedVessel?.maxSafeWave }}m)
                   </div>
-                  <div class="tel-note" v-else-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.cautionWave" style="color: #ffb830;">
+                  <div class="tel-note" v-else-if="travelDateSafetyReport.waveHeightMax <= selectedVessel?.cautionWave"
+                    style="color: #ffb830;">
                     ⚠ Approaching limit ({{ selectedVessel?.cautionWave }}m)
                   </div>
                   <div class="tel-note" v-else style="color: var(--storm-red);">
@@ -2036,27 +2176,35 @@
                 </div>
 
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Sustained Wind & Squall Gusts</div>
-                  <div class="tel-value">{{ formatWind(travelDateSafetyReport.windSpeedMax) }} <span class="tel-sub" style="color: #ffb830;">(Gusts {{ formatWind(travelDateSafetyReport.windGustsMax) }})</span></div>
+                  <div class="tel-label"><i class="fa-solid fa-wind" style="color: #38bdf8;"></i> Sustained Wind &
+                    Squall Gusts</div>
+                  <div class="tel-value">{{ formatWind(travelDateSafetyReport.windSpeedMax) }} <span class="tel-sub"
+                      style="color: #ffb830;">(Gusts {{ formatWind(travelDateSafetyReport.windGustsMax) }})</span></div>
                   <div class="tel-note">{{ travelDateSafetyReport.windCardinal }} winds along passage corridor</div>
                 </div>
 
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Ocean Current in Passes</div>
-                  <div class="tel-value">{{ formatCurrentSpeed(travelDateSafetyReport.oceanCurrentSpeedMaxKnots) }} <span class="tel-sub">{{ travelDateSafetyReport.oceanCurrentCardinal }}</span></div>
+                  <div class="tel-label"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Ocean
+                    Current in Passes</div>
+                  <div class="tel-value">{{ formatCurrentSpeed(travelDateSafetyReport.oceanCurrentSpeedMaxKnots) }}
+                    <span class="tel-sub">{{ travelDateSafetyReport.oceanCurrentCardinal }}</span></div>
                   <div class="tel-note">Inter-atoll kandu current velocity</div>
                 </div>
 
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-cloud-rain" style="color: #60a5fa;"></i> Precipitation & Squalls</div>
-                  <div class="tel-value">{{ formatPrecipitation(travelDateSafetyReport.precipitationSum) }} <span class="tel-sub">({{ travelDateSafetyReport.precipitationProbabilityMax }}% prob)</span></div>
+                  <div class="tel-label"><i class="fa-solid fa-cloud-rain" style="color: #60a5fa;"></i> Precipitation &
+                    Squalls</div>
+                  <div class="tel-value">{{ formatPrecipitation(travelDateSafetyReport.precipitationSum) }} <span
+                      class="tel-sub">({{ travelDateSafetyReport.precipitationProbabilityMax }}% prob)</span></div>
                   <div class="tel-note">{{ travelDateSafetyReport.weatherCondition.label }}</div>
                 </div>
 
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-arrows-left-right" style="color: var(--cyan-primary);"></i> Relative Sea Aspect</div>
+                  <div class="tel-label"><i class="fa-solid fa-arrows-left-right"
+                      style="color: var(--cyan-primary);"></i> Relative Sea Aspect</div>
                   <div class="tel-value" style="font-size: 1.05rem;">
-                    <span v-if="routeData && routeData.windAspect" class="aspect-pill" :class="'aspect-' + routeData.windAspect.type">
+                    <span v-if="routeData && routeData.windAspect" class="aspect-pill"
+                      :class="'aspect-' + routeData.windAspect.type">
                       <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
                     </span>
                     <span v-else>Corridor Aligned</span>
@@ -2065,34 +2213,41 @@
                 </div>
 
                 <div class="tel-card">
-                  <div class="tel-label"><i class="fa-solid fa-eye" style="color: #a78bfa;"></i> Navigational Visibility</div>
-                  <div class="tel-value">{{ travelDateSafetyReport.visibilityMinKm }} <span class="tel-sub">km</span></div>
+                  <div class="tel-label"><i class="fa-solid fa-eye" style="color: #a78bfa;"></i> Navigational Visibility
+                  </div>
+                  <div class="tel-value">{{ travelDateSafetyReport.visibilityMinKm }} <span class="tel-sub">km</span>
+                  </div>
                   <div class="tel-note">Atmospheric clarity on water</div>
                 </div>
               </div>
 
               <!-- Positive Factors & Hazards Lists -->
-              <div class="travel-factors-grid" v-if="(travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0) || (travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0)">
-                <div class="factors-col hazards-col" v-if="travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0">
+              <div class="travel-factors-grid"
+                v-if="(travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0) || (travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0)">
+                <div class="factors-col hazards-col"
+                  v-if="travelDateSafetyReport.hazards && travelDateSafetyReport.hazards.length > 0">
                   <div class="factors-title" style="color: var(--storm-red);">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span>Identified Passage Hazards ({{ travelDateSafetyReport.hazards.length }})</span>
                   </div>
                   <ul class="factors-list">
-                    <li v-for="(h, hIdx) in travelDateSafetyReport.hazards" :key="'hz_' + hIdx" class="factor-item hazard-item">
+                    <li v-for="(h, hIdx) in travelDateSafetyReport.hazards" :key="'hz_' + hIdx"
+                      class="factor-item hazard-item">
                       <i class="fa-solid fa-circle-exclamation"></i>
                       <span>{{ h.text }}</span>
                     </li>
                   </ul>
                 </div>
 
-                <div class="factors-col positives-col" v-if="travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0">
+                <div class="factors-col positives-col"
+                  v-if="travelDateSafetyReport.positiveFactors && travelDateSafetyReport.positiveFactors.length > 0">
                   <div class="factors-title" style="color: var(--sea-green);">
                     <i class="fa-solid fa-circle-check"></i>
                     <span>Favorable Conditions ({{ travelDateSafetyReport.positiveFactors.length }})</span>
                   </div>
                   <ul class="factors-list">
-                    <li v-for="(p, pIdx) in travelDateSafetyReport.positiveFactors" :key="'pos_' + pIdx" class="factor-item positive-item">
+                    <li v-for="(p, pIdx) in travelDateSafetyReport.positiveFactors" :key="'pos_' + pIdx"
+                      class="factor-item positive-item">
                       <i class="fa-solid fa-check"></i>
                       <span>{{ p }}</span>
                     </li>
@@ -3004,15 +3159,119 @@
       <div class="route-modal-container">
         <div class="route-modal-header">
           <div class="route-modal-title">
-            <i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i>
-            <span>Passage Route & Vessel Configuration</span>
+            <i :class="modalLocationTab === 'single' ? 'fa-solid fa-location-dot' : 'fa-solid fa-route'" style="color: var(--cyan-primary);"></i>
+            <span>{{ modalLocationTab === 'single' ? 'Single Location Weather & Marine Forecast' : 'Passage Route & Vessel Configuration' }}</span>
           </div>
           <button class="route-modal-close-btn" @click="showRoutePlannerModal = false" title="Close"><i
               class="fa-solid fa-xmark"></i></button>
         </div>
 
+        <!-- Modal Mode Switcher Tabs: Single Location vs Passage Route -->
+        <div class="modal-mode-tabs-row">
+          <button type="button" class="modal-tab-pill" :class="{ active: modalLocationTab === 'single' }"
+            @click="modalLocationTab = 'single'; setLocationMode('single')">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>1. Single Location Forecast</span>
+          </button>
+          <button type="button" class="modal-tab-pill" :class="{ active: modalLocationTab === 'route' }"
+            @click="modalLocationTab = 'route'; setLocationMode('route')">
+            <i class="fa-solid fa-route"></i>
+            <span>2. Passage Voyage Route</span>
+          </button>
+        </div>
+
+        <!-- SINGLE LOCATION FORECAST SELECTOR PANEL -->
+        <section class="glass-panel single-location-panel" v-if="modalLocationTab === 'single'">
+          <div class="single-loc-header">
+            <div class="section-label">
+              <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i></span>
+              Single Location Selection • Island / Port / Anchorage Forecast
+            </div>
+            <div class="single-loc-current">
+              <div class="current-loc-badge">
+                <i class="fa-solid fa-map-pin" style="color: var(--cyan-primary);"></i>
+                <strong>{{ singleLocation.name }}</strong>
+                <span class="default-pill-tag" v-if="isMaafilaafushiSingle">DEFAULT</span>
+                <span class="gps-active-tag" v-else-if="singleLocation.isDeviceLocation">LIVE GPS</span>
+              </div>
+              <div class="current-loc-sub">
+                {{ singleLocation.atoll ? singleLocation.atoll + ' Atoll • ' : '' }}
+                {{ singleLocation.latitude.toFixed(3) }}°N, {{ singleLocation.longitude.toFixed(3) }}°E
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons: Maafilaafushi & Device GPS -->
+          <div class="col-quick-actions" style="margin-bottom: 0.85rem;">
+            <button class="col-quick-btn maaf-btn" :class="{ active: isMaafilaafushiSingle }"
+              @click="setSingleToMaafilaafushi()" title="View forecast for Maafilaafushi (Lhaviyani Atoll)">
+              <i class="fa-solid fa-anchor"></i> Maafilaafushi (Default)
+            </button>
+            <button class="col-quick-btn gps-btn" :class="{ active: singleLocation.isDeviceLocation }"
+              @click="detectDeviceLocation(true)" :disabled="isLocatingDevice"
+              title="Use physical device GPS coordinates">
+              <i class="fa-solid fa-spinner fa-spin" v-if="isLocatingDevice"></i>
+              <i class="fa-solid fa-location-crosshairs" v-else></i>
+              <span>{{ isLocatingDevice ? 'Locating...' : 'My Device GPS' }}</span>
+            </button>
+          </div>
+
+          <!-- Popular Island Hubs for Instant Weather -->
+          <div class="single-popular-tray">
+            <div class="popular-routes-title" style="margin-bottom: 0.4rem;">
+              <i class="fa-solid fa-bolt" style="color: var(--cyan-primary);"></i>
+              <span>Popular Islands for Instant Forecast:</span>
+            </div>
+            <div class="quick-ports">
+              <button class="port-chip" v-for="isl in popularSingleIslands" :key="'modal_pop_' + isl.name"
+                :class="{ active: singleLocation.name === isl.name }"
+                @click="setSingleIsland(isl)">
+                <i class="fa-solid fa-map-pin" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i>
+                {{ isl.island || isl.name.split('(')[0].trim() }} ({{ isl.atollCode || isl.atoll }})
+              </button>
+            </div>
+          </div>
+
+          <!-- Atoll Filter & Search Input -->
+          <div class="col-filters-row" style="margin-top: 0.85rem;">
+            <div class="filter-group">
+              <label class="filter-label"><i class="fa-solid fa-filter"></i> Filter Atoll:</label>
+              <select class="col-atoll-select" v-model="singleAtollFilter">
+                <option value="ALL">All 20 Atolls</option>
+                <option v-for="atoll in maldivesAtolls" :key="'single_' + atoll.key" :value="atoll.key">
+                  {{ atoll.name }} ({{ atoll.shortName }})
+                </option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label"><i class="fa-solid fa-magnifying-glass"></i> Search Island:</label>
+              <input type="text" class="col-search-input" v-model="singleSearchQuery"
+                placeholder="Type island name (e.g. Malé, Dhidhdhoo, Fuvahmulah)..." />
+            </div>
+          </div>
+
+          <!-- Scrollable Island Selection Grid -->
+          <div class="col-island-scroll-box" style="max-height: 280px;">
+            <div class="col-island-count">
+              <span>Available Islands ({{ singleFilteredIslands.length }}):</span>
+              <small>Click island to view instant weather & marine forecast</small>
+            </div>
+            <div class="island-select-grid">
+              <button class="island-select-pill" v-for="isl in singleFilteredIslands"
+                :key="'single_isl_' + isl.name" :class="{ selected: singleLocation.name === isl.name }"
+                @click="setSingleIsland(isl)">
+                <i class="fa-solid fa-map-pin"
+                  :style="{ color: singleLocation.name === isl.name ? '#00f0ff' : '#38bdf8' }"></i>
+                <span class="isl-name">{{ isl.island || isl.name.split('(')[0].trim() }}</span>
+                <span class="isl-atoll-badge">{{ isl.atollCode || isl.atoll }}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- 1. VOYAGE PASSAGE ROUTE PLANNER (DEPARTURE & DESTINATION DUAL SELECTORS) -->
-        <section class="glass-panel route-planner-card">
+        <section class="glass-panel route-planner-card" v-if="modalLocationTab === 'route'">
           <div class="route-planner-header">
             <div class="section-label">
               <span><i class="fa-solid fa-route" style="color: var(--cyan-primary);"></i></span>
@@ -3238,7 +3497,7 @@
 
         <div class="route-modal-actions">
           <button class="route-modal-apply-btn" @click="showRoutePlannerModal = false">
-            <i class="fa-solid fa-check"></i> <span>Apply Route & View Passage</span>
+            <i class="fa-solid fa-check"></i> <span>Apply & View {{ modalLocationTab === 'single' ? 'Island Weather' : 'Passage Route' }}</span>
           </button>
         </div>
       </div>

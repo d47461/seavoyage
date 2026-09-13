@@ -61,13 +61,13 @@ import {
 
 const app = createApp({
   setup() {
-    // 1. Dual Location Route Planning State
-    // Default departure location is ALWAYS Maafilaafushi (Lhaviyani Atoll: 5.3625°N, 73.4197°E)
-    // unless the user explicitly wants to change it to their device GPS or another island.
-    const departureLocation = ref({ ...MAAFILAAFUSHI_PORT });
-    const destinationLocation = ref({ ...HANIMAADHOO_PORT }); // Hanimaadhoo (Haa Dhaalu Atoll) by default
-    const activePickerTarget = ref('departure'); // 'departure' or 'destination'
-    const popularRoutes = ref(POPULAR_ROUTES);
+    // 0. Location Mode: 'single' (Single Location Forecast) vs 'route' (Inter-Atoll Passage Route)
+    // Default to 'single' so looking up weather for any single island in the Maldives is instantaneous
+    const locationMode = ref('single');
+    const modalLocationTab = ref('single'); // 'single' or 'route' in location modal
+    const singleLocation = ref({ ...MAAFILAAFUSHI_PORT });
+    const singleAtollFilter = ref('ALL');
+    const singleSearchQuery = ref('');
 
     // Dedicated Atoll & Island Directory Filtering for Departure & Destination
     const maldivesAtolls = ref(MALDIVES_ATOLLS);
@@ -75,6 +75,70 @@ const app = createApp({
     const destinationAtollFilter = ref('Kaafu');
     const departureSearchQuery = ref('');
     const destinationSearchQuery = ref('');
+
+    const singleFilteredIslands = computed(() => {
+      const q = singleSearchQuery.value?.trim();
+      if (q && q.length > 0) {
+        return searchMaldivesDirectory(q, 45);
+      }
+      if (singleAtollFilter.value === 'ALL') {
+        return MALDIVES_ISLANDS_DATABASE;
+      }
+      return getIslandsByAtoll(singleAtollFilter.value);
+    });
+
+    const isMaafilaafushiSingle = computed(() => {
+      if (!singleLocation.value) return false;
+      return (
+        Math.abs(singleLocation.value.latitude - 5.3625) < 0.005 &&
+        Math.abs(singleLocation.value.longitude - 73.4197) < 0.005 &&
+        !singleLocation.value.isDeviceLocation
+      );
+    });
+
+    // Popular Island Hubs for Instant 1-Click Weather Lookup
+    const popularSingleIslands = ref([
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Malé City') || MALDIVES_ISLANDS_DATABASE[1],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Maafilaafushi') || MALDIVES_ISLANDS_DATABASE[0],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Hulhumalé') || MALDIVES_ISLANDS_DATABASE[2],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Hanimaadhoo') || HANIMAADHOO_PORT,
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Dharavandhoo') || MALDIVES_ISLANDS_DATABASE[3],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Rasdhoo') || MALDIVES_ISLANDS_DATABASE[4],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Fuvahmulah') || MALDIVES_ISLANDS_DATABASE[5],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Girifushi') || MALDIVES_ISLANDS_DATABASE[6],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Kulhudhuffushi') || MALDIVES_ISLANDS_DATABASE[7],
+      MALDIVES_ISLANDS_DATABASE.find(i => i.island === 'Hithadhoo') || MALDIVES_ISLANDS_DATABASE[8]
+    ].filter(Boolean));
+
+    function setLocationMode(mode) {
+      if (mode !== 'single' && mode !== 'route') return;
+      locationMode.value = mode;
+      modalLocationTab.value = mode;
+      loadDataForRoute();
+    }
+
+    function setSingleIsland(island) {
+      if (!island) return;
+      singleLocation.value = { ...island, isDeviceLocation: false };
+      singleSearchQuery.value = '';
+      departureLocation.value = { ...island, isDeviceLocation: false };
+      loadDataForRoute();
+    }
+
+    function setSingleToMaafilaafushi() {
+      singleLocation.value = { ...MAAFILAAFUSHI_PORT };
+      departureLocation.value = { ...MAAFILAAFUSHI_PORT };
+      singleSearchQuery.value = '';
+      loadDataForRoute();
+    }
+
+    // 1. Dual Location Route Planning State
+    // Default departure location is ALWAYS Maafilaafushi (Lhaviyani Atoll: 5.3625°N, 73.4197°E)
+    // unless the user explicitly wants to change it to their device GPS or another island.
+    const departureLocation = ref({ ...MAAFILAAFUSHI_PORT });
+    const destinationLocation = ref({ ...HANIMAADHOO_PORT }); // Hanimaadhoo (Haa Dhaalu Atoll) by default
+    const activePickerTarget = ref('departure'); // 'departure' or 'destination'
+    const popularRoutes = ref(POPULAR_ROUTES);
 
     const departureFilteredIslands = computed(() => {
       const q = departureSearchQuery.value?.trim();
@@ -95,6 +159,7 @@ const app = createApp({
     function setDepartureIsland(island) {
       if (!island) return;
       departureLocation.value = { ...island, isDeviceLocation: false };
+      singleLocation.value = { ...island, isDeviceLocation: false };
       departureSearchQuery.value = '';
       loadDataForRoute();
     }
@@ -120,7 +185,10 @@ const app = createApp({
     const isLocatingDevice = ref(false);
     const deviceLocation = ref({ ...MAAFILAAFUSHI_PORT });
     const deviceLocationError = ref(null);
-    const isUsingDeviceLocation = computed(() => departureLocation.value?.isDeviceLocation === true);
+    const isUsingDeviceLocation = computed(() => {
+      if (locationMode.value === 'single') return singleLocation.value?.isDeviceLocation === true;
+      return departureLocation.value?.isDeviceLocation === true;
+    });
 
     // Top-Level Main Navigation Tab ('advisories' | 'weather' | 'planning' | 'fishing')
     const activeMainTab = ref('advisories');
@@ -460,8 +528,14 @@ const app = createApp({
       return getWindDirectionCardinal(marineReport.value.current.windDirection);
     });
 
-    // Check if route is in Maldives
+    // Check if route or location is in Maldives
     const isMaldives = computed(() => {
+      if (locationMode.value === 'single') {
+        return (
+          isCoordinateInMaldives(singleLocation.value.latitude, singleLocation.value.longitude) ||
+          singleLocation.value.country === 'Maldives'
+        );
+      }
       return (
         isCoordinateInMaldives(departureLocation.value.latitude, departureLocation.value.longitude) ||
         isCoordinateInMaldives(destinationLocation.value.latitude, destinationLocation.value.longitude) ||
@@ -470,8 +544,27 @@ const app = createApp({
       );
     });
 
-    // Active MMS Alert for this voyage route (checks departure, destination, or corridor)
+    // Active MMS Alert for this location or voyage route
     const currentMmsAlert = computed(() => {
+      if (locationMode.value === 'single') {
+        const singleAlert = matchMMSAlert(
+          singleLocation.value.latitude, 
+          singleLocation.value.longitude, 
+          singleLocation.value.name, 
+          mmsAlerts.value
+        );
+        return singleAlert || {
+          active: false,
+          color: 'green',
+          headline: 'No Active Severe Weather Warning',
+          description: 'Normal sea conditions prevailing according to Maldives Meteorological Service.',
+          areaDesc: 'All Atolls Clear - Normal Weather',
+          startAtoll: 'Haa Alif Atoll',
+          endAtoll: 'Addu City',
+          inEffect: false
+        };
+      }
+
       const depAlert = matchMMSAlert(
         departureLocation.value.latitude, 
         departureLocation.value.longitude, 
@@ -507,9 +600,10 @@ const app = createApp({
 
     // Astronomical Tide Prediction & Channel Water Velocity
     const tideData = computed(() => {
+      const loc = locationMode.value === 'single' ? singleLocation.value : departureLocation.value;
       return getTidePrediction(
-        departureLocation.value.latitude,
-        departureLocation.value.longitude,
+        loc.latitude,
+        loc.longitude,
         new Date()
       );
     });
@@ -640,16 +734,18 @@ const app = createApp({
       );
     });
 
-    // Check if current departure is bookmarked
+    // Active Location (Single island in single mode, departure in route mode)
+    const activeLocation = computed(() => locationMode.value === 'single' ? singleLocation.value : departureLocation.value);
+
+    // Check if current active location is bookmarked
     const isFavorite = computed(() => {
+      const loc = activeLocation.value;
+      if (!loc) return false;
       return favoriteLocations.value.some(l => 
-        Math.abs(l.latitude - departureLocation.value.latitude) < 0.01 && 
-        Math.abs(l.longitude - departureLocation.value.longitude) < 0.01
+        Math.abs(l.latitude - loc.latitude) < 0.01 && 
+        Math.abs(l.longitude - loc.longitude) < 0.01
       );
     });
-
-    // Backwards-compatible alias for single location references
-    const activeLocation = computed(() => departureLocation.value);
 
     // Dynamic Badges for Main Navigation Tabs
     const advisoriesTabBadge = computed(() => {
@@ -823,24 +919,23 @@ const app = createApp({
       }
     }
 
-    // Load Marine Data for Passage Route Corridor (evaluated at channel midpoint)
+    // Load Marine Data for Single Location or Passage Route Corridor
     async function loadDataForRoute() {
       isLoadingData.value = true;
       errorMessage.value = null;
       try {
-        const dep = departureLocation.value;
-        const dest = destinationLocation.value;
+        const targetLoc = locationMode.value === 'single' ? singleLocation.value : departureLocation.value;
 
-        // Query live marine and atmospheric observations at Departure (device location by default)
-        const data = await fetchMarineAndWeatherData(dep.latitude, dep.longitude);
+        // Query live marine and atmospheric observations at target location
+        const data = await fetchMarineAndWeatherData(targetLoc.latitude, targetLoc.longitude);
         marineReport.value = data;
 
         recalculateSafety();
         updateMapRoute();
         fetchAiBrief();
       } catch (err) {
-        console.error("Error loading route marine data:", err);
-        errorMessage.value = "Unable to fetch live marine observations for this route. Please verify coordinates or network connection.";
+        console.error("Error loading marine data:", err);
+        errorMessage.value = "Unable to fetch live marine observations for this location. Please verify coordinates or network connection.";
       } finally {
         isLoadingData.value = false;
       }
@@ -848,27 +943,28 @@ const app = createApp({
 
     function recalculateSafety() {
       if (!marineReport.value) return;
+      const effectiveRoute = locationMode.value === 'single' ? null : routeData.value;
       safetyEvaluation.value = evaluateSeaSafety(
         marineReport.value, 
         selectedVesselKey.value,
         currentMmsAlert.value,
-        routeData.value,
+        effectiveRoute,
         tideData.value,
         moonPhase.value,
         currentNakaiy.value
       );
 
-      // Evaluate 10-Day Environmental Weather Predictions & Trip Planning with Lunar & Nakaiy dynamics
+      // Evaluate 10-Day Environmental Weather Predictions with Lunar & Nakaiy dynamics
       if (marineReport.value.tenDays && marineReport.value.tenDays.length > 0) {
         tenDayForecast.value = marineReport.value.tenDays.map(d => {
           const dMoon = getMoonPhaseInfo(new Date(d.date + 'T12:00:00Z'));
           const dNakaiy = getCurrentNakaiy(new Date(d.date + 'T12:00:00Z'));
-          return evaluateDayTripPlanning(d, selectedVesselKey.value, routeData.value, currentMmsAlert.value, dMoon, dNakaiy);
+          return evaluateDayTripPlanning(d, selectedVesselKey.value, effectiveRoute, currentMmsAlert.value, dMoon, dNakaiy);
         });
         tenDaySummary.value = generateTenDayTripSummary(
           tenDayForecast.value, 
           vesselProfiles.value[selectedVesselKey.value], 
-          routeData.value
+          effectiveRoute
         );
       } else {
         tenDayForecast.value = [];
@@ -880,7 +976,12 @@ const app = createApp({
       if (!marineReport.value || !safetyEvaluation.value) return;
       isAiLoading.value = true;
       try {
-        let locationContext = `Passage: ${departureLocation.value.name} ➔ ${destinationLocation.value.name} (${routeData.value?.distanceNm} NM, heading ${routeData.value?.cardinal}, Est Transit: ${routeData.value?.transitTimeStr})`;
+        let locationContext = '';
+        if (locationMode.value === 'single') {
+          locationContext = `Location: ${singleLocation.value.name} (${singleLocation.value.atoll ? singleLocation.value.atoll + ' Atoll' : 'Maldives'}, ${singleLocation.value.latitude.toFixed(3)}°N, ${singleLocation.value.longitude.toFixed(3)}°E)`;
+        } else {
+          locationContext = `Passage: ${departureLocation.value.name} ➔ ${destinationLocation.value.name} (${routeData.value?.distanceNm} NM, heading ${routeData.value?.cardinal}, Est Transit: ${routeData.value?.transitTimeStr})`;
+        }
         if (currentNakaiy.value) {
           locationContext += ` [Active Nakaiy: ${currentNakaiy.value.name} (${currentNakaiy.value.thaana}) • ${currentNakaiy.value.monsoonFull} • ${currentNakaiy.value.weatherPattern}]`;
         }
@@ -1035,6 +1136,7 @@ const app = createApp({
         const devLoc = buildDeviceLocationObject(latitude, longitude, accuracy);
         deviceLocation.value = devLoc;
         departureLocation.value = devLoc;
+        singleLocation.value = devLoc;
         try {
           localStorage.setItem('seavoyage_device_location_v2', JSON.stringify(devLoc));
         } catch (e) {}
@@ -1072,6 +1174,7 @@ const app = createApp({
             const devLoc = buildDeviceLocationObject(lat, lon, accuracy);
             deviceLocation.value = devLoc;
             departureLocation.value = devLoc;
+            singleLocation.value = devLoc;
 
             // Cache device location for instant restoration on subsequent visits
             try {
@@ -1313,7 +1416,10 @@ const app = createApp({
           isMaldives: inMv
         };
 
-        if (activePickerTarget.value === 'destination') {
+        if (locationMode.value === 'single') {
+          singleLocation.value = newLoc;
+          departureLocation.value = newLoc;
+        } else if (activePickerTarget.value === 'destination') {
           destinationLocation.value = newLoc;
         } else {
           departureLocation.value = newLoc;
@@ -1325,6 +1431,52 @@ const app = createApp({
     // Draw route markers and animated polyline
     function updateMapRoute() {
       if (!leafletMap) return;
+
+      if (locationMode.value === 'single') {
+        const loc = singleLocation.value;
+        const locLatLng = [loc.latitude, loc.longitude];
+        const isDevice = loc.isDeviceLocation === true;
+        const pinIcon = L.divIcon({
+          className: 'custom-single-pin',
+          html: `
+            <div style="
+              background: #00f0ff;
+              width: 38px;
+              height: 38px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 0 15px #00f0ff, 0 0 30px rgba(0, 240, 255, 0.6);
+              border: 2px solid #ffffff;
+              font-size: 16px;
+              cursor: pointer;
+            " title="${loc.name}"><i class="${isDevice ? 'fa-solid fa-location-crosshairs' : 'fa-solid fa-location-dot'}" style="color: #060c18;"></i></div>
+          `,
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
+        });
+
+        if (departureMarker) {
+          departureMarker.setLatLng(locLatLng);
+          departureMarker.setIcon(pinIcon);
+        } else {
+          departureMarker = L.marker(locLatLng, { icon: pinIcon }).addTo(leafletMap);
+        }
+        departureMarker.bindTooltip(isDevice ? `<b>Device GPS</b>: ${loc.name}` : `<b>${loc.name}</b><br>${loc.atoll ? loc.atoll + ' Atoll' : ''}`, { direction: 'top' });
+
+        if (destinationMarker) {
+          leafletMap.removeLayer(destinationMarker);
+          destinationMarker = null;
+        }
+        if (routePolyline) {
+          leafletMap.removeLayer(routePolyline);
+          routePolyline = null;
+        }
+        leafletMap.setView(locLatLng, 12);
+        return;
+      }
+
       const dep = departureLocation.value;
       const dest = destinationLocation.value;
 
@@ -1453,6 +1605,17 @@ const app = createApp({
 
 
     return {
+      locationMode,
+      setLocationMode,
+      modalLocationTab,
+      singleLocation,
+      singleAtollFilter,
+      singleSearchQuery,
+      singleFilteredIslands,
+      isMaafilaafushiSingle,
+      popularSingleIslands,
+      setSingleIsland,
+      setSingleToMaafilaafushi,
       departureLocation,
       destinationLocation,
       activePickerTarget,
