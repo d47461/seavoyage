@@ -17,6 +17,19 @@ export const VESSEL_PROFILES = {
     maxSafeGusts: 25,
     minSafeVisibility: 2500
   },
+  speedboat_ferry: {
+    id: 'speedboat_ferry',
+    name: 'Speedboat Ferry (Commercial Express)',
+    subtitle: '38 - 60ft • > 3x 250HP+ Outboards • Commercial passenger express',
+    icon: 'fa-solid fa-gauge-high',
+    cruisingSpeedKnots: 36, // Triple/Quad 250HP+ engines (36 kn cruise)
+    maxSafeWave: 1.3,       // meters
+    cautionWave: 2.0,       // meters (requires throttle back to 22-26 kn)
+    maxSafeWind: 18,        // knots
+    cautionWind: 25,
+    maxSafeGusts: 30,
+    minSafeVisibility: 2000
+  },
   maldives_dhoni: {
     id: 'maldives_dhoni',
     name: 'Safari Boat / Traditional Dhoni',
@@ -294,6 +307,12 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
           hazards.push({
             level: 'danger',
             text: `Head Sea Bow Pounding: Course ${Math.round(route.bearing)}° drives directly into ${waveHeight.toFixed(1)}m waves (${dominantAspect.angle}° angle). Severe slamming against fiberglass hull; reduce speed to 14-16 kn, extending passage by ~35%.`
+          });
+        } else if (vessel.id === 'speedboat_ferry' && waveHeight >= 1.2) {
+          score -= 14;
+          hazards.push({
+            level: 'caution',
+            text: `Head Sea Resistance at 36 kn: Course ${Math.round(route.bearing)}° encounters ${waveHeight.toFixed(1)}m waves (${dominantAspect.angle}° angle). Reduce cruising throttles from 36 kn to 22–26 kn to minimize passenger slamming in open channel passes.`
           });
         } else {
           score -= 10;
@@ -622,7 +641,7 @@ export function evaluateDayTripPlanning(day, vesselProfileKey = 'maldives_speedb
   if (route && typeof route.bearing === 'number') {
     relativeAspect = getRelativeSeaAspect(route.bearing, day.windDirectionDominant);
     if (relativeAspect.type === 'head' && waveMax > 0.8) {
-      score -= (vessel.id === 'maldives_speedboat' ? 14 : 8);
+      score -= (vessel.id === 'maldives_speedboat' ? 14 : (vessel.id === 'speedboat_ferry' ? 11 : 8));
       hazards.push({
         level: 'caution',
         text: `Head sea aspect (${relativeAspect.angle}°). Hull pounding into opposing waves.`

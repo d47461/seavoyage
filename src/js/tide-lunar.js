@@ -702,7 +702,7 @@ export function findBestTravelWindow(timeline, vessel, mmsAlert = null, tidePred
 
     // Route directional impact
     if (windAspect?.type === 'head' && wave >= 0.8) {
-      score -= (vessel.id === 'maldives_speedboat' ? 16 : 10);
+      score -= (vessel.id === 'maldives_speedboat' ? 16 : (vessel.id === 'speedboat_ferry' ? 13 : 10));
     } else if (swellAspect?.type === 'beam' && (wave >= 1.0 || swellH >= 0.8)) {
       score -= (vessel.id === 'maldives_dhoni' ? 16 : 10);
     } else if (swellAspect?.type === 'following' && windAspect?.type === 'following' && wave < 1.6) {
