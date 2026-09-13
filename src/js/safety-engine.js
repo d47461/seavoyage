@@ -856,9 +856,9 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
   const offsetLabels = {
     '-3': '-3 Days',
     '-2': '-2 Days',
-    '-1': 'Yesterday',
-    '0': '★ TRAVEL DAY',
-    '1': 'Tomorrow',
+    '-1': '-1 Day',
+    '0': 'Selected Date',
+    '1': '+1 Day',
     '2': '+2 Days',
     '3': '+3 Days'
   };
@@ -964,18 +964,18 @@ export function generate7DaySafetyTrend(targetDateStr, allDailyRecords, vesselPr
   let trendInsight = '';
   if (travelDay.score >= 75) {
     if (travelDay.score >= highestScoreDay.score) {
-      trendInsight = `Your planned travel day (${travelDay.shortLabel}) is the optimal passage window in this 7-day period with a ${travelDay.score}% safety score.`;
+      trendInsight = `The selected date (${travelDay.shortLabel}) is the optimal passage window in this 7-day corridor with a ${travelDay.score}% safety score.`;
     } else {
       trendInsight = `Safe passage conditions prevailing on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Sea conditions remain well within vessel seaworthiness limits.`;
     }
   } else if (travelDay.score >= 50) {
     if (highestScoreDay.score > travelDay.score + 10) {
-      trendInsight = `Moderate chop on your planned travel day (${travelDay.score}% Safety Score). Consider ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}) which offers calmer ${highestScoreDay.waveHeightMax}m seas (${highestScoreDay.score}% score).`;
+      trendInsight = `Moderate chop on the selected date (${travelDay.shortLabel}, ${travelDay.score}% Safety Score). Consider ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}) which offers calmer ${highestScoreDay.waveHeightMax}m seas (${highestScoreDay.score}% score).`;
     } else {
       trendInsight = `Caution advised on ${travelDay.shortLabel} (${travelDay.score}% Safety Score). Inter-atoll channel crossings will experience elevated wave action.`;
     }
   } else {
-    trendInsight = `Adverse maritime conditions on your planned travel day (${travelDay.score}% Safety Score, ${travelDay.waveHeightMax}m waves). High swamping and squall hazard; consider rescheduling to ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}, ${highestScoreDay.score}% score).`;
+    trendInsight = `Adverse maritime conditions on the selected date (${travelDay.shortLabel}, ${travelDay.score}% Safety Score, ${travelDay.waveHeightMax}m waves). High swamping and squall hazard; consider rescheduling to ${highestScoreDay.relativeLabel} (${highestScoreDay.shortLabel}, ${highestScoreDay.score}% score).`;
   }
 
   return {

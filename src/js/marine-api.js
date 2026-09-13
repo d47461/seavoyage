@@ -570,7 +570,6 @@ export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM
   let dayLabel = '';
   if (dayOffset === 0) dayLabel = 'Today';
   else if (dayOffset === 1) dayLabel = 'Tomorrow';
-  else if (dayOffset === -1) dayLabel = 'Yesterday';
   else dayLabel = dayDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
   const fullDate = dayDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });

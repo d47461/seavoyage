@@ -1572,9 +1572,6 @@
                   <span class="calendar-day-relative" v-if="selectedTravelDate === (new Date()).toISOString().slice(0, 10)">
                     (Today)
                   </span>
-                  <span class="calendar-day-relative" v-else-if="travelDateSafetyReport">
-                    ({{ travelDateSafetyReport.relativeLabel }})
-                  </span>
                 </div>
                 <div class="calendar-sub-meta" v-if="travelDateNakaiy || travelDateMoon">
                   <span v-if="travelDateNakaiy" class="cal-meta-pill nakaiy-pill" :title="travelDateNakaiy.weatherPattern">
@@ -1610,7 +1607,7 @@
                     @click="setTravelDatePreset('today')">Today</button>
                   <button class="date-preset-pill"
                     :class="{ active: selectedTravelDate === (new Date(Date.now() + 86400000)).toISOString().slice(0, 10) }"
-                    @click="setTravelDatePreset('tomorrow')">Tomorrow</button>
+                    @click="setTravelDatePreset('tomorrow')">+1 Day</button>
                   <button class="date-preset-pill"
                     :class="{ active: selectedTravelDate === (new Date(Date.now() + 172800000)).toISOString().slice(0, 10) }"
                     @click="setTravelDatePreset('plus2')">+2 Days</button>
@@ -1629,7 +1626,7 @@
                     <i class="fa-solid fa-chart-area" style="color: var(--cyan-primary);"></i>
                     <span>7-DAY COMPARATIVE SEA TRAVEL SAFETY WINDOW</span>
                   </div>
-                  <h3 class="trend-headline">Previous 3 Days ➔ Traveling Day ➔ Next 3 Days</h3>
+                  <h3 class="trend-headline">Previous 3 Days ➔ Selected Date ➔ Next 3 Days</h3>
                   <p class="trend-subtext">
                     Evaluates sea travel safety scores across the 7-day corridor window for <strong>{{ departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name }}).
                   </p>
@@ -1662,7 +1659,7 @@
                   </div>
                   <div class="chart-legend-item">
                     <span class="legend-circle" style="background: var(--cyan-primary); box-shadow: 0 0 10px var(--cyan-primary);"></span>
-                    <span>Selected Traveling Day</span>
+                    <span>Selected Date</span>
                   </div>
                 </div>
 
@@ -1702,7 +1699,7 @@
                         :stroke-width="pt.isTravelDay ? 2 : 1"
                         :stroke-dasharray="pt.isTravelDay ? 'none' : '2 3'" />
                       
-                      <!-- Spotlight beam behind Travel Day -->
+                      <!-- Spotlight beam behind Selected Date -->
                       <rect v-if="pt.isTravelDay" :x="pt.x - 30" y="25" width="60" :height="sevenDaySafetyTrend.bottomY - 20"
                         fill="rgba(0, 240, 255, 0.07)" rx="8" />
                     </g>
@@ -1718,7 +1715,7 @@
                     <g v-for="(pt, idx) in sevenDaySafetyTrend.points" :key="'node_' + idx"
                       style="cursor: pointer;" @click="setTravelDate(pt.date)">
                       
-                      <!-- Travel Day Outer Pulsing Ring -->
+                      <!-- Selected Date Outer Pulsing Ring -->
                       <circle v-if="pt.isTravelDay" :cx="pt.x" :cy="pt.y" r="16"
                         fill="rgba(0, 240, 255, 0.2)" stroke="var(--cyan-primary)" stroke-width="1.5" class="pulsing-node-ring" />
                       
@@ -1739,11 +1736,11 @@
                         </text>
                       </g>
 
-                      <!-- Travel Day Floating Pin Banner -->
+                      <!-- Selected Date Floating Pin Banner -->
                       <g v-if="pt.isTravelDay" :transform="'translate(' + pt.x + ', 15)'">
-                        <rect x="-42" y="-10" width="84" height="18" rx="9" fill="#ffb830" />
-                        <text x="0" y="2.5" text-anchor="middle" fill="#000" font-size="8.5" font-weight="900" letter-spacing="0.5">
-                          ★ TRAVEL DAY
+                        <rect x="-46" y="-10" width="92" height="18" rx="9" fill="var(--cyan-primary)" />
+                        <text x="0" y="2.5" text-anchor="middle" fill="#040813" font-size="8.5" font-weight="900" letter-spacing="0.5">
+                          ★ SELECTED DATE
                         </text>
                       </g>
 
@@ -1801,7 +1798,7 @@
 
                   <div class="trend-card-action">
                     <span v-if="day.isTravelDay" class="active-indicator">
-                      <i class="fa-solid fa-circle-dot"></i> Planned Travel Day
+                      <i class="fa-solid fa-circle-dot"></i> Selected Date
                     </span>
                     <span v-else class="select-hint">
                       Select This Date ➔
@@ -1817,7 +1814,7 @@
                 <div class="scorecard-title-col">
                   <div class="best-window-badge">
                     <i class="fa-solid fa-ship" style="color: var(--cyan-primary);"></i>
-                    <span>TRAVEL DAY SEA SAFETY SCORE & ROUTE TELEMETRY</span>
+                    <span>SEA TRAVEL SAFETY SCORE & ROUTE TELEMETRY</span>
                   </div>
                   <h2 class="scorecard-date-title">{{ formatTravelDateFull(selectedTravelDate) }}</h2>
                   <p class="scorecard-route-sub">
