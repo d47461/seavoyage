@@ -22,8 +22,9 @@ import {
   MALDIVES_ATOLLS,
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
-  getIslandsByAtoll
-} from './marine-api.js?v=20260913-v4';
+  getIslandsByAtoll,
+  getZoomEarthUrl
+} from './marine-api.js?v=20260913-v5';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
@@ -164,10 +165,13 @@ const app = createApp({
       if (typeof window !== 'undefined' && window.innerWidth <= 1200) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      if (tabKey === 'advisories') {
+      if (tabKey === 'map') {
         nextTick(() => {
           if (typeof leafletMap !== 'undefined' && leafletMap) {
             leafletMap.invalidateSize();
+            fitRouteBounds();
+          } else {
+            initMap();
           }
         });
       }
@@ -1149,19 +1153,142 @@ const app = createApp({
 
 
 
-    // Leaflet Interactive Nautical Chart Initialization
+    // Basemap State & Free Imagery Layers (Esri & Bing Maps with Zero API Keys)
+    const activeBasemap = ref('esri_sat'); // 'esri_sat', 'bing_aerial', 'esri_ocean'
+    const showSeamarks = ref(true);
+
+    let esriSatelliteLayer = null;
+    let bingAerialLayer = null;
+    let esriOceanLayer = null;
+    let esriOceanRefLayer = null;
+    let openSeaMapLayer = null;
+
+    function createBingAerialLayer() {
+      const BingLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          let quadkey = '';
+          for (let i = coords.z; i > 0; i--) {
+            let digit = 0;
+            const mask = 1 << (i - 1);
+            if ((coords.x & mask) !== 0) digit += 1;
+            if ((coords.y & mask) !== 0) digit += 2;
+            quadkey += digit;
+          }
+          const sub = Math.abs((coords.x + coords.y) % 4);
+          return `https://ecn.t${sub}.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=1`;
+        }
+      });
+      return new BingLayer('', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Microsoft &mdash; Free Bing Maps Aerial'
+      });
+    }
+
+    function setBasemap(type) {
+      if (!leafletMap) return;
+      activeBasemap.value = type;
+
+      // Remove current basemaps
+      if (esriSatelliteLayer && leafletMap.hasLayer(esriSatelliteLayer)) leafletMap.removeLayer(esriSatelliteLayer);
+      if (bingAerialLayer && leafletMap.hasLayer(bingAerialLayer)) leafletMap.removeLayer(bingAerialLayer);
+      if (esriOceanLayer && leafletMap.hasLayer(esriOceanLayer)) leafletMap.removeLayer(esriOceanLayer);
+      if (esriOceanRefLayer && leafletMap.hasLayer(esriOceanRefLayer)) leafletMap.removeLayer(esriOceanRefLayer);
+
+      if (type === 'bing_aerial') {
+        if (!bingAerialLayer) bingAerialLayer = createBingAerialLayer();
+        bingAerialLayer.addTo(leafletMap);
+      } else if (type === 'esri_ocean') {
+        if (!esriOceanLayer) {
+          esriOceanLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 13,
+            attribution: 'Tiles &copy; Esri Ocean Basemap & Bathymetry'
+          });
+        }
+        if (!esriOceanRefLayer) {
+          esriOceanRefLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 13
+          });
+        }
+        esriOceanLayer.addTo(leafletMap);
+        esriOceanRefLayer.addTo(leafletMap);
+      } else {
+        // Default: Esri World Imagery (High-Resolution Satellite)
+        if (!esriSatelliteLayer) {
+          esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri &mdash; Free World Imagery Satellite'
+          });
+        }
+        esriSatelliteLayer.addTo(leafletMap);
+      }
+
+      // Keep seamarks on top if enabled
+      if (showSeamarks.value && openSeaMapLayer && leafletMap.hasLayer(openSeaMapLayer)) {
+        openSeaMapLayer.bringToFront();
+      }
+    }
+
+    function toggleSeamarks() {
+      if (!leafletMap) return;
+      showSeamarks.value = !showSeamarks.value;
+      if (!openSeaMapLayer) {
+        openSeaMapLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          opacity: 0.9,
+          attribution: 'Seamarks &copy; OpenSeaMap contributors'
+        });
+      }
+      if (showSeamarks.value) {
+        openSeaMapLayer.addTo(leafletMap);
+        openSeaMapLayer.bringToFront();
+      } else {
+        if (leafletMap.hasLayer(openSeaMapLayer)) {
+          leafletMap.removeLayer(openSeaMapLayer);
+        }
+      }
+    }
+
+    function fitRouteBounds() {
+      if (!leafletMap) return;
+      const dep = departureLocation.value;
+      const dest = destinationLocation.value;
+      const bounds = L.latLngBounds([[dep.latitude, dep.longitude], [dest.latitude, dest.longitude]]);
+      leafletMap.fitBounds(bounds, { padding: [55, 55], maxZoom: 12 });
+    }
+
+    function openZoomEarth(mode = 'satellite') {
+      const dep = departureLocation.value;
+      const dest = destinationLocation.value;
+      const midLat = (dep.latitude + dest.latitude) / 2;
+      const midLon = (dep.longitude + dest.longitude) / 2;
+      const url = getZoomEarthUrl(midLat, midLon, 9, mode);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    // Leaflet Interactive Satellite & Nautical Chart Initialization
     function initMap() {
       if (typeof L === 'undefined') return;
 
       const dep = departureLocation.value;
       leafletMap = L.map('sea-map', {
         zoomControl: true,
-        attributionControl: false
+        attributionControl: true
       }).setView([dep.latitude, dep.longitude], 9);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18
+      // 100% Free Default: Esri World Imagery (High-Resolution Satellite)
+      esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri &mdash; Free World Imagery Satellite'
       }).addTo(leafletMap);
+
+      // OpenSeaMap Seamarks Overlay
+      if (showSeamarks.value) {
+        openSeaMapLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          opacity: 0.9,
+          attribution: 'Seamarks &copy; OpenSeaMap'
+        }).addTo(leafletMap);
+      }
 
       updateMapRoute();
 
@@ -1428,6 +1555,12 @@ const app = createApp({
       liveClock,
       activeMainTab,
       setMainTab,
+      activeBasemap,
+      setBasemap,
+      showSeamarks,
+      toggleSeamarks,
+      fitRouteBounds,
+      openZoomEarth,
       activeAdvisorySubTab,
       setAdvisorySubTab,
       activeWeatherSubTab,

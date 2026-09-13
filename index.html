@@ -181,7 +181,26 @@
               </span>
             </button>
 
-            <!-- Tab 2: Weather & Marine -->
+            <!-- Tab 2: Satellite Map (Esri & Bing Basemaps + Zoom Earth) -->
+            <button class="main-tab-btn" :class="{ active: activeMainTab === 'map' }"
+              @click="setMainTab('map')"
+              title="Interactive Satellite Basemap Imagery (Free Esri & Bing Maps) with Zoom Earth Live Weather Services">
+              <span class="tab-btn-inner">
+                <span class="tab-title-row">
+                  <span class="tab-icon"><i class="fa-solid fa-satellite"></i></span>
+                  <span class="tab-label">
+                    <span class="tab-label-full">Satellite Map</span>
+                    <span class="tab-label-short">Sat Map</span>
+                  </span>
+                </span>
+                <span class="tab-badge tab-badge-map" style="background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.3);">
+                  <i class="fa-solid fa-earth-asia"></i>
+                  <span>Esri & Zoom</span>
+                </span>
+              </span>
+            </button>
+
+            <!-- Tab 3: Weather & Marine -->
             <button class="main-tab-btn" :class="{ active: activeMainTab === 'weather' }" @click="setMainTab('weather')"
               title="Traditional Nakaiy Monsoon Calendar, 10-Day Environmental Forecast, Marine Telemetry and Tides">
               <span class="tab-btn-inner">
@@ -246,24 +265,8 @@
 
         <!-- TAB PANE 1: TRAVEL & SAFETY ADVISORIES (MAIN / DEFAULT) -->
         <div class="tab-content-pane single-screen-pane tab-pane-advisories" v-show="activeMainTab === 'advisories'">
-          <!-- Segmented Sub-Navigation for Advisories & Passage -->
-          <div class="segmented-sub-nav">
-            <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'verdict' }"
-              @click="setAdvisorySubTab('verdict')">
-              <i class="fa-solid fa-scale-balanced"></i> <span>Safety Verdict & MMS</span>
-            </button>
-            <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'chart' }"
-              @click="setAdvisorySubTab('chart')">
-              <i class="fa-solid fa-map-location-dot"></i> <span>Live Nautical Chart</span>
-            </button>
-            <button class="sub-nav-btn" :class="{ active: activeAdvisorySubTab === 'hazards' }"
-              @click="setAdvisorySubTab('hazards')">
-              <i class="fa-solid fa-triangle-exclamation"></i> <span>Hazards & Clearances</span>
-            </button>
-          </div>
-
-          <!-- SUB-VIEW: THE SAFETY VERDICT (MMS Banner, Score Radial Gauge) -->
-          <div v-show="activeAdvisorySubTab === 'verdict'" class="sub-view-group">
+          <!-- THE SAFETY VERDICT & MMS OPERATIONS CENTER -->
+          <div class="sub-view-group">
             <!-- MALDIVES METEOROLOGICAL SERVICE (MMS) OPERATIONS CENTER BANNER -->
             <section v-if="currentMmsAlert" class="glass-panel mms-center-card"
               :class="'mms-' + (currentMmsAlert.color || 'green')">
@@ -433,109 +436,7 @@
               </div>
             </section>
 
-          </div> <!-- END SUB-VIEW: THE SAFETY VERDICT -->
-
-          <!-- SUB-VIEW: HAZARDS & CLEARANCES -->
-          <div v-show="activeAdvisorySubTab === 'hazards'" class="sub-view-group">
-            <!-- Hazard Breakdown & Positive Clearances -->
-            <section v-if="safetyEvaluation" class="analysis-split-grid">
-              <!-- Identified Hazards -->
-              <div class="glass-panel analysis-card">
-                <div class="section-label" style="color: var(--amber-caution);">
-                  <span><i class="fa-solid fa-triangle-exclamation"></i></span> Active Operational Hazards & Passage
-                  Alerts
-                  ({{ safetyEvaluation.hazards.length }})
-                </div>
-                <ul class="hazard-list" v-if="safetyEvaluation.hazards.length > 0">
-                  <li v-for="(hazard, idx) in safetyEvaluation.hazards" :key="idx" class="hazard-item"
-                    :class="'level-' + hazard.level">
-                    <i :class="hazard.level === 'danger' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-triangle-exclamation'"
-                      :style="{ color: hazard.level === 'danger' ? '#ff3366' : '#ffb830', marginTop: '0.2rem' }"></i>
-                    <span>{{ hazard.text }}</span>
-                  </li>
-                </ul>
-                <div v-else style="color: var(--text-muted); font-size: 0.88rem; padding: 0.5rem 0;">
-                  No critical hazards or storm advisories detected for this passage.
-                </div>
-              </div>
-
-              <!-- Positive Navigational Clearances -->
-              <div class="glass-panel analysis-card">
-                <div class="section-label" style="color: var(--sea-green);">
-                  <span><i class="fa-solid fa-circle-check"></i></span> Navigational Clearances ({{
-                  safetyEvaluation.positiveFactors.length }})
-                </div>
-                <ul class="positive-list" v-if="safetyEvaluation.positiveFactors.length > 0">
-                  <li v-for="(pos, idx) in safetyEvaluation.positiveFactors" :key="idx" class="positive-item">
-                    <i class="fa-solid fa-circle-check" style="color: var(--sea-green); margin-top: 0.2rem;"></i>
-                    <span>{{ pos }}</span>
-                  </li>
-                </ul>
-                <div v-else style="color: var(--text-muted); font-size: 0.88rem; padding: 0.5rem 0;">
-                  Adverse conditions dominant across primary navigational indices.
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <!-- SUB-VIEW: LIVE NAUTICAL CHART & TIMELINE -->
-          <div v-show="activeAdvisorySubTab === 'chart'" class="sub-view-group">
-            <!-- Visual Map & 24h Departure Forecast Timeline -->
-            <section class="nav-visual-grid">
-              <!-- Interactive Leaflet Map -->
-              <div class="glass-panel map-card single-screen-map-card">
-                <div
-                  style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                  <div class="section-label">
-                    <span><i class="fa-solid fa-map-location-dot"></i></span> Interactive Nautical Route Chart
-                  </div>
-                  <!-- Map Target Click Mode Toggle -->
-                  <div class="target-selector-tabs" style="font-size: 0.75rem;">
-                    <span style="color: var(--text-muted); margin-right: 0.2rem;">Map click sets:</span>
-                    <button class="target-tab-btn"
-                      :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
-                      @click="setPickerTarget('departure')">
-                      <i class="fa-solid fa-anchor"></i> Departure
-                    </button>
-                    <button class="target-tab-btn"
-                      :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
-                      @click="setPickerTarget('destination')">
-                      <i class="fa-solid fa-flag-checkered"></i> Destination
-                    </button>
-                  </div>
-                </div>
-                <div id="sea-map" class="map-container"></div>
-              </div>
-
-              <!-- 24-Hour Departure Window Timeline -->
-              <div class="glass-panel timeline-card">
-                <div
-                  style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                  <div class="section-label">
-                    <span><i class="fa-solid fa-clock-rotate-left"></i></span> Passage Timeline (Next 24 Hours)
-                  </div>
-                  <span
-                    style="font-size: 0.75rem; color: var(--cyan-primary); display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <i class="fa-solid fa-arrow-right-long"></i> Scroll right for 24h
-                  </span>
-                </div>
-                <p style="font-size: 0.82rem; color: var(--text-muted);">
-                  Directional wave & wind evolution along the {{ departureLocation.name.split(' ')[0] }} ➔ {{
-                  destinationLocation.name.split(' ')[0] }} corridor.
-                </p>
-                <div class="timeline-scroller" v-if="safetyEvaluation && safetyEvaluation.timelineWindows">
-                  <div v-for="(slot, idx) in safetyEvaluation.timelineWindows"
-                    :key="'timeline_' + idx + '_' + (slot.rawTime || slot.time)" class="timeline-slot"
-                    :class="'slot-' + slot.status">
-                    <div class="slot-time">{{ slot.time }}</div>
-                    <div class="slot-wave">{{ formatWave(slot.waveHeight) }}</div>
-                    <div class="slot-wind">{{ formatWind(slot.windSpeed) }}</div>
-                    <div class="slot-tag">{{ slot.status }}</div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
+          </div> <!-- END THE SAFETY VERDICT & MMS OPERATIONS CENTER -->
           <!-- Footer with Concept Attribution -->
           <footer class="site-footer">
             <div class="footer-container">
@@ -553,7 +454,167 @@
 
         </div> <!-- END TAB PANE 1: TRAVEL & SAFETY ADVISORIES -->
 
-        <!-- TAB PANE 2: WEATHER & MARINE FORECASTS -->
+        <!-- TAB PANE 2: SATELLITE & MARINE MAP (ESRI & BING SATELLITE + ZOOM EARTH SERVICES) -->
+        <div class="tab-content-pane single-screen-pane tab-pane-map" v-show="activeMainTab === 'map'">
+          <!-- Top Context & Quick Controls Strip -->
+          <div class="compact-loc-strip">
+            <div class="compact-loc-info">
+              <span class="compact-loc-tag"><i class="fa-solid fa-satellite"></i> Satellite Nav:</span>
+              <span class="compact-loc-name dep" title="Departure Port">
+                <i class="fa-solid fa-anchor"></i> {{ departureLocation.name.split(' ')[0] }}
+              </span>
+              <span class="compact-loc-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
+              <span class="compact-loc-name dest" title="Destination Port">
+                <i class="fa-solid fa-flag-checkered"></i> {{ destinationLocation.name.split(' ')[0] }}
+              </span>
+              <span class="compact-loc-meta" v-if="routeData">
+                • {{ routeData.distanceNm }} NM (Course {{ routeData.cardinal }} • {{ routeData.transitTimeStr }})
+              </span>
+            </div>
+            <div class="compact-loc-actions">
+              <button class="loc-mini-btn" @click="detectDeviceLocation(true)" title="Use physical GPS coordinates">
+                <i class="fa-solid fa-location-crosshairs"></i> GPS
+              </button>
+              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true"
+                title="Change Passage Route & Ports">
+                <i class="fa-solid fa-route"></i> Change Route
+              </button>
+              <button class="loc-mini-btn" @click="fitRouteBounds" title="Center map on voyage route">
+                <i class="fa-solid fa-compress"></i> Fit Route
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Satellite Map Card & Controls -->
+          <section class="nav-visual-grid">
+            <div class="glass-panel map-card single-screen-map-card">
+              <!-- Map Controls Toolbar: Basemaps & Overlays -->
+              <div class="map-toolbar-row">
+                <!-- Basemap Switcher Buttons (Free Esri & Bing Satellite + Ocean Bathymetry) -->
+                <div class="basemap-switch-group">
+                  <span class="toolbar-label"><i class="fa-solid fa-layer-group"></i> Basemap:</span>
+                  <button class="basemap-pill-btn" :class="{ active: activeBasemap === 'esri_sat' }"
+                    @click="setBasemap('esri_sat')" title="High-resolution Esri World Imagery (100% Free Satellite)">
+                    <i class="fa-solid fa-satellite"></i> Esri Satellite
+                  </button>
+                  <button class="basemap-pill-btn" :class="{ active: activeBasemap === 'bing_aerial' }"
+                    @click="setBasemap('bing_aerial')" title="Free Bing Maps High-Res Aerial Satellite Tiles">
+                    <i class="fa-solid fa-map"></i> Bing Aerial
+                  </button>
+                  <button class="basemap-pill-btn" :class="{ active: activeBasemap === 'esri_ocean' }"
+                    @click="setBasemap('esri_ocean')" title="Esri Ocean Bathymetric Contours, Soundings & Trench Depths">
+                    <i class="fa-solid fa-water"></i> Ocean Bathymetry
+                  </button>
+                  <button class="basemap-pill-btn seamarks-toggle" :class="{ active: showSeamarks }"
+                    @click="toggleSeamarks" title="Toggle OpenSeaMap Nautical Buoys & Marine Beacons">
+                    <i class="fa-solid fa-compass"></i> Seamarks
+                  </button>
+                </div>
+
+                <!-- Target Click Mode -->
+                <div class="target-selector-tabs">
+                  <span style="color: var(--text-muted); margin-right: 0.2rem;">Map click sets:</span>
+                  <button class="target-tab-btn"
+                    :class="{ active: activePickerTarget === 'departure', dep: activePickerTarget === 'departure' }"
+                    @click="setPickerTarget('departure')">
+                    <i class="fa-solid fa-anchor"></i> Departure
+                  </button>
+                  <button class="target-tab-btn"
+                    :class="{ active: activePickerTarget === 'destination', dest: activePickerTarget === 'destination' }"
+                    @click="setPickerTarget('destination')">
+                    <i class="fa-solid fa-flag-checkered"></i> Destination
+                  </button>
+                </div>
+              </div>
+
+              <!-- Map Container -->
+              <div id="sea-map" class="map-container"></div>
+
+              <!-- Zoom Earth Live Satellite & Weather Services Tray -->
+              <div class="zoom-earth-services-tray">
+                <div class="zoom-earth-header">
+                  <div class="ze-brand">
+                    <i class="fa-solid fa-satellite-dish" style="color: var(--cyan-primary);"></i>
+                    <span class="ze-title">Zoom Earth Live Satellite & Radar Services</span>
+                    <span class="ze-badge">Free EUMETSAT & DWD ICON Engine</span>
+                  </div>
+                  <span class="ze-sub">Live synchronized corridor scanner at {{ departureLocation.latitude.toFixed(2) }}°N, {{ departureLocation.longitude.toFixed(2) }}°E</span>
+                </div>
+                <div class="zoom-earth-actions-grid">
+                  <button class="ze-action-chip" @click="openZoomEarth('satellite')"
+                    title="Launch real-time visible & infrared satellite imagery from Zoom Earth">
+                    <i class="fa-solid fa-satellite" style="color: #38bdf8;"></i>
+                    <span class="ze-chip-title">Live Satellite</span>
+                    <span class="ze-chip-sub">EUMETSAT Meteosat</span>
+                  </button>
+                  <button class="ze-action-chip" @click="openZoomEarth('wind')"
+                    title="Launch Zoom Earth live wind streamline particle animation using DWD ICON">
+                    <i class="fa-solid fa-wind" style="color: #00f0ff;"></i>
+                    <span class="ze-chip-title">Wind Streamlines</span>
+                    <span class="ze-chip-sub">DWD ICON 13km</span>
+                  </button>
+                  <button class="ze-action-chip" @click="openZoomEarth('radar')"
+                    title="Launch Zoom Earth live rain radar & storm squall tracker">
+                    <i class="fa-solid fa-cloud-showers-heavy" style="color: #60a5fa;"></i>
+                    <span class="ze-chip-title">Radar & Rain</span>
+                    <span class="ze-chip-sub">Precipitation Tracker</span>
+                  </button>
+                  <button class="ze-action-chip" @click="openZoomEarth('waves')"
+                    title="Launch Zoom Earth real-time ocean wave heights & swell vectors">
+                    <i class="fa-solid fa-water" style="color: #34d399;"></i>
+                    <span class="ze-chip-title">Waves & Swell</span>
+                    <span class="ze-chip-sub">Oceanic Vectors</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 24-Hour Departure Window Timeline -->
+            <div class="glass-panel timeline-card">
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div class="section-label">
+                  <span><i class="fa-solid fa-clock-rotate-left"></i></span> Passage Timeline (Next 24 Hours)
+                </div>
+                <span
+                  style="font-size: 0.75rem; color: var(--cyan-primary); display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <i class="fa-solid fa-arrow-right-long"></i> Scroll right for 24h
+                </span>
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Directional wave & wind evolution along the {{ departureLocation.name.split(' ')[0] }} ➔ {{
+                destinationLocation.name.split(' ')[0] }} corridor.
+              </p>
+              <div class="timeline-scroller" v-if="safetyEvaluation && safetyEvaluation.timelineWindows">
+                <div v-for="(slot, idx) in safetyEvaluation.timelineWindows"
+                  :key="'timeline_' + idx + '_' + (slot.rawTime || slot.time)" class="timeline-slot"
+                  :class="'slot-' + slot.status">
+                  <div class="slot-time">{{ slot.time }}</div>
+                  <div class="slot-wave">{{ formatWave(slot.waveHeight) }}</div>
+                  <div class="slot-wind">{{ formatWind(slot.windSpeed) }}</div>
+                  <div class="slot-tag">{{ slot.status }}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Footer with Concept Attribution -->
+          <footer class="site-footer">
+            <div class="footer-container">
+              <div class="footer-brand">
+                <img src="favicon.svg?v=20260912-v7" alt="SeaVoyage" class="footer-brand-logo" width="16" height="16" />
+                <span>SEAVOYAGE</span>
+                <span class="footer-tagline">• Safety First</span>
+              </div>
+              <div class="footer-concept-card">
+                <span class="concept-pre">Concept by</span>
+                <span class="concept-name">Ahmed Nimal</span>
+              </div>
+            </div>
+          </footer>
+        </div> <!-- END TAB PANE 2: SATELLITE & MARINE MAP -->
+
+        <!-- TAB PANE 3: WEATHER & MARINE FORECASTS -->
         <div class="tab-content-pane single-screen-pane tab-pane-weather" v-show="activeMainTab === 'weather'">
           <!-- Segmented Sub-Navigation for Weather & Marine -->
           <div class="segmented-sub-nav">
@@ -1552,6 +1613,10 @@
               </div>
             </div>
             <div class="route-context-actions">
+              <button class="loc-mini-btn" @click="setMainTab('map')"
+                title="View interactive satellite passage map with Esri & Zoom Earth">
+                <i class="fa-solid fa-satellite"></i> Satellite Map
+              </button>
               <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true"
                 title="Open Route Passage Planner to adjust ports or vessel">
                 <i class="fa-solid fa-sliders"></i> Modify Route / Ports
@@ -3370,7 +3435,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260913-v4"></script>
+  <script type="module" src="src/js/app.js?v=20260913-v5"></script>
 </body>
 
 </html>

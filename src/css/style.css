@@ -7680,11 +7680,11 @@ button, a, input, select, textarea {
   box-sizing: border-box;
 }
 
-/* 4-Column Grid on Desktop / Wide screens */
+/* 5-Column Grid on Desktop / Wide screens */
 .main-tab-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.6rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -7964,13 +7964,13 @@ button, a, input, select, textarea {
     z-index: 9999 !important;
   }
 
-  /* 4 Equal Items Across the Mobile / Tablet Screen */
+  /* 5 Equal Items Across the Mobile / Tablet Screen */
   .main-tab-nav {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 0.3rem !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 0.2rem !important;
     width: 100% !important;
-    max-width: 580px !important;
+    max-width: 650px !important;
     margin: 0 auto !important;
   }
 
@@ -8674,18 +8674,233 @@ button, a, input, select, textarea {
 
 @media (max-width: 1100px) {
   .single-screen-map-card {
-    height: 340px;
-    min-height: 280px;
-    max-height: 48vh;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
     flex: none;
   }
 }
 
 .single-screen-map-card #sea-map {
   width: 100%;
-  height: 100% !important;
-  min-height: 100%;
-  border-radius: 16px;
+  height: 520px !important;
+  min-height: 440px;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1100px) {
+  .single-screen-map-card #sea-map {
+    height: 380px !important;
+    min-height: 300px;
+  }
+}
+
+/* ==========================================================================
+   SATELLITE BASEMAP TOOLBAR & OVERLAYS (ESRI & BING MAPS)
+   ========================================================================== */
+.map-toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: rgba(6, 18, 34, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.16);
+  z-index: 5;
+  position: relative;
+}
+
+.basemap-switch-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.basemap-switch-group .toolbar-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.basemap-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.38rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary, #cbd5e1);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.basemap-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.basemap-pill-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.22) 0%, rgba(0, 150, 255, 0.28) 100%);
+  border-color: var(--cyan-primary, #00f0ff);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+  font-weight: 700;
+}
+
+.basemap-pill-btn.seamarks-toggle.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+/* ==========================================================================
+   ZOOM EARTH LIVE SATELLITE & RADAR SERVICES TRAY
+   ========================================================================== */
+.zoom-earth-services-tray {
+  padding: 0.85rem 1rem;
+  background: rgba(6, 18, 34, 0.92);
+  border-top: 1px solid rgba(0, 240, 255, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  z-index: 5;
+  position: relative;
+}
+
+.zoom-earth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ze-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ze-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.ze-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan-primary, #00f0ff);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.ze-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.zoom-earth-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .zoom-earth-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ze-action-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  user-select: none;
+}
+
+.ze-action-chip:hover {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.38);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.ze-action-chip i {
+  font-size: 1rem;
+}
+
+.ze-chip-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 0.3rem;
+}
+
+.ze-chip-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted, #94a3b8);
+  margin-top: 1px;
+}
+
+[data-theme="light"] .map-toolbar-row {
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom-color: rgba(0, 160, 220, 0.25);
+}
+
+[data-theme="light"] .zoom-earth-services-tray {
+  background: rgba(248, 250, 252, 0.95);
+  border-top-color: rgba(0, 160, 220, 0.25);
+}
+
+[data-theme="light"] .ze-title,
+[data-theme="light"] .ze-chip-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .ze-action-chip {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .basemap-pill-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .basemap-pill-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
 }
 
 /* Floating HUD on Chart */

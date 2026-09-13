@@ -334,19 +334,28 @@ export async function fetchMarineAndWeatherData(lat, lon) {
   const roundedLon = parseFloat(lon).toFixed(4);
 
   const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${roundedLat}&longitude=${roundedLon}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,ocean_current_velocity,ocean_current_direction,sea_surface_temperature&daily=wave_height_max,wave_direction_dominant,wave_period_max,wind_wave_height_max,swell_wave_height_max&past_days=4&forecast_days=14&timezone=auto`;
-  const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${roundedLat}&longitude=${roundedLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,surface_pressure,pressure_msl,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,surface_pressure,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&past_days=4&forecast_days=14&wind_speed_unit=kn&timezone=auto`;
+  
+  // DWD ICON Seamless (Zoom Earth primary weather engine)
+  const baseForecastQuery = `latitude=${roundedLat}&longitude=${roundedLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,surface_pressure,pressure_msl,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,surface_pressure,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&past_days=4&forecast_days=14&wind_speed_unit=kn&timezone=auto`;
+  const iconForecastUrl = `https://api.open-meteo.com/v1/forecast?${baseForecastQuery}&models=icon_seamless`;
+  const defaultForecastUrl = `https://api.open-meteo.com/v1/forecast?${baseForecastQuery}`;
 
   try {
     const [marineRes, forecastRes] = await Promise.all([
       fetch(marineUrl).catch(e => ({ ok: false, error: e })),
-      fetch(forecastUrl)
+      fetch(iconForecastUrl).catch(() => fetch(defaultForecastUrl))
     ]);
 
-    if (!forecastRes.ok) {
-      throw new Error(`Weather Forecast API failed with status ${forecastRes.status}`);
+    let finalForecastRes = forecastRes;
+    if (!finalForecastRes || !finalForecastRes.ok) {
+      finalForecastRes = await fetch(defaultForecastUrl);
     }
 
-    const forecastData = await forecastRes.json();
+    if (!finalForecastRes.ok) {
+      throw new Error(`Weather Forecast API failed with status ${finalForecastRes.status}`);
+    }
+
+    const forecastData = await finalForecastRes.json();
     let marineData = null;
 
     if (marineRes && marineRes.ok) {
@@ -524,6 +533,8 @@ function compileMarineReport(lat, lon, forecast, marine) {
     latitude: lat,
     longitude: lon,
     timezone: forecast.timezone,
+    weatherModel: 'DWD ICON (Zoom Earth Numerical Engine) Seamless 13km',
+    satelliteProvider: 'EUMETSAT Meteosat & NOAA / Zoom Earth Integrated',
     hasMarineData: hasWaveData,
     current: {
       waveHeight: currentWaveHeight,
@@ -589,34 +600,34 @@ export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM
   const weatherCode = dailyF.weather_code ? dailyF.weather_code[dayDataIdx] : 0;
   const weatherCondition = WMO_CODES[weatherCode] || { label: 'Clear Sky', icon: 'fa-solid fa-sun', severity: 'safe' };
 
-  const tempMax = dailyF.temperature_2m_max ? Math.round(dailyF.temperature_2m_max[dayDataIdx]) : 29;
-  const tempMin = dailyF.temperature_2m_min ? Math.round(dailyF.temperature_2m_min[dayDataIdx]) : 26;
+  const tempMax = dailyF.temperature_2m_max && dailyF.temperature_2m_max[dayDataIdx] != null ? Math.round(dailyF.temperature_2m_max[dayDataIdx]) : 29;
+  const tempMin = dailyF.temperature_2m_min && dailyF.temperature_2m_min[dayDataIdx] != null ? Math.round(dailyF.temperature_2m_min[dayDataIdx]) : 26;
 
-  const windSpeedMax = dailyF.wind_speed_10m_max ? Math.round(dailyF.wind_speed_10m_max[dayDataIdx]) : 12;
-  const windGustsMax = dailyF.wind_gusts_10m_max ? Math.round(dailyF.wind_gusts_10m_max[dayDataIdx]) : windSpeedMax;
-  const windDirectionDominant = dailyF.wind_direction_10m_dominant ? dailyF.wind_direction_10m_dominant[dayDataIdx] : 0;
+  const windSpeedMax = dailyF.wind_speed_10m_max && dailyF.wind_speed_10m_max[dayDataIdx] != null ? Math.round(dailyF.wind_speed_10m_max[dayDataIdx]) : 12;
+  const windGustsMax = dailyF.wind_gusts_10m_max && dailyF.wind_gusts_10m_max[dayDataIdx] != null ? Math.round(dailyF.wind_gusts_10m_max[dayDataIdx]) : windSpeedMax;
+  const windDirectionDominant = dailyF.wind_direction_10m_dominant && dailyF.wind_direction_10m_dominant[dayDataIdx] != null ? dailyF.wind_direction_10m_dominant[dayDataIdx] : 0;
   const windCardinal = getWindDirectionCardinal(windDirectionDominant);
 
-  const waveHeightMax = hasWaveData && dailyM.wave_height_max && dailyM.wave_height_max[dayDataIdx] !== null
-    ? parseFloat(dailyM.wave_height_max[dayDataIdx].toFixed(2))
+  const waveHeightMax = hasWaveData && dailyM.wave_height_max && dailyM.wave_height_max[dayDataIdx] != null
+    ? parseFloat(Number(dailyM.wave_height_max[dayDataIdx]).toFixed(2))
     : (hasWaveData ? 0.9 : 0.6);
-  const wavePeriodMax = hasWaveData && dailyM.wave_period_max && dailyM.wave_period_max[dayDataIdx] !== null
+  const wavePeriodMax = hasWaveData && dailyM.wave_period_max && dailyM.wave_period_max[dayDataIdx] != null
     ? Math.round(dailyM.wave_period_max[dayDataIdx])
     : 7;
-  const waveDirectionDominant = hasWaveData && dailyM.wave_direction_dominant && dailyM.wave_direction_dominant[dayDataIdx] !== null
+  const waveDirectionDominant = hasWaveData && dailyM.wave_direction_dominant && dailyM.wave_direction_dominant[dayDataIdx] != null
     ? dailyM.wave_direction_dominant[dayDataIdx]
     : 160;
   const waveCardinal = getWindDirectionCardinal(waveDirectionDominant);
 
-  const swellHeightMax = hasWaveData && dailyM.swell_wave_height_max && dailyM.swell_wave_height_max[dayDataIdx] !== null
-    ? parseFloat(dailyM.swell_wave_height_max[dayDataIdx].toFixed(2))
+  const swellHeightMax = hasWaveData && dailyM.swell_wave_height_max && dailyM.swell_wave_height_max[dayDataIdx] != null
+    ? parseFloat(Number(dailyM.swell_wave_height_max[dayDataIdx]).toFixed(2))
     : parseFloat((waveHeightMax * 0.7).toFixed(2));
-  const windWaveHeightMax = hasWaveData && dailyM.wind_wave_height_max && dailyM.wind_wave_height_max[dayDataIdx] !== null
-    ? parseFloat(dailyM.wind_wave_height_max[dayDataIdx].toFixed(2))
+  const windWaveHeightMax = hasWaveData && dailyM.wind_wave_height_max && dailyM.wind_wave_height_max[dayDataIdx] != null
+    ? parseFloat(Number(dailyM.wind_wave_height_max[dayDataIdx]).toFixed(2))
     : parseFloat((waveHeightMax * 0.35).toFixed(2));
 
-  const precipitationSum = dailyF.precipitation_sum ? parseFloat(dailyF.precipitation_sum[dayDataIdx].toFixed(1)) : 0;
-  const precipitationProbabilityMax = dailyF.precipitation_probability_max ? dailyF.precipitation_probability_max[dayDataIdx] : 0;
+  const precipitationSum = dailyF.precipitation_sum && dailyF.precipitation_sum[dayDataIdx] != null ? parseFloat(Number(dailyF.precipitation_sum[dayDataIdx]).toFixed(1)) : 0;
+  const precipitationProbabilityMax = dailyF.precipitation_probability_max && dailyF.precipitation_probability_max[dayDataIdx] != null ? dailyF.precipitation_probability_max[dayDataIdx] : 0;
 
   const uvVal = dailyF.uv_index_max ? dailyF.uv_index_max[dayDataIdx] : 9;
   const uvIndexMax = parseFloat(Number(uvVal).toFixed(1));
@@ -966,4 +977,27 @@ export function getRelativeSeaAspect(courseBearing, waveOrWindDirection) {
       icon: 'fa-solid fa-arrow-down'
     };
   }
+}
+
+/**
+ * Generate Zoom Earth live satellite, wind, radar, or swell view URLs for any coordinates
+ * @param {number|string} lat Latitude
+ * @param {number|string} lon Longitude
+ * @param {number} [zoom=9] Zoom level
+ * @param {string} [mode='satellite'] View mode: 'satellite' | 'wind' | 'radar' | 'waves' | 'precipitation'
+ * @returns {string} Fully qualified Zoom Earth URL
+ */
+export function getZoomEarthUrl(lat, lon, zoom = 9, mode = 'satellite') {
+  const rLat = parseFloat(lat).toFixed(4);
+  const rLon = parseFloat(lon).toFixed(4);
+  if (mode === 'wind') {
+    return `https://zoom.earth/maps/wind-speed/#view=${rLat},${rLon},${zoom}z/model=icon`;
+  } else if (mode === 'radar') {
+    return `https://zoom.earth/maps/radar/#view=${rLat},${rLon},${zoom}z`;
+  } else if (mode === 'waves') {
+    return `https://zoom.earth/maps/waves/#view=${rLat},${rLon},${zoom}z`;
+  } else if (mode === 'precipitation') {
+    return `https://zoom.earth/maps/precipitation/#view=${rLat},${rLon},${zoom}z/model=icon`;
+  }
+  return `https://zoom.earth/maps/satellite/#view=${rLat},${rLon},${zoom}z`;
 }
