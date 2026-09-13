@@ -7680,11 +7680,11 @@ button, a, input, select, textarea {
   box-sizing: border-box;
 }
 
-/* 5-Column Grid on Desktop / Wide screens */
+/* 5-Column Single-Row Grid on Desktop / Wide screens */
 .main-tab-nav {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: 0.4rem;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -7697,8 +7697,8 @@ button, a, input, select, textarea {
   width: 100%;
   min-width: 0; /* Essential for CSS Grid tracks to shrink properly */
   max-width: 100%;
-  min-height: 56px;
-  padding: 0.75rem 0.85rem;
+  min-height: 46px;
+  padding: 0.45rem 0.6rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-md, 12px);
@@ -7711,6 +7711,7 @@ button, a, input, select, textarea {
   box-sizing: border-box;
   text-decoration: none;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .tab-btn-inner {
@@ -7719,25 +7720,26 @@ button, a, input, select, textarea {
   justify-content: space-between;
   width: 100%;
   min-width: 0;
-  gap: 0.5rem;
+  gap: 0.35rem;
   box-sizing: border-box;
 }
 
 .tab-title-row {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.92rem;
+  gap: 0.4rem;
+  font-size: 0.86rem;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
   min-width: 0;
+  white-space: nowrap;
 }
 
 .tab-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   color: var(--cyan-primary, #00f0ff);
   opacity: 0.9;
   transition: transform 0.25s ease, filter 0.25s ease;
@@ -7892,39 +7894,40 @@ button, a, input, select, textarea {
    ========================================================================== */
 
 /* Breakpoint 1: Medium Laptops & Desktops (> 1200px) */
-@media (min-width: 1201px) and (max-width: 1366px) {
+@media (min-width: 1201px) and (max-width: 1440px) {
   .main-tab-nav {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.45rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.35rem;
   }
 
   .main-tab-btn {
-    padding: 0.65rem 0.5rem;
-    min-height: 56px;
+    padding: 0.42rem 0.45rem;
+    min-height: 44px;
   }
 
   .tab-btn-inner {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 0.35rem;
+    justify-content: space-between;
+    text-align: left;
+    gap: 0.25rem;
   }
 
   .tab-title-row {
-    justify-content: center;
-    font-size: 0.84rem;
-    gap: 0.35rem;
-    text-align: center;
+    justify-content: flex-start;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+    text-align: left;
+    white-space: nowrap;
   }
 
   .tab-icon {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .tab-badge {
-    font-size: 0.62rem;
-    padding: 0.15rem 0.45rem;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
   }
 }
 
@@ -8606,6 +8609,7 @@ button, a, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   background: rgba(11, 24, 48, 0.88);
   backdrop-filter: blur(16px);
@@ -9594,10 +9598,10 @@ button, a, input, select, textarea {
   gap: 0.4rem;
 }
 
-/* Ensure 4 main tabs distribute evenly across desktop & mobile navs */
+/* Ensure 5 main tabs distribute evenly across desktop & mobile navs */
 .main-tab-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.4rem;
 }
 
