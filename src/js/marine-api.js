@@ -341,9 +341,15 @@ export async function fetchMarineAndWeatherData(lat, lon) {
   const defaultForecastUrl = `https://api.open-meteo.com/v1/forecast?${baseForecastQuery}`;
 
   try {
+    const marineController = new AbortController();
+    const marineTimer = setTimeout(() => marineController.abort(), 3500);
+
+    const forecastController = new AbortController();
+    const forecastTimer = setTimeout(() => forecastController.abort(), 6500);
+
     const [marineRes, forecastRes] = await Promise.all([
-      fetch(marineUrl).catch(e => ({ ok: false, error: e })),
-      fetch(iconForecastUrl).catch(() => fetch(defaultForecastUrl))
+      fetch(marineUrl, { signal: marineController.signal }).catch(e => ({ ok: false, error: e })).finally(() => clearTimeout(marineTimer)),
+      fetch(iconForecastUrl, { signal: forecastController.signal }).catch(() => fetch(defaultForecastUrl)).finally(() => clearTimeout(forecastTimer))
     ]);
 
     let finalForecastRes = forecastRes;
@@ -683,8 +689,10 @@ export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM
     const wGusts = hourlyF.wind_gusts_10m ? hourlyF.wind_gusts_10m[idx] : wSpeed;
     const wDir = hourlyF.wind_direction_10m ? hourlyF.wind_direction_10m[idx] : 0;
     const code = hourlyF.weather_code ? hourlyF.weather_code[idx] : 0;
-    const vis = hourlyF.visibility ? hourlyF.visibility[idx] : 10000;
-    if (vis < minVisibility) minVisibility = vis;
+    const vis = (hourlyF.visibility && hourlyF.visibility[idx] !== null && typeof hourlyF.visibility[idx] === 'number') 
+      ? hourlyF.visibility[idx] 
+      : 10000;
+    if (typeof vis === 'number' && vis > 0 && vis < minVisibility) minVisibility = vis;
 
     const sst = hasWaveData && hourlyM.sea_surface_temperature && hourlyM.sea_surface_temperature[idx] !== null
       ? hourlyM.sea_surface_temperature[idx]
@@ -745,8 +753,9 @@ export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM
   const oceanCurrentSpeedAvgKnots = hours.length > 0 ? parseFloat((sumCurrentKnots / hours.length).toFixed(1)) : 0.8;
   const seaTemperature = countSst > 0 ? parseFloat((sumSst / countSst).toFixed(1)) : 29.5;
   const surfacePressureAvg = countPressure > 0 ? parseFloat((sumPressure / countPressure).toFixed(1)) : 1011.5;
-  const visibilityMinKm = parseFloat((minVisibility / 1000).toFixed(1));
-  const visibilityMinNm = parseFloat((minVisibility * 0.000539957).toFixed(1));
+  const effectiveMinVis = (minVisibility > 0 && minVisibility <= 20000) ? minVisibility : 10000;
+  const visibilityMinKm = parseFloat((effectiveMinVis / 1000).toFixed(1));
+  const visibilityMinNm = parseFloat((effectiveMinVis * 0.000539957).toFixed(1));
 
   return {
     dayIndex: dayOffset,

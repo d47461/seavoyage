@@ -24,7 +24,7 @@ import {
   searchMaldivesDirectory,
   getIslandsByAtoll,
   getZoomEarthUrl
-} from './marine-api.js?v=20260913-v5';
+} from './marine-api.js?v=20260914-v2';
 import { 
   VESSEL_PROFILES, 
   evaluateSeaSafety, 
@@ -33,31 +33,31 @@ import {
   evaluateDayTripPlanning,
   generateTenDayTripSummary,
   generate7DaySafetyTrend
-} from './safety-engine.js?v=20260913-v2';
+} from './safety-engine.js?v=20260914-v2';
 import { 
   generateCaptainAdvisory 
-} from './ai-advisory.js?v=20260912-v7';
+} from './ai-advisory.js?v=20260914-v2';
 import { 
   initAuthListener, 
   loginAnonymously, 
   saveFavoriteLocation, 
   fetchFavoriteLocations, 
   removeFavoriteLocation 
-} from './firebase-config.js?v=20260912-v8';
+} from './firebase-config.js?v=20260914-v2';
 import {
   getMoonPhaseInfo,
   getTidePrediction,
   getVisibilityAnalysis,
   findBestTravelWindow
-} from './tide-lunar.js?v=20260912-v8';
+} from './tide-lunar.js?v=20260914-v2';
 import {
   evaluateFishingConditions,
   MALDIVES_FISHING_HOTSPOTS
-} from './fishing-engine.js?v=20260912-v8';
+} from './fishing-engine.js?v=20260914-v2';
 import {
   getCurrentNakaiy,
   NAKAIY_CALENDAR
-} from './nakaiy-engine.js?v=20260912-v10';
+} from './nakaiy-engine.js?v=20260914-v2';
 
 const app = createApp({
   setup() {
@@ -332,7 +332,7 @@ const app = createApp({
       if (!marineReport.value) return null;
       const allRecords = marineReport.value.allDailyRecords || marineReport.value.tenDays || [];
       const vessel = selectedVesselKey.value;
-      const route = routeData.value;
+      const route = locationMode.value === 'single' ? null : routeData.value;
       const alert = currentMmsAlert.value;
       return generate7DaySafetyTrend(
         selectedTravelDate.value,
@@ -674,12 +674,13 @@ const app = createApp({
       if (!isToday && travelDateSafetyReport.value && travelDateSafetyReport.value.hours && travelDateSafetyReport.value.hours.length >= 3) {
         timelineToUse = travelDateSafetyReport.value.hours;
       }
+      const effectiveRoute = locationMode.value === 'single' ? null : routeData.value;
       return findBestTravelWindow(
         timelineToUse,
         vessel,
         (isToday ? currentMmsAlert.value : null),
         tideData.value,
-        routeData.value
+        effectiveRoute
       );
     });
 
@@ -733,6 +734,20 @@ const app = createApp({
         currentNakaiy.value
       );
     });
+
+    // Sync fishing atoll when singleLocation changes
+    watch(singleLocation, (newLoc) => {
+      if (newLoc && newLoc.atoll) {
+        const matchingAtoll = fishingAtolls.value.find(a => 
+          a.key.toLowerCase() === newLoc.atoll.toLowerCase() ||
+          a.name.toLowerCase().includes(newLoc.atoll.toLowerCase()) ||
+          newLoc.atoll.toLowerCase().includes(a.key.toLowerCase())
+        );
+        if (matchingAtoll && matchingAtoll.key !== selectedFishingAtollKey.value) {
+          setFishingAtoll(matchingAtoll.key);
+        }
+      }
+    }, { immediate: true });
 
     // Active Location (Single island in single mode, departure in route mode)
     const activeLocation = computed(() => locationMode.value === 'single' ? singleLocation.value : departureLocation.value);

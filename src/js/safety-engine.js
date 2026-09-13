@@ -450,6 +450,7 @@ export function evaluateSeaSafety(marineReport, vesselProfileKey = 'maldives_spe
     status,
     score,
     title,
+    qualityRating: title,
     badgeColor,
     verdictSummary,
     vessel,

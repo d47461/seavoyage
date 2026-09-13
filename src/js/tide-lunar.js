@@ -914,13 +914,16 @@ export function findBestTravelWindow(timeline, vessel, mmsAlert = null, tidePred
     reason: avoidCandidate.hasStorm ? 'Convective storm front & lightning' : (avoidCandidate.hasGustSpike ? `Severe squall gusts up to ${avoidCandidate.maxGusts} kn` : `Rough ${avoidCandidate.maxWave}m wave chop & poor visibility`)
   } : null;
 
+  const optimalWindow = {
+    ...best,
+    qualityRating,
+    qualityBadge,
+    adviceSummary
+  };
+
   return {
-    optimal: {
-      ...best,
-      qualityRating,
-      qualityBadge,
-      adviceSummary
-    },
+    optimal: optimalWindow,
+    best: optimalWindow,
     alternative,
     avoidWindow,
     hourlySchedule

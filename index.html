@@ -38,7 +38,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260914-v1" />
+  <link rel="stylesheet" href="src/css/style.css?v=20260914-v2" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -2203,13 +2203,19 @@
                   <div class="tel-label"><i class="fa-solid fa-arrows-left-right"
                       style="color: var(--cyan-primary);"></i> Relative Sea Aspect</div>
                   <div class="tel-value" style="font-size: 1.05rem;">
-                    <span v-if="routeData && routeData.windAspect" class="aspect-pill"
+                    <span v-if="locationMode === 'single'" class="aspect-pill aspect-following">
+                      <i class="fa-solid fa-anchor"></i> Local Waters
+                    </span>
+                    <span v-else-if="routeData && routeData.windAspect" class="aspect-pill"
                       :class="'aspect-' + routeData.windAspect.type">
                       <i :class="routeData.windAspect.icon"></i> {{ routeData.windAspect.label.split('/')[0] }}
                     </span>
                     <span v-else>Corridor Aligned</span>
                   </div>
-                  <div class="tel-note">Vessel course {{ routeData ? routeData.cardinal : 'Passage' }}</div>
+                  <div class="tel-note">
+                    <span v-if="locationMode === 'single'">Island Anchorage & Atoll Lagoon</span>
+                    <span v-else>Vessel course {{ routeData ? routeData.cardinal : 'Passage' }}</span>
+                  </div>
                 </div>
 
                 <div class="tel-card">
@@ -2442,7 +2448,73 @@
 
           <!-- SUB-VIEW 4: ROUTE CORRIDOR & VESSEL HUD -->
           <div v-show="activePlanningSubTab === 'corridor'" class="sub-view-group">
-            <section class="glass-panel" v-if="routeData" style="padding: 1.25rem;">
+            <!-- Single Location Telemetry HUD -->
+            <section class="glass-panel" v-if="locationMode === 'single'" style="padding: 1.25rem;">
+              <div class="section-label" style="margin-bottom: 1rem;">
+                <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i></span> Active Island Location & Vessel Seaworthiness Telemetry
+              </div>
+              <div class="route-hud-strip" style="margin-top: 0;">
+                <div class="hud-item">
+                  <div class="hud-label"><i class="fa-solid fa-map-pin"></i> Forecast Island</div>
+                  <div class="hud-value">{{ singleLocation.name.split('(')[0] }}</div>
+                  <div class="hud-sub">{{ singleLocation.atoll ? singleLocation.atoll + ' Atoll' : 'Maldives' }}</div>
+                </div>
+
+                <div class="hud-item">
+                  <div class="hud-label"><i class="fa-solid fa-compass"></i> Coordinates</div>
+                  <div class="hud-value">{{ singleLocation.latitude.toFixed(3) }}°N <span
+                      style="font-size: 0.85rem; color: var(--cyan-primary);">{{ singleLocation.longitude.toFixed(3) }}°E</span></div>
+                  <div class="hud-sub">Geographic Waypoint</div>
+                </div>
+
+                <div class="hud-item">
+                  <div class="hud-label"><i class="fa-solid fa-water"></i> Local Waters</div>
+                  <div class="hud-value" style="color: var(--cyan-primary);">{{ marineReport ? formatWave(marineReport.current.waveHeight) : '0.8m' }}</div>
+                  <div class="hud-sub">{{ marineReport?.current?.wavePeriod || 6 }}s period • {{ formatWind(marineReport?.current?.windSpeed) }} breeze</div>
+                </div>
+
+                <div class="hud-item">
+                  <div class="hud-label"><i class="fa-solid fa-anchor"></i> Anchorage / Pass</div>
+                  <div>
+                    <span class="aspect-pill aspect-following">
+                      <i class="fa-solid fa-shield-halved"></i> {{ singleLocation.type || 'Island Harbor / Anchorage' }}
+                    </span>
+                  </div>
+                  <div class="hud-sub">Lagoon & Perimeter Waters</div>
+                </div>
+
+                <div class="hud-item">
+                  <div class="hud-label"><i class="fa-solid fa-route"></i> Mode Switch</div>
+                  <div>
+                    <button class="loc-mini-btn" @click="setLocationMode('route')" title="Switch to dual-port passage route corridor">
+                      <i class="fa-solid fa-arrows-split-up-and-left"></i> Switch to Route
+                    </button>
+                  </div>
+                  <div class="hud-sub">Plan voyage between 2 islands</div>
+                </div>
+              </div>
+
+              <!-- Vessel Profile In Use -->
+              <div
+                style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div
+                    style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0, 240, 255, 0.1); border: 1px solid var(--cyan-primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--cyan-primary);">
+                    <i :class="selectedVessel.icon"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ selectedVessel?.name }} (Active Profile)</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ selectedVessel?.subtitle }} • Max wave limit {{ selectedVessel?.maxSafeWave }}m • Max wind limit {{ selectedVessel?.maxSafeWind }} kn</div>
+                  </div>
+                </div>
+                <button class="loc-mini-btn" @click="showRoutePlannerModal = true">
+                  <i class="fa-solid fa-ship"></i> Change Vessel
+                </button>
+              </div>
+            </section>
+
+            <!-- Dual Route Corridor & Vessel HUD (Route Mode) -->
+            <section class="glass-panel" v-else-if="routeData" style="padding: 1.25rem;">
               <div class="section-label" style="margin-bottom: 1rem;">
                 <span><i class="fa-solid fa-compass"></i></span> Active Passage Corridor & Vessel Telemetry
               </div>
@@ -3496,7 +3568,7 @@
         </section>
 
         <div class="route-modal-actions">
-          <button class="route-modal-apply-btn" @click="showRoutePlannerModal = false">
+          <button class="route-modal-apply-btn" @click="setLocationMode(modalLocationTab); showRoutePlannerModal = false">
             <i class="fa-solid fa-check"></i> <span>Apply & View {{ modalLocationTab === 'single' ? 'Island Weather' : 'Passage Route' }}</span>
           </button>
         </div>
@@ -3694,7 +3766,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260913-v5"></script>
+  <script type="module" src="src/js/app.js?v=20260914-v2"></script>
 </body>
 
 </html>
