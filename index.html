@@ -128,9 +128,10 @@
       </nav>
 
       <!-- Sticky Quick Route & Vessel Header Bar (Single-Screen Navigation) -->
-      <div class="sticky-route-bar" @click="showRoutePlannerModal = true; modalLocationTab = locationMode" role="button" tabindex="0"
+      <div class="sticky-route-bar" @click="showRoutePlannerModal = true; modalLocationTab = locationMode" role="button"
+        tabindex="0"
         :title="locationMode === 'single' ? 'Click to change island forecast' : 'Click to adjust departure, destination, or vessel profile'">
-        
+
         <!-- Mode Switcher in Sticky Bar -->
         <div class="route-bar-mode-switch" @click.stop>
           <button type="button" class="top-mode-btn" :class="{ active: locationMode === 'single' }"
@@ -155,7 +156,8 @@
           </span>
           <span class="route-meta-badge" v-if="marineReport && marineReport.current">
             <i class="fa-solid fa-wind"></i>
-            <span>{{ formatWind(marineReport.current.windSpeed) }} {{ windCardinal }} • {{ formatWave(marineReport.current.waveHeight) }}</span>
+            <span>{{ formatWind(marineReport.current.windSpeed) }} {{ windCardinal }} • {{
+              formatWave(marineReport.current.waveHeight) }}</span>
           </span>
         </div>
 
@@ -398,9 +400,11 @@
               <div class="advisory-main-content">
                 <div class="advisory-location-tag">
                   <template v-if="locationMode === 'single'">
-                    <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary); margin-right: 0.35rem;"></i>{{
+                    <span><i class="fa-solid fa-location-dot"
+                        style="color: var(--cyan-primary); margin-right: 0.35rem;"></i>{{
                       singleLocation.name }}</span>
-                    <span v-if="singleLocation.atoll" style="color: var(--text-muted);">({{ singleLocation.atoll }} Atoll • Local Waters)</span>
+                    <span v-if="singleLocation.atoll" style="color: var(--text-muted);">({{ singleLocation.atoll }}
+                      Atoll • Local Waters)</span>
                   </template>
                   <template v-else>
                     <span><i class="fa-solid fa-anchor" style="color: #10b981; margin-right: 0.35rem;"></i>{{
@@ -523,9 +527,11 @@
               <button class="loc-mini-btn" @click="detectDeviceLocation(true)" title="Use physical GPS coordinates">
                 <i class="fa-solid fa-location-crosshairs"></i> GPS
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+              <button class="loc-mini-btn btn-modify-route"
+                @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
                 :title="locationMode === 'single' ? 'Select Island or Location' : 'Change Passage Route & Ports'">
-                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
+                <i
+                  :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
                 <span>{{ locationMode === 'single' ? 'Change Island' : 'Change Route' }}</span>
               </button>
               <button class="loc-mini-btn" @click="fitRouteBounds" title="Center map on selected location or route">
@@ -739,9 +745,11 @@
               <button class="loc-mini-btn" @click="detectDeviceLocation(true)" title="Use physical GPS coordinates">
                 <i class="fa-solid fa-location-crosshairs"></i> GPS
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+              <button class="loc-mini-btn btn-modify-route"
+                @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
                 :title="locationMode === 'single' ? 'Choose any island or location in the Maldives' : 'Open Route Passage Planner to adjust ports or vessel'">
-                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
+                <i
+                  :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-route'"></i>
                 <span>{{ locationMode === 'single' ? 'Change Island' : 'Change Route' }}</span>
               </button>
             </div>
@@ -754,9 +762,8 @@
               <span>Quick Island:</span>
             </div>
             <div class="quick-tray-chips">
-              <button type="button" class="quick-island-chip"
-                v-for="isl in popularSingleIslands" :key="'quick_' + isl.name"
-                :class="{ active: singleLocation.name === isl.name }"
+              <button type="button" class="quick-island-chip" v-for="isl in popularSingleIslands"
+                :key="'quick_' + isl.name" :class="{ active: singleLocation.name === isl.name }"
                 @click="setSingleIsland(isl)">
                 <i class="fa-solid fa-map-pin"></i>
                 <span>{{ isl.island || isl.name.split('(')[0].trim() }}</span>
@@ -849,11 +856,14 @@
                   </div>
                   <div class="ten-day-subtitle">
                     <span v-if="locationMode === 'single'">
-                      Comprehensive 10-day environmental & marine forecast for <strong>{{ singleLocation.name }}</strong> ({{ singleLocation.atoll ? singleLocation.atoll + ' Atoll' : 'Maldives' }}) • Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Island Conditions
+                      Comprehensive 10-day environmental & marine forecast for <strong>{{ singleLocation.name
+                        }}</strong> ({{ singleLocation.atoll ? singleLocation.atoll + ' Atoll' : 'Maldives' }}) •
+                      Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Island Conditions
                     </span>
                     <span v-else>
                       Comprehensive 10-day environmental & marine forecast for <strong>{{
-                        getFirstName(departureLocation.name) }} ➔ {{ getFirstName(destinationLocation.name) }}</strong> •
+                        getFirstName(departureLocation.name) }} ➔ {{ getFirstName(destinationLocation.name) }}</strong>
+                      •
                       Evaluates Waves, Wind, Gusts, Currents, Swells, Rain & Passage Feasibility
                     </span>
                   </div>
@@ -1715,7 +1725,8 @@
               <div class="route-context-names">
                 <template v-if="locationMode === 'single'">
                   <strong>{{ singleLocation.name }}</strong>
-                  <span v-if="singleLocation.atoll" class="route-context-nm">({{ singleLocation.atoll }} Atoll • Local Waters)</span>
+                  <span v-if="singleLocation.atoll" class="route-context-nm">({{ singleLocation.atoll }} Atoll • Local
+                    Waters)</span>
                 </template>
                 <template v-else>
                   <strong>{{ departureLocation.name }}</strong>
@@ -1731,9 +1742,11 @@
                 title="View interactive satellite passage map with Esri & Zoom Earth">
                 <i class="fa-solid fa-satellite"></i> Satellite Map
               </button>
-              <button class="loc-mini-btn btn-modify-route" @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
+              <button class="loc-mini-btn btn-modify-route"
+                @click="showRoutePlannerModal = true; modalLocationTab = locationMode"
                 :title="locationMode === 'single' ? 'Change single location' : 'Open Route Passage Planner to adjust ports or vessel'">
-                <i :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-sliders'"></i>
+                <i
+                  :class="locationMode === 'single' ? 'fa-solid fa-magnifying-glass-location' : 'fa-solid fa-sliders'"></i>
                 <span>{{ locationMode === 'single' ? 'Change Island' : 'Modify Route / Ports' }}</span>
               </button>
             </div>
@@ -1811,11 +1824,13 @@
                   <h3 class="trend-headline">Previous 3 Days ➔ Selected Date ➔ Next 3 Days</h3>
                   <p class="trend-subtext">
                     <span v-if="locationMode === 'single'">
-                      Evaluates sea travel safety scores across the 7-day window for <strong>{{ singleLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                      Evaluates sea travel safety scores across the 7-day window for <strong>{{ singleLocation.name
+                        }}</strong> ({{ selectedVessel?.name }}).
                     </span>
                     <span v-else>
                       Evaluates sea travel safety scores across the 7-day corridor window for <strong>{{
-                        departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name }}).
+                        departureLocation.name }} ➔ {{ destinationLocation.name }}</strong> ({{ selectedVessel?.name
+                      }}).
                     </span>
                   </p>
                 </div>
@@ -2187,7 +2202,8 @@
                   <div class="tel-label"><i class="fa-solid fa-compass-drafting" style="color: #10b981;"></i> Ocean
                     Current in Passes</div>
                   <div class="tel-value">{{ formatCurrentSpeed(travelDateSafetyReport.oceanCurrentSpeedMaxKnots) }}
-                    <span class="tel-sub">{{ travelDateSafetyReport.oceanCurrentCardinal }}</span></div>
+                    <span class="tel-sub">{{ travelDateSafetyReport.oceanCurrentCardinal }}</span>
+                  </div>
                   <div class="tel-note">Inter-atoll kandu current velocity</div>
                 </div>
 
@@ -2451,7 +2467,8 @@
             <!-- Single Location Telemetry HUD -->
             <section class="glass-panel" v-if="locationMode === 'single'" style="padding: 1.25rem;">
               <div class="section-label" style="margin-bottom: 1rem;">
-                <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i></span> Active Island Location & Vessel Seaworthiness Telemetry
+                <span><i class="fa-solid fa-location-dot" style="color: var(--cyan-primary);"></i></span> Active Island
+                Location & Vessel Seaworthiness Telemetry
               </div>
               <div class="route-hud-strip" style="margin-top: 0;">
                 <div class="hud-item">
@@ -2463,14 +2480,17 @@
                 <div class="hud-item">
                   <div class="hud-label"><i class="fa-solid fa-compass"></i> Coordinates</div>
                   <div class="hud-value">{{ singleLocation.latitude.toFixed(3) }}°N <span
-                      style="font-size: 0.85rem; color: var(--cyan-primary);">{{ singleLocation.longitude.toFixed(3) }}°E</span></div>
+                      style="font-size: 0.85rem; color: var(--cyan-primary);">{{ singleLocation.longitude.toFixed(3)
+                      }}°E</span></div>
                   <div class="hud-sub">Geographic Waypoint</div>
                 </div>
 
                 <div class="hud-item">
                   <div class="hud-label"><i class="fa-solid fa-water"></i> Local Waters</div>
-                  <div class="hud-value" style="color: var(--cyan-primary);">{{ marineReport ? formatWave(marineReport.current.waveHeight) : '0.8m' }}</div>
-                  <div class="hud-sub">{{ marineReport?.current?.wavePeriod || 6 }}s period • {{ formatWind(marineReport?.current?.windSpeed) }} breeze</div>
+                  <div class="hud-value" style="color: var(--cyan-primary);">{{ marineReport ?
+                    formatWave(marineReport.current.waveHeight) : '0.8m' }}</div>
+                  <div class="hud-sub">{{ marineReport?.current?.wavePeriod || 6 }}s period • {{
+                    formatWind(marineReport?.current?.windSpeed) }} breeze</div>
                 </div>
 
                 <div class="hud-item">
@@ -2486,7 +2506,8 @@
                 <div class="hud-item">
                   <div class="hud-label"><i class="fa-solid fa-route"></i> Mode Switch</div>
                   <div>
-                    <button class="loc-mini-btn" @click="setLocationMode('route')" title="Switch to dual-port passage route corridor">
+                    <button class="loc-mini-btn" @click="setLocationMode('route')"
+                      title="Switch to dual-port passage route corridor">
                       <i class="fa-solid fa-arrows-split-up-and-left"></i> Switch to Route
                     </button>
                   </div>
@@ -2503,8 +2524,11 @@
                     <i :class="selectedVessel.icon"></i>
                   </div>
                   <div>
-                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ selectedVessel?.name }} (Active Profile)</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ selectedVessel?.subtitle }} • Max wave limit {{ selectedVessel?.maxSafeWave }}m • Max wind limit {{ selectedVessel?.maxSafeWind }} kn</div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ selectedVessel?.name
+                      }} (Active Profile)</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ selectedVessel?.subtitle }} • Max wave
+                      limit {{ selectedVessel?.maxSafeWave }}m • Max wind limit {{ selectedVessel?.maxSafeWind }} kn
+                    </div>
                   </div>
                 </div>
                 <button class="loc-mini-btn" @click="showRoutePlannerModal = true">
@@ -3231,8 +3255,10 @@
       <div class="route-modal-container">
         <div class="route-modal-header">
           <div class="route-modal-title">
-            <i :class="modalLocationTab === 'single' ? 'fa-solid fa-location-dot' : 'fa-solid fa-route'" style="color: var(--cyan-primary);"></i>
-            <span>{{ modalLocationTab === 'single' ? 'Single Location Weather & Marine Forecast' : 'Passage Route & Vessel Configuration' }}</span>
+            <i :class="modalLocationTab === 'single' ? 'fa-solid fa-location-dot' : 'fa-solid fa-route'"
+              style="color: var(--cyan-primary);"></i>
+            <span>{{ modalLocationTab === 'single' ? 'Single Location Weather & Marine Forecast' : 'Passage Route &
+              Vessel Configuration' }}</span>
           </div>
           <button class="route-modal-close-btn" @click="showRoutePlannerModal = false" title="Close"><i
               class="fa-solid fa-xmark"></i></button>
@@ -3296,8 +3322,7 @@
             </div>
             <div class="quick-ports">
               <button class="port-chip" v-for="isl in popularSingleIslands" :key="'modal_pop_' + isl.name"
-                :class="{ active: singleLocation.name === isl.name }"
-                @click="setSingleIsland(isl)">
+                :class="{ active: singleLocation.name === isl.name }" @click="setSingleIsland(isl)">
                 <i class="fa-solid fa-map-pin" style="margin-right: 0.35rem; color: var(--cyan-primary);"></i>
                 {{ isl.island || isl.name.split('(')[0].trim() }} ({{ isl.atollCode || isl.atoll }})
               </button>
@@ -3330,9 +3355,8 @@
               <small>Click island to view instant weather & marine forecast</small>
             </div>
             <div class="island-select-grid">
-              <button class="island-select-pill" v-for="isl in singleFilteredIslands"
-                :key="'single_isl_' + isl.name" :class="{ selected: singleLocation.name === isl.name }"
-                @click="setSingleIsland(isl)">
+              <button class="island-select-pill" v-for="isl in singleFilteredIslands" :key="'single_isl_' + isl.name"
+                :class="{ selected: singleLocation.name === isl.name }" @click="setSingleIsland(isl)">
                 <i class="fa-solid fa-map-pin"
                   :style="{ color: singleLocation.name === isl.name ? '#00f0ff' : '#38bdf8' }"></i>
                 <span class="isl-name">{{ isl.island || isl.name.split('(')[0].trim() }}</span>
@@ -3568,8 +3592,10 @@
         </section>
 
         <div class="route-modal-actions">
-          <button class="route-modal-apply-btn" @click="setLocationMode(modalLocationTab); showRoutePlannerModal = false">
-            <i class="fa-solid fa-check"></i> <span>Apply & View {{ modalLocationTab === 'single' ? 'Island Weather' : 'Passage Route' }}</span>
+          <button class="route-modal-apply-btn"
+            @click="setLocationMode(modalLocationTab); showRoutePlannerModal = false">
+            <i class="fa-solid fa-check"></i> <span>Apply & View {{ modalLocationTab === 'single' ? 'Island Weather' :
+              'Passage Route' }}</span>
           </button>
         </div>
       </div>
