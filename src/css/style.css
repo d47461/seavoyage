@@ -701,6 +701,12 @@ button {
   border-color: var(--border-card);
 }
 
+.mms-alert-banner.alert-green {
+  background: var(--color-safe-bg);
+  border-color: var(--color-safe-border);
+  color: var(--text-primary);
+}
+
 .mms-left {
   display: flex;
   align-items: center;
@@ -715,6 +721,7 @@ button {
 .mms-alert-banner.alert-yellow .mms-icon { color: var(--color-caution); }
 .mms-alert-banner.alert-red .mms-icon { color: var(--color-danger); }
 .mms-alert-banner.alert-white .mms-icon { color: var(--accent-cyan); }
+.mms-alert-banner.alert-green .mms-icon { color: var(--color-safe); }
 
 .mms-title {
   font-weight: 700;

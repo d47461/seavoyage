@@ -209,26 +209,28 @@
           </div>
         </div>
 
-        <!-- MMS Alert Banner (If Alert Active) -->
+        <!-- MMS Alert Banner (Sync with Official MMS Active Alerts) -->
         <div class="mms-alert-banner" :class="{
-          'alert-yellow': currentMmsAlert?.color === 'yellow',
-          'alert-red': currentMmsAlert?.color === 'red' || currentMmsAlert?.color === 'orange',
-          'alert-white': currentMmsAlert?.color === 'white' || !currentMmsAlert?.active
+          'alert-yellow': currentMmsAlert?.active && currentMmsAlert?.color === 'yellow',
+          'alert-red': currentMmsAlert?.active && (currentMmsAlert?.color === 'red' || currentMmsAlert?.color === 'orange'),
+          'alert-white': currentMmsAlert?.active && currentMmsAlert?.color === 'white',
+          'alert-green': !currentMmsAlert?.active || currentMmsAlert?.color === 'green'
         }">
           <div class="mms-left">
-            <i class="fa-solid fa-triangle-exclamation mms-icon"></i>
+            <i :class="currentMmsAlert?.active ? 'fa-solid fa-triangle-exclamation mms-icon' : 'fa-solid fa-circle-check mms-icon'"></i>
             <div>
               <div class="mms-title">
-                {{ currentMmsAlert?.headline || 'No Active MMS Severe Weather Warning' }}
+                {{ currentMmsAlert?.active ? currentMmsAlert?.headline : 'No Active MMS Weather Warning' }}
               </div>
               <div class="mms-desc">
-                {{ currentMmsAlert?.description || 'Normal conditions prevailing. Monitor channel winds.' }}
+                {{ currentMmsAlert?.active ? currentMmsAlert?.description : 'All atolls clear. Maldives Meteorological Service reports no active alerts across the archipelago.' }}
               </div>
             </div>
           </div>
-          <span class="tab-badge" style="background: var(--bg-surface-elevated); font-size: 0.72rem; padding: 0.3rem 0.6rem;">
-            {{ currentMmsAlert?.areaDesc || 'Archipelago-Wide' }}
-          </span>
+          <a href="https://www.meteorology.gov.mv/active_alerts" target="_blank" rel="noopener noreferrer" class="tab-badge" style="background: var(--bg-surface-elevated); font-size: 0.72rem; padding: 0.35rem 0.75rem; text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; white-space: nowrap;">
+            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
+            <span>{{ currentMmsAlert?.active ? (currentMmsAlert?.areaDesc || 'MMS Alert Active') : 'Official MMS Sync: All Clear' }}</span>
+          </a>
         </div>
 
         <!-- Telemetry Sensor Grid -->

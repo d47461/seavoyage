@@ -223,18 +223,44 @@ export function matchMMSAlert(lat, lon, locationName, alerts = []) {
     };
   }
 
-  // Get active alerts (filter out expired if date is parsable)
+  // Get active alerts (filter out any expired alert)
   const now = new Date();
   const validAlerts = alerts.filter(a => {
-    if (!a.expires) return true;
+    if (!a) return false;
+    if (a.active === false) return false;
+    if (!a.expires) {
+      if (a.pubDate) {
+        try {
+          const ageHours = (now - new Date(a.pubDate)) / (1000 * 60 * 60);
+          return ageHours < 12;
+        } catch (_) {
+          return false;
+        }
+      }
+      return false;
+    }
     try {
-      return new Date(a.expires) >= now;
+      return new Date(a.expires) > now;
     } catch (e) {
-      return true;
+      return false;
     }
   });
 
-  const alertsPool = validAlerts.length > 0 ? validAlerts : alerts;
+  // If no valid active alerts, return clear status
+  if (validAlerts.length === 0) {
+    return {
+      active: false,
+      color: 'green',
+      headline: 'No Active Severe Weather Warning',
+      description: 'No active weather alerts issued by Maldives Meteorological Service (MMS). Normal sea conditions prevailing.',
+      areaDesc: 'All Atolls Clear • Normal Weather',
+      startAtoll: 'Haa Alif Atoll',
+      endAtoll: 'Addu City',
+      inEffect: false
+    };
+  }
+
+  const alertsPool = validAlerts;
 
   // Score alerts by severity and location relevance
   const getSeverityScore = (color) => {

@@ -130,7 +130,41 @@ def parse_mms_alerts():
                 except Exception:
                     pass
 
-            alerts.append(alert_item)
+            # Strict Expiry Verification: Only include genuinely active MMS alerts
+            is_active = True
+            if alert_item.get('expires'):
+                try:
+                    exp_dt = datetime.fromisoformat(alert_item['expires'])
+                    now_dt = datetime.now(exp_dt.tzinfo) if exp_dt.tzinfo else datetime.now()
+                    if exp_dt <= now_dt:
+                        is_active = False
+                except Exception:
+                    pass
+            elif alert_item.get('pubDate'):
+                try:
+                    from email.utils import parsedate_to_datetime
+                    pub_dt = parsedate_to_datetime(alert_item['pubDate'])
+                    now_dt = datetime.now(pub_dt.tzinfo) if pub_dt.tzinfo else datetime.now()
+                    if (now_dt - pub_dt).total_seconds() > 12 * 3600:
+                        is_active = False
+                except Exception:
+                    pass
+
+            if is_active:
+                alerts.append(alert_item)
+
+        # Cross-verify with official MMS Active Alerts portal (https://www.meteorology.gov.mv/active_alerts)
+        try:
+            portal_req = urllib.request.Request(
+                'https://www.meteorology.gov.mv/active_alerts',
+                headers={'User-Agent': 'Mozilla/5.0 SeaVoyage/2.0'}
+            )
+            with fetch_with_fallback(portal_req, timeout=5) as p_res:
+                p_html = p_res.read().decode('utf-8', errors='ignore')
+                if 'No alerts available at the moment' in p_html or 'var alerts = [];' in p_html:
+                    alerts = []
+        except Exception:
+            pass
 
         _mms_cache['timestamp'] = time.time()
         _mms_cache['data'] = alerts
