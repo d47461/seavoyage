@@ -1084,3 +1084,16 @@ export function getZoomEarthUrl(lat, lon, zoom = 9, mode = 'satellite') {
   }
   return `https://zoom.earth/maps/satellite/#view=${rLat},${rLon},${zoom}z`;
 }
+
+/**
+ * Generate Google Earth 3D Web URL for any coordinates
+ * @param {number|string} lat Latitude
+ * @param {number|string} lon Longitude
+ * @param {number} [altitude=8000] Distance/altitude view range in meters
+ * @returns {string} Google Earth 3D web URL
+ */
+export function getGoogleEarthUrl(lat, lon, altitude = 8000) {
+  const rLat = parseFloat(lat).toFixed(5);
+  const rLon = parseFloat(lon).toFixed(5);
+  return `https://earth.google.com/web/@${rLat},${rLon},50a,${altitude}d,35y,0t,0r`;
+}

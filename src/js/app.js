@@ -23,8 +23,9 @@ import {
   MALDIVES_ATOLL_LIST,
   searchMaldivesDirectory,
   getIslandsByAtoll,
-  getZoomEarthUrl
-} from './marine-api.js?v=20261105-v1';
+  getZoomEarthUrl,
+  getGoogleEarthUrl
+} from './marine-api.js?v=20261105-v2';
 import {
   VESSEL_PROFILES,
   evaluateSeaSafety,
@@ -1375,50 +1376,38 @@ const app = createApp({
 
 
 
-    // Basemap State & Free Imagery Layers (Esri & Bing Maps with Zero API Keys)
-    const activeBasemap = ref('esri_sat'); // 'esri_sat', 'bing_aerial', 'esri_ocean'
+    // Basemap State & Free High-Res Imagery (Google Earth Satellite, Google Earth Hybrid, Esri Ocean Bathymetry)
+    const activeBasemap = ref('google_sat'); // 'google_sat', 'google_hybrid', 'esri_ocean', 'esri_sat'
     const showSeamarks = ref(true);
 
+    let googleSatelliteLayer = null;
+    let googleHybridLayer = null;
     let esriSatelliteLayer = null;
-    let bingAerialLayer = null;
     let esriOceanLayer = null;
     let esriOceanRefLayer = null;
     let openSeaMapLayer = null;
-
-    function createBingAerialLayer() {
-      const BingLayer = L.TileLayer.extend({
-        getTileUrl: function (coords) {
-          let quadkey = '';
-          for (let i = coords.z; i > 0; i--) {
-            let digit = 0;
-            const mask = 1 << (i - 1);
-            if ((coords.x & mask) !== 0) digit += 1;
-            if ((coords.y & mask) !== 0) digit += 2;
-            quadkey += digit;
-          }
-          const sub = Math.abs((coords.x + coords.y) % 4);
-          return `https://ecn.t${sub}.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=1`;
-        }
-      });
-      return new BingLayer('', {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Microsoft &mdash; Free Bing Maps Aerial'
-      });
-    }
 
     function setBasemap(type) {
       if (!leafletMap) return;
       activeBasemap.value = type;
 
       // Remove current basemaps
+      if (googleSatelliteLayer && leafletMap.hasLayer(googleSatelliteLayer)) leafletMap.removeLayer(googleSatelliteLayer);
+      if (googleHybridLayer && leafletMap.hasLayer(googleHybridLayer)) leafletMap.removeLayer(googleHybridLayer);
       if (esriSatelliteLayer && leafletMap.hasLayer(esriSatelliteLayer)) leafletMap.removeLayer(esriSatelliteLayer);
-      if (bingAerialLayer && leafletMap.hasLayer(bingAerialLayer)) leafletMap.removeLayer(bingAerialLayer);
       if (esriOceanLayer && leafletMap.hasLayer(esriOceanLayer)) leafletMap.removeLayer(esriOceanLayer);
       if (esriOceanRefLayer && leafletMap.hasLayer(esriOceanRefLayer)) leafletMap.removeLayer(esriOceanRefLayer);
 
-      if (type === 'bing_aerial') {
-        if (!bingAerialLayer) bingAerialLayer = createBingAerialLayer();
-        bingAerialLayer.addTo(leafletMap);
+      if (type === 'google_hybrid') {
+        if (!googleHybridLayer) {
+          googleHybridLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 21,
+            maxNativeZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: 'Tiles &copy; Google Earth &mdash; Hybrid Satellite'
+          });
+        }
+        googleHybridLayer.addTo(leafletMap);
       } else if (type === 'esri_ocean') {
         if (!esriOceanLayer) {
           esriOceanLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
@@ -1433,15 +1422,25 @@ const app = createApp({
         }
         esriOceanLayer.addTo(leafletMap);
         esriOceanRefLayer.addTo(leafletMap);
-      } else {
-        // Default: Esri World Imagery (High-Resolution Satellite)
+      } else if (type === 'esri_sat') {
         if (!esriSatelliteLayer) {
           esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: 'Tiles &copy; Esri &mdash; Free World Imagery Satellite'
+            attribution: 'Tiles &copy; Esri &mdash; World Imagery Satellite'
           });
         }
         esriSatelliteLayer.addTo(leafletMap);
+      } else {
+        // Default: High-Resolution Google Earth Satellite Imagery
+        if (!googleSatelliteLayer) {
+          googleSatelliteLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 21,
+            maxNativeZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: 'Tiles &copy; Google Earth &mdash; High-Resolution Satellite'
+          });
+        }
+        googleSatelliteLayer.addTo(leafletMap);
       }
 
       // Keep seamarks on top if enabled
@@ -1478,6 +1477,14 @@ const app = createApp({
       leafletMap.fitBounds(bounds, { padding: [55, 55], maxZoom: 12 });
     }
 
+    function openGoogleEarth3D() {
+      const loc = locationMode.value === 'single' ? singleLocation.value : departureLocation.value;
+      const lat = loc?.latitude || 4.175;
+      const lon = loc?.longitude || 73.509;
+      const url = getGoogleEarthUrl(lat, lon, 8000);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
     function openZoomEarth(mode = 'satellite') {
       const dep = departureLocation.value;
       const dest = destinationLocation.value;
@@ -1497,10 +1504,12 @@ const app = createApp({
         attributionControl: true
       }).setView([dep.latitude, dep.longitude], 9);
 
-      // 100% Free Default: Esri World Imagery (High-Resolution Satellite)
-      esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri &mdash; Free World Imagery Satellite'
+      // Default: Ultra High-Resolution Google Earth Satellite Imagery
+      googleSatelliteLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 21,
+        maxNativeZoom: 20,
+        subdomains: ['0', '1', '2', '3'],
+        attribution: 'Tiles &copy; Google Earth &mdash; High-Resolution Satellite'
       }).addTo(leafletMap);
 
       // OpenSeaMap Seamarks Overlay
@@ -1842,6 +1851,7 @@ const app = createApp({
       showSeamarks,
       toggleSeamarks,
       fitRouteBounds,
+      openGoogleEarth3D,
       openZoomEarth,
       activeAdvisorySubTab,
       setAdvisorySubTab,

@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- Modern Redesigned Stylesheet -->
-  <link rel="stylesheet" href="src/css/style.css?v=20261105-v4" />
+  <link rel="stylesheet" href="src/css/style.css?v=20261105-v5" />
 
   <!-- Theme Script (Instant apply to avoid FOUC) -->
   <script>
@@ -520,23 +520,29 @@
         <div class="map-view-shell">
           <div class="map-controls-bar">
             <div class="map-btn-group">
-              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'satellite' }" @click="setBasemap('satellite')">
-                <i class="fa-solid fa-satellite"></i> Satellite
+              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'google_sat' }" @click="setBasemap('google_sat')" title="High-Resolution Google Earth Satellite Imagery">
+                <i class="fa-solid fa-earth-americas"></i> Google Earth
               </button>
-              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'street' }" @click="setBasemap('street')">
-                <i class="fa-solid fa-map"></i> Nautical/Road
+              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'google_hybrid' }" @click="setBasemap('google_hybrid')" title="Google Earth Satellite with Reef & Island Labels">
+                <i class="fa-solid fa-layer-group"></i> Hybrid Labels
               </button>
-              <button type="button" class="map-tool-btn" :class="{ active: showSeamarks }" @click="toggleSeamarks">
+              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'esri_ocean' }" @click="setBasemap('esri_ocean')" title="Ocean Bathymetry & Depth Topography">
+                <i class="fa-solid fa-water"></i> Bathymetry
+              </button>
+              <button type="button" class="map-tool-btn" :class="{ active: showSeamarks }" @click="toggleSeamarks" title="Toggle Navigation Buoys & Marine Lights">
                 <i class="fa-solid fa-anchor"></i> Seamarks
               </button>
             </div>
 
             <div class="map-btn-group">
-              <button type="button" class="map-tool-btn" @click="fitRouteBounds">
+              <button type="button" class="map-tool-btn" @click="fitRouteBounds" title="Fit Camera to Route">
                 <i class="fa-solid fa-expand"></i> Fit Route
               </button>
-              <button type="button" class="map-tool-btn" @click="openZoomEarth" style="color: var(--accent-cyan);">
-                <i class="fa-solid fa-earth-asia"></i> Open Zoom Earth
+              <button type="button" class="map-tool-btn" @click="openGoogleEarth3D" style="color: #60a5fa;" title="Open in Google Earth 3D Web">
+                <i class="fa-solid fa-globe"></i> Earth 3D
+              </button>
+              <button type="button" class="map-tool-btn" @click="openZoomEarth" style="color: var(--accent-cyan);" title="Open Live Satellite & Weather Radar">
+                <i class="fa-solid fa-satellite"></i> Live Weather
               </button>
             </div>
           </div>
@@ -757,7 +763,7 @@
   </div> <!-- END #app -->
 
   <!-- Vue 3 Application Script -->
-  <script type="module" src="src/js/app.js?v=20261105-v4"></script>
+  <script type="module" src="src/js/app.js?v=20261105-v5"></script>
 </body>
 
 </html>
