@@ -11344,5 +11344,624 @@ button, a, input, select, textarea {
   border-color: #0284c7;
 }
 
+/* ==========================================================================
+   MODERN MARITIME ENHANCEMENTS: TABULAR NUMS & HIGH-LEGIBILITY TELEMETRY
+   ========================================================================== */
+.font-tabular,
+.hud-value,
+.clock-digits,
+.route-meta-badge,
+.tel-value,
+.windy-metric-val,
+.trend-card-day,
+.tc-metric-val,
+.param-label-cell,
+.windy-sub-val,
+.route-point,
+code,
+.gps-coords-display code {
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* ==========================================================================
+   AUDIENCE PERSONA MODE STRIP (Sea Travellers • Anglers • Voyage Planners • SOS)
+   ========================================================================== */
+.persona-mode-strip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(4, 12, 28, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.22);
+  padding: 0.45rem 1.25rem;
+  z-index: 125;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.persona-pills-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.persona-strip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(14, 28, 56, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+.persona-strip-btn:hover {
+  background: rgba(16, 36, 75, 0.85);
+  border-color: rgba(0, 240, 255, 0.45);
+  color: var(--text-bright);
+  transform: translateY(-1px);
+}
+
+.persona-strip-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.18) 0%, rgba(16, 185, 129, 0.12) 100%);
+  border-color: var(--cyan-primary);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3), inset 0 0 12px rgba(0, 240, 255, 0.1);
+}
+
+.persona-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.persona-icon-badge.traveller {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan-primary);
+}
+
+.persona-icon-badge.angler {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.persona-icon-badge.planner {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+}
+
+.persona-strip-btn.active .persona-icon-badge {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px currentColor;
+}
+
+.persona-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.persona-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: inherit;
+}
+
+.persona-desc {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  line-height: 1.1;
+}
+
+.persona-strip-btn.active .persona-desc {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.emergency-sos-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.95rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.85) 0%, rgba(185, 28, 28, 0.95) 100%);
+  border: 1px solid rgba(255, 120, 120, 0.6);
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.emergency-sos-trigger-btn:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.7);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   1-TAP COAST GUARD & EMERGENCY MODAL
+   ========================================================================== */
+.emergency-modal-card {
+  width: min(92vw, 680px);
+  background: rgba(7, 16, 36, 0.96);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 75, 100, 0.45);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(255, 51, 102, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  color: #ffffff;
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.emergency-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1.25rem;
+}
+
+.emergency-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.sos-badge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.emergency-title-wrap h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.emergency-title-wrap p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.emergency-gps-strip {
+  background: rgba(14, 28, 56, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.gps-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.location-name-tag {
+  color: var(--cyan-primary);
+  font-weight: 700;
+}
+
+.gps-coords-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(5, 12, 25, 0.9);
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.gps-coords-display code {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.04em;
+}
+
+.btn-copy-coords {
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid var(--cyan-primary);
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-copy-coords:hover {
+  background: var(--cyan-primary);
+  color: #040813;
+}
+
+.gps-radio-hint {
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  line-height: 1.35;
+  font-style: italic;
+}
+
+.emergency-hotlines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.hotline-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  background: rgba(14, 28, 56, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.hotline-card:hover {
+  background: rgba(20, 42, 85, 0.85);
+  transform: translateY(-2px);
+}
+
+.hotline-coastguard {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.hotline-coastguard:hover {
+  border-color: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+.hotline-police {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.hotline-police:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+}
+
+.hotline-ambulance {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.hotline-ambulance:hover {
+  border-color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+}
+
+.hotline-vhf {
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.hotline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.hotline-coastguard .hotline-icon { color: #f87171; background: rgba(239, 68, 68, 0.15); }
+.hotline-police .hotline-icon { color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
+.hotline-ambulance .hotline-icon { color: #34d399; background: rgba(16, 185, 129, 0.15); }
+.hotline-vhf .hotline-icon { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+
+.hotline-info {
+  flex: 1;
+}
+
+.hotline-dept {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.hotline-num {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+.hotline-note {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.hotline-call-pill {
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hotline-police .hotline-call-pill { background: #0284c7; }
+.hotline-ambulance .hotline-call-pill { background: #059669; }
+.hotline-call-pill.vhf-pill { background: #d97706; }
+
+.emergency-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.footer-note {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  flex: 1;
+}
+
+.btn-dismiss-emergency {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-dismiss-emergency:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   CAPTAIN'S PRE-DEPARTURE SAFETY CHECKLIST
+   ========================================================================== */
+.checklist-panel {
+  margin-top: 1rem;
+}
+
+.checklist-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.section-subtext {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.checklist-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  background: rgba(14, 28, 56, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.checklist-progress-pill.all-ready {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.btn-reset-checklist {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: color 0.2s ease;
+}
+
+.btn-reset-checklist:hover {
+  color: var(--cyan-primary);
+}
+
+.checklist-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+}
+
+.checklist-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(11, 23, 46, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.checklist-card:hover {
+  background: rgba(16, 34, 68, 0.9);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+
+.checklist-card.checked {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.checklist-checkbox {
+  font-size: 1.25rem;
+  color: var(--text-faint);
+  margin-top: 0.1rem;
+  transition: color 0.2s ease;
+}
+
+.checklist-card.checked .checklist-checkbox {
+  color: #10b981;
+}
+
+.checklist-info {
+  flex: 1;
+}
+
+.checklist-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+.checklist-desc {
+  font-size: 0.73rem;
+  color: var(--text-faint);
+  margin-top: 0.2rem;
+  line-height: 1.3;
+}
+
+.checklist-card.checked .checklist-label {
+  color: #f8fafc;
+}
+
+/* Light Mode Overrides for Persona & Emergency */
+[data-theme="light"] .persona-mode-strip {
+  background: rgba(241, 245, 249, 0.96);
+  border-bottom-color: rgba(2, 132, 199, 0.2);
+}
+
+[data-theme="light"] .persona-strip-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .persona-strip-btn:hover {
+  background: #f8fafc;
+  border-color: #0284c7;
+  color: #0f172a;
+}
+
+[data-theme="light"] .persona-strip-btn.active {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0369a1;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.2);
+}
+
+[data-theme="light"] .emergency-modal-card {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #fda4af;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .emergency-title-wrap h3 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .emergency-gps-strip {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .gps-coords-display {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .gps-coords-display code {
+  color: #0284c7;
+}
+
+[data-theme="light"] .hotline-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .hotline-num {
+  color: #0f172a;
+}
+
+[data-theme="light"] .checklist-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .checklist-card:hover {
+  background: #f8fafc;
+  border-color: #0284c7;
+}
+
+[data-theme="light"] .checklist-card.checked {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+[data-theme="light"] .btn-dismiss-emergency {
+  background: #e2e8f0;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+
 
 

@@ -43,7 +43,7 @@ export const FAMOUS_PORTS = [
   { name: 'Galle & Southern Coast', country: 'Sri Lanka', latitude: 6.0535, longitude: 80.2210, region: 'Indian Ocean' }
 ];
 
-const getPort = (islandName, fallbackIndex = 0) => 
+const getPort = (islandName, fallbackIndex = 0) =>
   MALDIVES_PORTS.find(p => p.island === islandName || p.name.includes(islandName)) || MALDIVES_PORTS[fallbackIndex];
 
 export const POPULAR_ROUTES = [
@@ -138,27 +138,35 @@ export const WMO_CODES = {
   99: { label: 'Severe Thunderstorm with Heavy Hail', icon: 'fa-solid fa-bolt-lightning', severity: 'danger', hazard: 'High-risk sea state, gale gusts & lightning' }
 };
 
-// Fetch live Maldives Meteorological Service (MMS) alerts
+// Fetch live Maldives Meteorological Service (MMS) alerts with timeout & resilient fallback
 export async function fetchMMSAlerts() {
   try {
-    // If running in development with custom server.py backend, query dynamic endpoint;
-    // on static deployment (GitHub Pages / seavoyage.info), query static snapshot
-    const isLocalCustomBackend = typeof window !== 'undefined' && 
+    const isLocalCustomBackend = typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
       window.location.port === '5173' &&
       !window.STATIC_MODE;
-    
+
     let res = null;
     if (isLocalCustomBackend) {
       try {
-        res = await fetch('/api/mms-alerts');
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 4000);
+        res = await fetch('/api/mms-alerts', { signal: ctrl.signal });
+        clearTimeout(tid);
       } catch (e) {
         res = null;
       }
     }
-    
+
     if (!res || !res.ok) {
-      res = await fetch('src/data/mms-alerts.json?v=20260912-v7');
+      try {
+        const ctrlFallback = new AbortController();
+        const tidFallback = setTimeout(() => ctrlFallback.abort(), 4000);
+        res = await fetch('src/data/mms-alerts.json?v=20260914-v3', { signal: ctrlFallback.signal });
+        clearTimeout(tidFallback);
+      } catch (e) {
+        res = null;
+      }
     }
 
     if (res && res.ok) {
@@ -247,8 +255,8 @@ export function matchMMSAlert(lat, lon, locationName, alerts = []) {
     }
 
     const maldivesAtolls = [
-      'kaafu', 'alif alif', 'alif dhaal', 'vaavu', 'meemu', 'faafu', 'dhaalu', 
-      'thaa', 'laamu', 'gaafu alif', 'gaafu dhaalu', 'gnaviyani', 'addu', 'baa', 
+      'kaafu', 'alif alif', 'alif dhaal', 'vaavu', 'meemu', 'faafu', 'dhaalu',
+      'thaa', 'laamu', 'gaafu alif', 'gaafu dhaalu', 'gnaviyani', 'addu', 'baa',
       'raa', 'lhaviyani', 'noonu', 'shaviyani', 'haa alif', 'haa dhaalu'
     ];
     for (const atoll of maldivesAtolls) {
@@ -329,12 +337,46 @@ export async function searchLocations(query) {
   }
 }
 
-export async function fetchMarineAndWeatherData(lat, lon) {
+// Client-side Memory & SessionStorage Cache (10-minute TTL)
+const marineCache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+
+export function clearMarineCache() {
+  marineCache.clear();
+  try {
+    const keys = Object.keys(sessionStorage);
+    for (const k of keys) {
+      if (k.startsWith('sv_marine_')) {
+        sessionStorage.removeItem(k);
+      }
+    }
+  } catch (_) { }
+}
+
+export async function fetchMarineAndWeatherData(lat, lon, forceFresh = false) {
   const roundedLat = parseFloat(lat).toFixed(4);
   const roundedLon = parseFloat(lon).toFixed(4);
+  const cacheKey = `sv_marine_${roundedLat}_${roundedLon}`;
+
+  if (!forceFresh) {
+    const memEntry = marineCache.get(cacheKey);
+    if (memEntry && (Date.now() - memEntry.timestamp < CACHE_TTL_MS)) {
+      return memEntry.data;
+    }
+    try {
+      const stored = sessionStorage.getItem(cacheKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed.timestamp < CACHE_TTL_MS) {
+          marineCache.set(cacheKey, parsed);
+          return parsed.data;
+        }
+      }
+    } catch (_) { }
+  }
 
   const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${roundedLat}&longitude=${roundedLon}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,ocean_current_velocity,ocean_current_direction,sea_surface_temperature&daily=wave_height_max,wave_direction_dominant,wave_period_max,wind_wave_height_max,swell_wave_height_max&past_days=4&forecast_days=14&timezone=auto`;
-  
+
   // DWD ICON Seamless (Zoom Earth primary weather engine)
   const baseForecastQuery = `latitude=${roundedLat}&longitude=${roundedLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,surface_pressure,pressure_msl,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,surface_pressure,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&past_days=4&forecast_days=14&wind_speed_unit=kn&timezone=auto`;
   const iconForecastUrl = `https://api.open-meteo.com/v1/forecast?${baseForecastQuery}&models=icon_seamless`;
@@ -342,10 +384,10 @@ export async function fetchMarineAndWeatherData(lat, lon) {
 
   try {
     const marineController = new AbortController();
-    const marineTimer = setTimeout(() => marineController.abort(), 3500);
+    const marineTimer = setTimeout(() => marineController.abort(), 5500);
 
     const forecastController = new AbortController();
-    const forecastTimer = setTimeout(() => forecastController.abort(), 6500);
+    const forecastTimer = setTimeout(() => forecastController.abort(), 7500);
 
     const [marineRes, forecastRes] = await Promise.all([
       fetch(marineUrl, { signal: marineController.signal }).catch(e => ({ ok: false, error: e })).finally(() => clearTimeout(marineTimer)),
@@ -370,7 +412,13 @@ export async function fetchMarineAndWeatherData(lat, lon) {
       console.warn("Marine API returned unavailable:", marineRes?.error);
     }
 
-    return compileMarineReport(roundedLat, roundedLon, forecastData, marineData);
+    const report = compileMarineReport(roundedLat, roundedLon, forecastData, marineData);
+    try {
+      const entry = { timestamp: Date.now(), data: report };
+      marineCache.set(cacheKey, entry);
+      sessionStorage.setItem(cacheKey, JSON.stringify(entry));
+    } catch (_) { }
+    return report;
   } catch (err) {
     console.error("Marine & Weather data fetch failed:", err);
     throw err;
@@ -408,8 +456,8 @@ function compileMarineReport(lat, lon, forecast, marine) {
   }
 
   // 1. Waves, Swells & Wind Waves
-  const currentWaveHeight = hasWaveData && hourlyM.wave_height[currentHourIdx] !== null 
-    ? hourlyM.wave_height[currentHourIdx] 
+  const currentWaveHeight = hasWaveData && hourlyM.wave_height[currentHourIdx] !== null
+    ? hourlyM.wave_height[currentHourIdx]
     : (hasWaveData ? (hourlyM.wave_height.find(v => v !== null) || 0) : 0.6);
 
   const currentWavePeriod = hasWaveData && hourlyM.wave_period ? hourlyM.wave_period[currentHourIdx] : 6;
@@ -448,7 +496,7 @@ function compileMarineReport(lat, lon, forecast, marine) {
   const humidityPct = current.relative_humidity_2m ?? (hourlyF.relative_humidity_2m ? hourlyF.relative_humidity_2m[currentHourIdx] : 80);
   const precipitationMm = current.precipitation ?? (hourlyF.precipitation ? hourlyF.precipitation[currentHourIdx] : 0);
   const precipProb = hourlyF.precipitation_probability ? (hourlyF.precipitation_probability[currentHourIdx] || 0) : 0;
-  
+
   const surfacePressure = current.surface_pressure ?? current.pressure_msl ?? (hourlyF.surface_pressure ? hourlyF.surface_pressure[currentHourIdx] : 1011.5);
   const pressureMsl = current.pressure_msl ?? current.surface_pressure ?? 1012.0;
 
@@ -474,7 +522,7 @@ function compileMarineReport(lat, lon, forecast, marine) {
   // 6. 24-Hour Timeline Compilation
   const timeline = [];
   const hoursCount = Math.min(24, (hourlyF.time || []).length - currentHourIdx);
-  
+
   for (let i = 0; i < hoursCount; i++) {
     const tIdx = currentHourIdx + i;
     const timeStr = hourlyF.time[tIdx];
@@ -689,8 +737,8 @@ export function compileDailyRecord(dayDataIdx, todayIdx, dailyF, hourlyF, dailyM
     const wGusts = hourlyF.wind_gusts_10m ? hourlyF.wind_gusts_10m[idx] : wSpeed;
     const wDir = hourlyF.wind_direction_10m ? hourlyF.wind_direction_10m[idx] : 0;
     const code = hourlyF.weather_code ? hourlyF.weather_code[idx] : 0;
-    const vis = (hourlyF.visibility && hourlyF.visibility[idx] !== null && typeof hourlyF.visibility[idx] === 'number') 
-      ? hourlyF.visibility[idx] 
+    const vis = (hourlyF.visibility && hourlyF.visibility[idx] !== null && typeof hourlyF.visibility[idx] === 'number')
+      ? hourlyF.visibility[idx]
       : 10000;
     if (typeof vis === 'number' && vis > 0 && vis < minVisibility) minVisibility = vis;
 
@@ -878,9 +926,9 @@ export function calculateDistance(lat1, lon1, lat2, lon2) {
   const R_km = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const km = R_km * c;
@@ -946,11 +994,11 @@ export function calculateMidpoint(lat1, lon1, lat2, lon2) {
  */
 export function getRelativeSeaAspect(courseBearing, waveOrWindDirection) {
   if (waveOrWindDirection === null || waveOrWindDirection === undefined) {
-    return { 
-      type: 'following', 
-      label: 'Following Sea / Fair Winds', 
-      desc: 'Mild wave action on vessel stern', 
-      angle: 0, 
+    return {
+      type: 'following',
+      label: 'Following Sea / Fair Winds',
+      desc: 'Mild wave action on vessel stern',
+      angle: 0,
       severity: 'safe',
       icon: 'fa-solid fa-arrow-down'
     };

@@ -1,17 +1,17 @@
 // Vue 3 Maritime Voyage Application with Maldives Meteorological Service (MMS) Integration & Route Optimization
 import { createApp, ref, computed, watch, onMounted, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js';
-import { 
-  fetchMarineAndWeatherData, 
-  searchLocations, 
-  fetchMMSAlerts, 
-  matchMMSAlert, 
-  MALDIVES_PORTS, 
-  FAMOUS_PORTS, 
+import {
+  fetchMarineAndWeatherData,
+  searchLocations,
+  fetchMMSAlerts,
+  matchMMSAlert,
+  MALDIVES_PORTS,
+  FAMOUS_PORTS,
   POPULAR_ROUTES,
   MAAFILAAFUSHI_PORT,
   MAAFILAAFUSHI_DEVICE_LOCATION,
   HANIMAADHOO_PORT,
-  WMO_CODES, 
+  WMO_CODES,
   getWindDirectionCardinal,
   isCoordinateInMaldives,
   calculateDistance,
@@ -24,25 +24,25 @@ import {
   searchMaldivesDirectory,
   getIslandsByAtoll,
   getZoomEarthUrl
-} from './marine-api.js?v=20260914-v2';
-import { 
-  VESSEL_PROFILES, 
-  evaluateSeaSafety, 
-  getBeaufortScale, 
+} from './marine-api.js?v=20261105-v1';
+import {
+  VESSEL_PROFILES,
+  evaluateSeaSafety,
+  getBeaufortScale,
   getDouglasSeaState,
   evaluateDayTripPlanning,
   generateTenDayTripSummary,
   generate7DaySafetyTrend
 } from './safety-engine.js?v=20260914-v2';
-import { 
-  generateCaptainAdvisory 
+import {
+  generateCaptainAdvisory
 } from './ai-advisory.js?v=20260914-v2';
-import { 
-  initAuthListener, 
-  loginAnonymously, 
-  saveFavoriteLocation, 
-  fetchFavoriteLocations, 
-  removeFavoriteLocation 
+import {
+  initAuthListener,
+  loginAnonymously,
+  saveFavoriteLocation,
+  fetchFavoriteLocations,
+  removeFavoriteLocation
 } from './firebase-config.js?v=20260914-v2';
 import {
   getMoonPhaseInfo,
@@ -199,6 +199,110 @@ const app = createApp({
     const activePlanningSubTab = ref('travel-date'); // 'travel-date', 'best-window', 'hourly', 'briefing', 'corridor'
     const activeFishingSubTab = ref('intel'); // 'intel', 'jigging', 'casting', 'trolling', 'spots'
     const showRoutePlannerModal = ref(false);
+    const showEmergencyModal = ref(false);
+    const emergencyCopied = ref(false);
+
+    // Persona Mode State: 'traveller' | 'angler' | 'planner'
+    const currentPersona = ref(localStorage.getItem('sv_persona') || 'traveller');
+
+    function switchPersona(personaKey) {
+      currentPersona.value = personaKey;
+      try {
+        localStorage.setItem('sv_persona', personaKey);
+      } catch (_) { }
+
+      if (personaKey === 'traveller') {
+        setMainTab('advisories');
+        setAdvisorySubTab('verdict');
+      } else if (personaKey === 'angler') {
+        setMainTab('fishing');
+        setFishingSubTab('intel');
+      } else if (personaKey === 'planner') {
+        setMainTab('planning');
+        setPlanningSubTab('travel-date');
+      }
+    }
+
+    // Marine VHF Radio Coords Formatter (Degrees & Decimal Minutes: DD°MM.MMM' N/S)
+    const radioCoordinatesStr = computed(() => {
+      const loc = locationMode.value === 'single' ? singleLocation.value : departureLocation.value;
+      if (!loc || typeof loc.latitude !== 'number') return '04°10.500\' N, 073°30.400\' E';
+      const lat = loc.latitude;
+      const lon = loc.longitude;
+      const latDeg = Math.floor(Math.abs(lat)).toString().padStart(2, '0');
+      const latMin = ((Math.abs(lat) - Math.floor(Math.abs(lat))) * 60).toFixed(3).padStart(6, '0');
+      const latDir = lat >= 0 ? 'N' : 'S';
+
+      const lonDeg = Math.floor(Math.abs(lon)).toString().padStart(3, '0');
+      const lonMin = ((Math.abs(lon) - Math.floor(Math.abs(lon))) * 60).toFixed(3).padStart(6, '0');
+      const lonDir = lon >= 0 ? 'E' : 'W';
+
+      return `${latDeg}°${latMin}' ${latDir}, ${lonDeg}°${lonMin}' ${lonDir}`;
+    });
+
+    async function copyRadioCoordinates() {
+      try {
+        const text = radioCoordinatesStr.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        emergencyCopied.value = true;
+        setTimeout(() => { emergencyCopied.value = false; }, 3000);
+      } catch (e) {
+        console.warn('Copy failed:', e);
+      }
+    }
+
+    // Pre-Departure Safety Checklist for Captains & Voyage Planners
+    const defaultChecklist = [
+      { id: 'pob_jackets', label: 'Life Jackets (SOLAS 100% POB)', desc: 'Whistle & reflective tape verified for each person aboard', checked: true },
+      { id: 'vhf_ch16', label: 'VHF Radio on Ch 16 (156.8 MHz)', desc: 'Dual-watch active, tested with base/port station', checked: true },
+      { id: 'bilge_test', label: 'Electric & Manual Bilge Pumps', desc: 'Pump cycle tested, strum box strainer clear of debris', checked: true },
+      { id: 'epirb_status', label: 'EPIRB / PLB & Distress Flares', desc: 'Within battery expiry date; flares dry in container', checked: false },
+      { id: 'nav_lights', label: 'Navigation Lights & Flashlights', desc: 'Port, starboard, stern & all-round white anchor light', checked: false },
+      { id: 'ground_tackle', label: 'Anchor & Chain Rode Ready', desc: 'Securely shackled and bitter end made fast to samson post', checked: true },
+      { id: 'reserve_fuel', label: 'Fuel Rule of Thirds Checked', desc: '1/3 outbound, 1/3 inbound, 1/3 safety reserve for headwind', checked: true },
+      { id: 'fresh_water', label: 'Fresh Drinking Water & First Aid', desc: '3L per person minimum plus emergency medical kit', checked: false },
+      { id: 'mms_bulletin', label: 'Latest MMS Advisory Verified', desc: 'White/Yellow/Orange alert status checked before lines cast', checked: true }
+    ];
+
+    const initialChecklist = (() => {
+      try {
+        const saved = localStorage.getItem('sv_departure_checklist');
+        if (saved) return JSON.parse(saved);
+      } catch (_) { }
+      return defaultChecklist;
+    })();
+
+    const departureChecklist = ref(initialChecklist);
+
+    function toggleChecklistItem(id) {
+      const item = departureChecklist.value.find(x => x.id === id);
+      if (item) {
+        item.checked = !item.checked;
+        try {
+          localStorage.setItem('sv_departure_checklist', JSON.stringify(departureChecklist.value));
+        } catch (_) { }
+      }
+    }
+
+    function resetChecklist() {
+      departureChecklist.value.forEach(x => { x.checked = false; });
+      try {
+        localStorage.setItem('sv_departure_checklist', JSON.stringify(departureChecklist.value));
+      } catch (_) { }
+    }
+
+    const checklistCompletedCount = computed(() => {
+      return departureChecklist.value.filter(x => x.checked).length;
+    });
 
     function setAdvisorySubTab(subKey) {
       activeAdvisorySubTab.value = subKey;
@@ -252,7 +356,7 @@ const app = createApp({
     const searchQuery = ref('');
     const searchResults = ref([]);
     const isSearching = ref(false);
-    
+
     const maldivesPorts = ref(MALDIVES_PORTS);
     const famousPorts = ref(FAMOUS_PORTS);
     const activeRegionTab = ref('maldives'); // 'maldives' or 'global'
@@ -548,9 +652,9 @@ const app = createApp({
     const currentMmsAlert = computed(() => {
       if (locationMode.value === 'single') {
         const singleAlert = matchMMSAlert(
-          singleLocation.value.latitude, 
-          singleLocation.value.longitude, 
-          singleLocation.value.name, 
+          singleLocation.value.latitude,
+          singleLocation.value.longitude,
+          singleLocation.value.name,
           mmsAlerts.value
         );
         return singleAlert || {
@@ -566,17 +670,17 @@ const app = createApp({
       }
 
       const depAlert = matchMMSAlert(
-        departureLocation.value.latitude, 
-        departureLocation.value.longitude, 
-        departureLocation.value.name, 
+        departureLocation.value.latitude,
+        departureLocation.value.longitude,
+        departureLocation.value.name,
         mmsAlerts.value
       );
       if (depAlert && depAlert.active) return depAlert;
 
       const destAlert = matchMMSAlert(
-        destinationLocation.value.latitude, 
-        destinationLocation.value.longitude, 
-        destinationLocation.value.name, 
+        destinationLocation.value.latitude,
+        destinationLocation.value.longitude,
+        destinationLocation.value.name,
         mmsAlerts.value
       );
       if (destAlert && destAlert.active) return destAlert;
@@ -636,7 +740,7 @@ const app = createApp({
       const transitTimeStr = hrs > 0 ? (mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`) : `${mins}m`;
 
       // Match famous passage channel
-      const matchedRoute = POPULAR_ROUTES.find(r => 
+      const matchedRoute = POPULAR_ROUTES.find(r =>
         (r.departure.name === dep.name && r.destination.name === dest.name) ||
         (r.departure.name === dest.name && r.destination.name === dep.name)
       );
@@ -738,7 +842,7 @@ const app = createApp({
     // Sync fishing atoll when singleLocation changes
     watch(singleLocation, (newLoc) => {
       if (newLoc && newLoc.atoll) {
-        const matchingAtoll = fishingAtolls.value.find(a => 
+        const matchingAtoll = fishingAtolls.value.find(a =>
           a.key.toLowerCase() === newLoc.atoll.toLowerCase() ||
           a.name.toLowerCase().includes(newLoc.atoll.toLowerCase()) ||
           newLoc.atoll.toLowerCase().includes(a.key.toLowerCase())
@@ -756,8 +860,8 @@ const app = createApp({
     const isFavorite = computed(() => {
       const loc = activeLocation.value;
       if (!loc) return false;
-      return favoriteLocations.value.some(l => 
-        Math.abs(l.latitude - loc.latitude) < 0.01 && 
+      return favoriteLocations.value.some(l =>
+        Math.abs(l.latitude - loc.latitude) < 0.01 &&
         Math.abs(l.longitude - loc.longitude) < 0.01
       );
     });
@@ -847,7 +951,7 @@ const app = createApp({
       const c = typeof celsius === 'number' ? celsius : parseFloat(celsius);
       if (isNaN(c)) return `${celsius}`;
       if (unitSystem.value === 'imperial') {
-        const f = (c * 9/5) + 32;
+        const f = (c * 9 / 5) + 32;
         return `${Math.round(f)}°F`;
       }
       return `${Math.round(c)}°C`;
@@ -858,7 +962,7 @@ const app = createApp({
       const c = typeof celsius === 'number' ? celsius : parseFloat(celsius);
       if (isNaN(c)) return `${celsius}°C`;
       if (unitSystem.value === 'imperial') {
-        const f = (c * 9/5) + 32;
+        const f = (c * 9 / 5) + 32;
         return `${f.toFixed(1)}°F`;
       }
       return `${c.toFixed(1)}°C`;
@@ -960,7 +1064,7 @@ const app = createApp({
       if (!marineReport.value) return;
       const effectiveRoute = locationMode.value === 'single' ? null : routeData.value;
       safetyEvaluation.value = evaluateSeaSafety(
-        marineReport.value, 
+        marineReport.value,
         selectedVesselKey.value,
         currentMmsAlert.value,
         effectiveRoute,
@@ -977,8 +1081,8 @@ const app = createApp({
           return evaluateDayTripPlanning(d, selectedVesselKey.value, effectiveRoute, currentMmsAlert.value, dMoon, dNakaiy);
         });
         tenDaySummary.value = generateTenDayTripSummary(
-          tenDayForecast.value, 
-          vesselProfiles.value[selectedVesselKey.value], 
+          tenDayForecast.value,
+          vesselProfiles.value[selectedVesselKey.value],
           effectiveRoute
         );
       } else {
@@ -1004,8 +1108,8 @@ const app = createApp({
           locationContext += ` [MMS Alert: ${currentMmsAlert.value.headline} - ${currentMmsAlert.value.areaDesc}]`;
         }
         const brief = await generateCaptainAdvisory(
-          locationContext, 
-          safetyEvaluation.value, 
+          locationContext,
+          safetyEvaluation.value,
           marineReport.value
         );
         aiBrief.value = brief;
@@ -1154,10 +1258,10 @@ const app = createApp({
         singleLocation.value = devLoc;
         try {
           localStorage.setItem('seavoyage_device_location_v2', JSON.stringify(devLoc));
-        } catch (e) {}
-        if (destinationLocation.value && 
-            Math.abs(destinationLocation.value.latitude - latitude) < 0.02 && 
-            Math.abs(destinationLocation.value.longitude - longitude) < 0.02) {
+        } catch (e) { }
+        if (destinationLocation.value &&
+          Math.abs(destinationLocation.value.latitude - latitude) < 0.02 &&
+          Math.abs(destinationLocation.value.longitude - longitude) < 0.02) {
           const altDest = maldivesPorts.value.find(p => Math.abs(p.latitude - latitude) > 0.1) || HANIMAADHOO_PORT;
           destinationLocation.value = altDest;
         }
@@ -1194,12 +1298,12 @@ const app = createApp({
             // Cache device location for instant restoration on subsequent visits
             try {
               localStorage.setItem('seavoyage_device_location_v2', JSON.stringify(devLoc));
-            } catch (e) {}
+            } catch (e) { }
 
             // Ensure destination is not identical to device location
-            if (destinationLocation.value && 
-                Math.abs(destinationLocation.value.latitude - lat) < 0.02 && 
-                Math.abs(destinationLocation.value.longitude - lon) < 0.02) {
+            if (destinationLocation.value &&
+              Math.abs(destinationLocation.value.latitude - lat) < 0.02 &&
+              Math.abs(destinationLocation.value.longitude - lon) < 0.02) {
               const altDest = maldivesPorts.value.find(p => Math.abs(p.latitude - lat) > 0.1) || HANIMAADHOO_PORT;
               destinationLocation.value = altDest;
             }
@@ -1251,8 +1355,8 @@ const app = createApp({
     async function toggleFavorite() {
       const loc = departureLocation.value;
       if (isFavorite.value) {
-        const existing = favoriteLocations.value.find(l => 
-          Math.abs(l.latitude - loc.latitude) < 0.01 && 
+        const existing = favoriteLocations.value.find(l =>
+          Math.abs(l.latitude - loc.latitude) < 0.01 &&
           Math.abs(l.longitude - loc.longitude) < 0.01
         );
         if (existing) {
@@ -1283,7 +1387,7 @@ const app = createApp({
 
     function createBingAerialLayer() {
       const BingLayer = L.TileLayer.extend({
-        getTileUrl: function(coords) {
+        getTileUrl: function (coords) {
           let quadkey = '';
           for (let i = coords.z; i > 0; i--) {
             let digit = 0;
@@ -1774,7 +1878,17 @@ const app = createApp({
       formatTravelDateFull,
       setTravelDate,
       stepTravelDate,
-      setTravelDatePreset
+      setTravelDatePreset,
+      showEmergencyModal,
+      emergencyCopied,
+      currentPersona,
+      switchPersona,
+      radioCoordinatesStr,
+      copyRadioCoordinates,
+      departureChecklist,
+      toggleChecklistItem,
+      resetChecklist,
+      checklistCompletedCount
     };
   }
 });

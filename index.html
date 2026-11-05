@@ -38,7 +38,7 @@
 
 
   <!-- Stylesheet (Cache-Busted for Immediate Mobile & Tablet Refresh) -->
-  <link rel="stylesheet" href="src/css/style.css?v=20260914-v2" />
+  <link rel="stylesheet" href="src/css/style.css?v=20261105-v1" />
 
   <!-- Instant Theme Script to avoid FOUC & Safety Fallback -->
   <script>
@@ -126,6 +126,47 @@
 
         </div>
       </nav>
+      <!-- Audience Persona Quick Bar: Sea Travellers • Anglers • Planners • SOS 191 -->
+      <header class="persona-mode-strip" role="banner" aria-label="Audience Persona Switcher">
+        <div class="persona-pills-cluster">
+          <button type="button" class="persona-strip-btn" :class="{ active: currentPersona === 'traveller' }"
+            @click="switchPersona('traveller')"
+            title="Sea Travellers: Instant Safety Verdict, Sea State, Wave Hazards & MMS Alerts">
+            <span class="persona-icon-badge traveller"><i class="fa-solid fa-ship"></i></span>
+            <div class="persona-text-wrap">
+              <span class="persona-title">Sea Traveller</span>
+              <span class="persona-desc">Safety Verdict & Waves</span>
+            </div>
+          </button>
+
+          <button type="button" class="persona-strip-btn" :class="{ active: currentPersona === 'angler' }"
+            @click="switchPersona('angler')"
+            title="Anglers: Solunar Bite Rating, Major/Minor Feeding Windows, Tides & Hotspots">
+            <span class="persona-icon-badge angler"><i class="fa-solid fa-fish-fins"></i></span>
+            <div class="persona-text-wrap">
+              <span class="persona-title">Angler & Fishing</span>
+              <span class="persona-desc">Solunar Peak & Tides</span>
+            </div>
+          </button>
+
+          <button type="button" class="persona-strip-btn" :class="{ active: currentPersona === 'planner' }"
+            @click="switchPersona('planner')"
+            title="Voyage Planners: Inter-Atoll NM, 24h Best Departure Window, Nakaiy & Checklist">
+            <span class="persona-icon-badge planner"><i class="fa-solid fa-compass"></i></span>
+            <div class="persona-text-wrap">
+              <span class="persona-title">Voyage Planner</span>
+              <span class="persona-desc">Passage NM & 24h Window</span>
+            </div>
+          </button>
+        </div>
+
+        <button type="button" class="emergency-sos-trigger-btn" @click="showEmergencyModal = true"
+          title="Emergency Distress Contacts & Coast Guard Radio Position">
+          <i class="fa-solid fa-tower-broadcast"></i>
+          <span>SOS 191</span>
+        </button>
+      </header>
+
 
       <!-- Sticky Quick Route & Vessel Header Bar (Single-Screen Navigation) -->
       <div class="sticky-route-bar" @click="showRoutePlannerModal = true; modalLocationTab = locationMode" role="button"
@@ -1713,6 +1754,11 @@
               @click="setPlanningSubTab('corridor')">
               <i class="fa-solid fa-route"></i> <span>Corridor & Vessel</span>
             </button>
+            <button class="sub-nav-btn" :class="{ active: activePlanningSubTab === 'checklist' }"
+              @click="setPlanningSubTab('checklist')">
+              <i class="fa-solid fa-list-check"></i> <span>Safety Checklist ({{ checklistCompletedCount }}/{{
+                departureChecklist.length }})</span>
+            </button>
           </div>
 
           <!-- Quick Route Context Strip with 1-Click Change Route / Ports -->
@@ -2620,7 +2666,45 @@
               </div>
             </div>
           </footer>
-        </div> <!-- END TAB PANE 3: TRIP PLANNING & VOYAGE TIMING -->
+        </div>
+        <!-- SUB-VIEW 5: CAPTAIN'S PRE-DEPARTURE SAFETY CHECKLIST -->
+        <div v-show="activePlanningSubTab === 'checklist'" class="sub-view-group">
+          <section class="glass-panel checklist-panel" style="padding: 1.5rem;">
+            <div class="checklist-header-flex">
+              <div>
+                <div class="section-label" style="margin-bottom: 0.25rem;">
+                  <span><i class="fa-solid fa-clipboard-check" style="color: var(--cyan-primary);"></i></span>
+                  Captain's Pre-Departure Sea Safety Checklist
+                </div>
+                <p class="section-subtext">MNDF Coast Guard, Transport Authority & SOLAS Pre-Sailing Verification</p>
+              </div>
+              <div class="checklist-progress-pill"
+                :class="{ 'all-ready': checklistCompletedCount === departureChecklist.length }">
+                <span class="progress-count">{{ checklistCompletedCount }} / {{ departureChecklist.length }}
+                  Ready</span>
+                <button type="button" class="btn-reset-checklist" @click="resetChecklist"
+                  title="Reset all checkboxes for new voyage">
+                  <i class="fa-solid fa-arrows-rotate"></i> Reset
+                </button>
+              </div>
+            </div>
+
+            <div class="checklist-items-grid">
+              <div v-for="item in departureChecklist" :key="item.id" class="checklist-card"
+                :class="{ checked: item.checked }" @click="toggleChecklistItem(item.id)">
+                <div class="checklist-checkbox">
+                  <i :class="item.checked ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
+                </div>
+                <div class="checklist-info">
+                  <div class="checklist-label">{{ item.label }}</div>
+                  <div class="checklist-desc">{{ item.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- END TAB PANE 3: TRIP PLANNING & VOYAGE TIMING -->
 
         <!-- TAB PANE 4: SPORTFISHING INTELLIGENCE -->
         <div class="tab-content-pane single-screen-pane tab-pane-fishing" v-show="activeMainTab === 'fishing'">
@@ -3249,6 +3333,94 @@
 
     </div> <!-- END .app-viewport-shell -->
 
+
+    <!-- 1-TAP EMERGENCY & COAST GUARD SAR MODAL -->
+    <div v-if="showEmergencyModal" class="route-modal-backdrop" @click.self="showEmergencyModal = false" role="dialog"
+      aria-modal="true">
+      <div class="emergency-modal-card">
+        <div class="emergency-modal-header">
+          <div class="emergency-title-wrap">
+            <div class="sos-badge-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+              <h3>Maldives Maritime Emergency Contacts</h3>
+              <p>24/7 Coast Guard Search & Rescue (SAR), Police & Sea Ambulance</p>
+            </div>
+          </div>
+          <button class="route-modal-close-btn" @click="showEmergencyModal = false" aria-label="Close modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Live GPS Coordinates formatted for VHF radio broadcast -->
+        <div class="emergency-gps-strip">
+          <div class="gps-label-row">
+            <span class="gps-title"><i class="fa-solid fa-satellite-dish"></i> Current Vessel Location (VHF Radio
+              Format):</span>
+            <span class="location-name-tag">{{ locationMode === 'single' ? singleLocation?.name :
+              departureLocation?.name }}</span>
+          </div>
+          <div class="gps-coords-display">
+            <code>{{ radioCoordinatesStr }}</code>
+            <button type="button" class="btn-copy-coords" @click="copyRadioCoordinates">
+              <i :class="emergencyCopied ? 'fa-solid fa-check text-emerald' : 'fa-solid fa-copy'"></i>
+              <span>{{ emergencyCopied ? 'COPIED TO CLIPBOARD' : 'COPY FOR RADIO CALL' }}</span>
+            </button>
+          </div>
+          <p class="gps-radio-hint">Read aloud to Coast Guard on VHF Ch 16: "MAYDAY MAYDAY MAYDAY / PAN-PAN PAN-PAN
+            PAN-PAN, THIS IS [VESSEL NAME], POSITION {{ radioCoordinatesStr }}"</p>
+        </div>
+
+        <!-- Emergency Hotlines Grid -->
+        <div class="emergency-hotlines-grid">
+          <a href="tel:191" class="hotline-card hotline-coastguard">
+            <div class="hotline-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="hotline-info">
+              <div class="hotline-dept">MNDF Coast Guard (MRCC)</div>
+              <div class="hotline-num">191</div>
+              <div class="hotline-note">Maritime Search & Rescue • 24/7 Toll-Free</div>
+            </div>
+            <span class="hotline-call-pill"><i class="fa-solid fa-phone"></i> Dial 191</span>
+          </a>
+
+          <a href="tel:119" class="hotline-card hotline-police">
+            <div class="hotline-icon"><i class="fa-solid fa-sailboat"></i></div>
+            <div class="hotline-info">
+              <div class="hotline-dept">Maldives Marine Police</div>
+              <div class="hotline-num">119</div>
+              <div class="hotline-note">Waterborne Police Response & Harbor Security</div>
+            </div>
+            <span class="hotline-call-pill"><i class="fa-solid fa-phone"></i> Dial 119</span>
+          </a>
+
+          <a href="tel:102" class="hotline-card hotline-ambulance">
+            <div class="hotline-icon"><i class="fa-solid fa-kit-medical"></i></div>
+            <div class="hotline-info">
+              <div class="hotline-dept">Sea Ambulance Emergency</div>
+              <div class="hotline-num">102</div>
+              <div class="hotline-note">Urgent Inter-Atoll Medical Evacuation & Patient Transfer</div>
+            </div>
+            <span class="hotline-call-pill"><i class="fa-solid fa-phone"></i> Dial 102</span>
+          </a>
+
+          <div class="hotline-card hotline-vhf">
+            <div class="hotline-icon"><i class="fa-solid fa-tower-cell"></i></div>
+            <div class="hotline-info">
+              <div class="hotline-dept">Maritime VHF Radio</div>
+              <div class="hotline-num">Channel 16</div>
+              <div class="hotline-note">156.800 MHz International Distress, Safety & Calling</div>
+            </div>
+            <span class="hotline-call-pill vhf-pill"><i class="fa-solid fa-radio"></i> Active Guard</span>
+          </div>
+        </div>
+
+        <div class="emergency-modal-footer">
+          <span class="footer-note"><i class="fa-solid fa-circle-info"></i> All Maldives speedboats & passenger craft
+            are legally mandated to keep VHF Channel 16 active while underway outside lagoons.</span>
+          <button class="btn-dismiss-emergency" @click="showEmergencyModal = false">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ROUTE PLANNER & VESSEL PROFILE MODAL / DRAWER -->
     <div v-if="showRoutePlannerModal" class="route-modal-backdrop" @click.self="showRoutePlannerModal = false"
       role="dialog" aria-modal="true">
@@ -3792,7 +3964,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Application Entry Point (Vue 3 Composition API ES Module) -->
-  <script type="module" src="src/js/app.js?v=20260914-v2"></script>
+  <script type="module" src="src/js/app.js?v=20261105-v1"></script>
 </body>
 
 </html>
