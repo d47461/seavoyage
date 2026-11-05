@@ -3,12 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="theme-color" content="#081120">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>SeaVoyage • Maldives Sea Travel Advisory & Marine Intelligence</title>
-  <meta name="description" content="Intelligent sea travel safety advisories, marine weather, solunar bite ratings, and inter-atoll passage planning for the Maldives.">
+  <meta name="description"
+    content="Intelligent sea travel safety advisories, marine weather, solunar bite ratings, and inter-atoll passage planning for the Maldives.">
 
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20261105-v3">
@@ -17,7 +19,9 @@
   <!-- Modern Fonts: Plus Jakarta Sans, Outfit, JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <!-- FontAwesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -60,8 +64,10 @@
         </div>
 
         <!-- Location Pill (Single Island or Passage Corridor) -->
-        <button type="button" class="header-location-pill" @click="showRoutePlannerModal = true" title="Change Island or Voyage Route">
-          <i :class="locationMode === 'single' ? 'fa-solid fa-location-dot loc-icon' : 'fa-solid fa-route loc-icon'"></i>
+        <button type="button" class="header-location-pill" @click="showRoutePlannerModal = true"
+          title="Change Island or Voyage Route">
+          <i
+            :class="locationMode === 'single' ? 'fa-solid fa-location-dot loc-icon' : 'fa-solid fa-route loc-icon'"></i>
           <span class="loc-name">
             <template v-if="locationMode === 'single'">
               {{ singleLocation ? singleLocation.name : 'Select Island' }}
@@ -94,11 +100,13 @@
           <button type="button" class="btn-action-icon"
             @click="setTheme(themeMode === 'ocean' ? 'light' : (themeMode === 'light' ? 'dark' : 'ocean'))"
             :title="`Current theme: ${themeMode}. Click to switch.`">
-            <i :class="themeMode === 'light' ? 'fa-solid fa-sun' : (themeMode === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-water')"></i>
+            <i
+              :class="themeMode === 'light' ? 'fa-solid fa-sun' : (themeMode === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-water')"></i>
           </button>
 
           <!-- Emergency SOS Quick Dial Button -->
-          <button type="button" class="btn-emergency-sos" @click="showEmergencyModal = true" title="Emergency Coast Guard & Maritime Distress Hotlines">
+          <button type="button" class="btn-emergency-sos" @click="showEmergencyModal = true"
+            title="Emergency Coast Guard & Maritime Distress Hotlines">
             <i class="fa-solid fa-tower-broadcast"></i>
             <span>SOS 191</span>
           </button>
@@ -115,7 +123,8 @@
           <i class="fa-solid fa-shield-halved"></i>
           <span>Sea Travel & Safety</span>
           <span class="tab-badge" v-if="safetyEvaluation">
-            {{ safetyEvaluation.verdict === 'SAFE' ? 'Safe' : (safetyEvaluation.verdict === 'CAUTION' ? 'Caution' : 'Hazard') }}
+            {{ safetyEvaluation.verdict === 'SAFE' ? 'Safe' : (safetyEvaluation.verdict === 'CAUTION' ? 'Caution' :
+            'Hazard') }}
           </span>
         </button>
 
@@ -171,14 +180,16 @@
           <div class="safety-hero-content">
             <div class="safety-headline-group">
               <div class="safety-badge-pill">
-                <i :class="safetyEvaluation?.verdict === 'SAFE' ? 'fa-solid fa-circle-check' : (safetyEvaluation?.verdict === 'CAUTION' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-xmark')"></i>
+                <i
+                  :class="safetyEvaluation?.verdict === 'SAFE' ? 'fa-solid fa-circle-check' : (safetyEvaluation?.verdict === 'CAUTION' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-xmark')"></i>
                 <span>{{ safetyEvaluation?.verdictLabel || 'Evaluating Conditions...' }}</span>
               </div>
               <h1 class="safety-title">
                 {{ safetyEvaluation?.verdictHeadline || 'Normal Sea Conditions Across Channels' }}
               </h1>
               <p class="safety-desc">
-                {{ safetyEvaluation?.guidance || 'Safe navigating conditions prevailing for all craft. Standard life jacket regulations and communication procedures apply.' }}
+                {{ safetyEvaluation?.guidance || 'Safe navigating conditions prevailing for all craft. Standard life
+                jacket regulations and communication procedures apply.' }}
               </p>
 
               <!-- Coast Guard Vessel Restriction Notice -->
@@ -186,7 +197,8 @@
                 <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan);"></i>
                 <span>
                   <strong>Vessel Operational Scope:</strong>
-                  {{ selectedVessel?.name }} • Safe Wave Limit {{ selectedVessel?.maxSafeWave }}m • Wind Limit {{ selectedVessel?.maxSafeWind }} kn.
+                  {{ selectedVessel?.name }} • Safe Wave Limit {{ selectedVessel?.maxSafeWave }}m • Wind Limit {{
+                  selectedVessel?.maxSafeWind }} kn.
                 </span>
               </div>
             </div>
@@ -196,8 +208,7 @@
               <div class="gauge-svg-box">
                 <svg viewBox="0 0 140 140">
                   <circle cx="70" cy="70" r="60" class="gauge-bg-circle"></circle>
-                  <circle cx="70" cy="70" r="60" class="gauge-progress-circle"
-                    :stroke-dasharray="gaugeCircumference"
+                  <circle cx="70" cy="70" r="60" class="gauge-progress-circle" :stroke-dasharray="gaugeCircumference"
                     :stroke-dashoffset="gaugeOffset"></circle>
                 </svg>
                 <div class="gauge-text-center">
@@ -226,7 +237,8 @@
               </div>
             </div>
           </div>
-          <span class="tab-badge" style="background: var(--bg-surface-elevated); font-size: 0.72rem; padding: 0.3rem 0.6rem;">
+          <span class="tab-badge"
+            style="background: var(--bg-surface-elevated); font-size: 0.72rem; padding: 0.3rem 0.6rem;">
             {{ currentMmsAlert?.areaDesc || 'Archipelago-Wide' }}
           </span>
         </div>
@@ -234,8 +246,10 @@
         <!-- Telemetry Sensor Grid -->
         <div class="view-header">
           <div class="view-title-wrap">
-            <h2 class="view-title"><i class="fa-solid fa-gauge-high" style="color: var(--accent-cyan);"></i> Live Marine Telemetry</h2>
-            <p class="view-subtitle">Real-time oceanographic and atmospheric data for {{ locationMode === 'single' ? singleLocation?.name : departureLocation?.name }}</p>
+            <h2 class="view-title"><i class="fa-solid fa-gauge-high" style="color: var(--accent-cyan);"></i> Live Marine
+              Telemetry</h2>
+            <p class="view-subtitle">Real-time oceanographic and atmospheric data for {{ locationMode === 'single' ?
+              singleLocation?.name : departureLocation?.name }}</p>
           </div>
         </div>
 
@@ -250,7 +264,8 @@
               {{ marineReport ? formatWave(marineReport.current.waveHeight) : '0.7 m' }}
             </div>
             <div class="metric-sub">
-              Swell: {{ marineReport ? formatWave(marineReport.current.swellHeight) : '0.5 m' }} • {{ marineReport?.current?.swellPeriod || 7 }}s
+              Swell: {{ marineReport ? formatWave(marineReport.current.swellHeight) : '0.5 m' }} • {{
+              marineReport?.current?.swellPeriod || 7 }}s
             </div>
           </div>
 
@@ -278,7 +293,8 @@
               {{ safetyEvaluation?.douglasSeaState?.label || 'Moderate (Chop)' }}
             </div>
             <div class="metric-sub">
-              Beaufort {{ safetyEvaluation?.beaufortScale?.number || 3 }} • {{ safetyEvaluation?.beaufortScale?.label || 'Gentle Breeze' }}
+              Beaufort {{ safetyEvaluation?.beaufortScale?.number || 3 }} • {{ safetyEvaluation?.beaufortScale?.label ||
+              'Gentle Breeze' }}
             </div>
           </div>
 
@@ -289,26 +305,33 @@
               <span class="badge">{{ moonPhase?.tideType?.split('(')[0] || 'Moderate' }}</span>
             </div>
             <div class="metric-val" style="color: #34d399;">
-              {{ marineReport?.current?.currentVelocity ? formatCurrentSpeed(marineReport.current.currentVelocity) : '1.4 kn' }}
+              {{ marineReport?.current?.currentVelocity ? formatCurrentSpeed(marineReport.current.currentVelocity) :
+              '1.4 kn' }}
             </div>
             <div class="metric-sub">
-              Flow: {{ marineReport?.current?.currentDirection != null ? `${marineReport.current.currentDirection}°` : 'Channel Exchange' }}
+              Flow: {{ marineReport?.current?.currentDirection != null ? `${marineReport.current.currentDirection}°` :
+              'Channel Exchange' }}
             </div>
           </div>
         </div>
 
         <!-- Vessel Seaworthiness Card -->
-        <div class="card" style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div class="card"
+          style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(2, 132, 199, 0.15); border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; color: var(--accent-cyan);">
+            <div
+              style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(2, 132, 199, 0.15); border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; color: var(--accent-cyan);">
               <i :class="selectedVessel?.icon || 'fa-solid fa-ship'"></i>
             </div>
             <div>
-              <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary);">{{ selectedVessel?.name }}</div>
-              <div style="font-size: 0.78rem; color: var(--text-muted);">{{ selectedVessel?.subtitle }} • Cruising Speed: {{ selectedVessel?.cruisingSpeed }} kn</div>
+              <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary);">{{ selectedVessel?.name }}
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">{{ selectedVessel?.subtitle }} • Cruising
+                Speed: {{ selectedVessel?.cruisingSpeed }} kn</div>
             </div>
           </div>
-          <button type="button" class="btn-action-icon" @click="showRoutePlannerModal = true" style="height: 38px; padding: 0 1rem;">
+          <button type="button" class="btn-action-icon" @click="showRoutePlannerModal = true"
+            style="height: 38px; padding: 0 1rem;">
             <i class="fa-solid fa-sliders"></i>
             <span>Change Vessel Profile</span>
           </button>
@@ -328,17 +351,23 @@
                 <span>SOLUNAR FEEDING SCORE: {{ moonPhase?.solunarFeedingScore || 75 }}/100</span>
               </div>
               <h2 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; margin-top: 0.5rem;">
-                {{ moonPhase?.solunarFeedingRating || 'GOOD ACTIVITY' }} • {{ moonPhase?.phaseName }} ({{ moonPhase?.dhivehiName }})
+                {{ moonPhase?.solunarFeedingRating || 'GOOD ACTIVITY' }} • {{ moonPhase?.phaseName }} ({{
+                moonPhase?.dhivehiName }})
               </h2>
               <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem; max-width: 650px;">
-                {{ moonPhase?.nightHandliningCondition || 'Optimal water exchange through outer reef passes (kandu). Fish actively feeding along current lines.' }}
+                {{ moonPhase?.nightHandliningCondition || 'Optimal water exchange through outer reef passes (kandu).
+                Fish actively feeding along current lines.' }}
               </p>
             </div>
 
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Lunar Illumination</span>
-              <span style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 800; color: #38bdf8;">{{ moonPhase?.illumination || 50 }}%</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted);">Age: {{ moonPhase?.moonAgeDays || 14 }} days</span>
+              <span
+                style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Lunar
+                Illumination</span>
+              <span style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 800; color: #38bdf8;">{{
+                moonPhase?.illumination || 50 }}%</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Age: {{ moonPhase?.moonAgeDays || 14 }}
+                days</span>
             </div>
           </div>
 
@@ -370,58 +399,71 @@
         <!-- Fishing Modality Selector & Technique Advice -->
         <div class="view-header" style="margin-top: 1.5rem;">
           <div class="view-title-wrap">
-            <h3 class="view-title"><i class="fa-solid fa-crosshairs" style="color: var(--accent-cyan);"></i> Tactical Modalities & Gear</h3>
+            <h3 class="view-title"><i class="fa-solid fa-crosshairs" style="color: var(--accent-cyan);"></i> Tactical
+              Modalities & Gear</h3>
             <p class="view-subtitle">Maldivian technique guidance for target species and current water clarity</p>
           </div>
         </div>
 
         <div class="modality-tab-cluster">
-          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'jigging' }" @click="activeFishingTab = 'jigging'">
+          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'jigging' }"
+            @click="activeFishingTab = 'jigging'">
             <i class="fa-solid fa-anchor"></i> Vertical Jigging (Dogtooth / Amberjack)
           </button>
-          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'casting' }" @click="activeFishingTab = 'casting'">
+          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'casting' }"
+            @click="activeFishingTab = 'casting'">
             <i class="fa-solid fa-fish"></i> Topwater Popping (Giant Trevally)
           </button>
-          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'trolling' }" @click="activeFishingTab = 'trolling'">
+          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'trolling' }"
+            @click="activeFishingTab = 'trolling'">
             <i class="fa-solid fa-ship"></i> Pelagic Trolling (Sailfish / Wahoo)
           </button>
-          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'night' }" @click="activeFishingTab = 'night'">
+          <button type="button" class="modality-btn" :class="{ active: activeFishingTab === 'night' }"
+            @click="activeFishingTab = 'night'">
             <i class="fa-solid fa-moon"></i> Night Handlining (Red Snapper / Faana)
           </button>
         </div>
 
         <div class="card" style="padding: 1.25rem;">
           <div v-if="activeFishingTab === 'jigging'">
-            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Deep Drop Vertical Jigging Strategy</h4>
+            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Deep Drop Vertical Jigging
+              Strategy</h4>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.45;">
-              Focus on steep atoll drop-offs (50m to 120m depths) along the outer channel mouths. Use 150g–250g center-weighted speed jigs or slow-pitch leaf jigs during slack-to-flood tide transitions.
+              Focus on steep atoll drop-offs (50m to 120m depths) along the outer channel mouths. Use 150g–250g
+              center-weighted speed jigs or slow-pitch leaf jigs during slack-to-flood tide transitions.
             </p>
             <div style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--accent-cyan);">
               Target Species: Dogtooth Tuna (Woshimas), Greater Amberjack, Rusty Jobfish, Giant Trevally.
             </div>
           </div>
           <div v-else-if="activeFishingTab === 'casting'">
-            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Reef Edge Topwater Popping & Stickbaiting</h4>
+            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Reef Edge Topwater Popping &
+              Stickbaiting</h4>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.45;">
-              Target white-water breaker zones where outer ocean swells compress against the shallow outer reef flats. Cast 120g–160g wide-cup poppers with 100lb fluorocarbon shock leaders.
+              Target white-water breaker zones where outer ocean swells compress against the shallow outer reef flats.
+              Cast 120g–160g wide-cup poppers with 100lb fluorocarbon shock leaders.
             </p>
             <div style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--accent-cyan);">
               Target Species: Giant Trevally (Handhi), Bluefin Trevally, Red Bass, Coral Trout.
             </div>
           </div>
           <div v-else-if="activeFishingTab === 'trolling'">
-            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Open Ocean Pelagic Trolling Strategy</h4>
+            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Open Ocean Pelagic Trolling
+              Strategy</h4>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.45;">
-              Troll 2 to 5 miles off the outer atoll barrier along sea temperature breaks and current confluences. Run deep-diver minnows (Rapala X-Rap Mag 30) at 7–9 knots for Wahoo.
+              Troll 2 to 5 miles off the outer atoll barrier along sea temperature breaks and current confluences. Run
+              deep-diver minnows (Rapala X-Rap Mag 30) at 7–9 knots for Wahoo.
             </p>
             <div style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--accent-cyan);">
               Target Species: Yellowfin Tuna (Kanneli), Wahoo (Kurumas), Sailfish (Khibaru), Mahi-Mahi.
             </div>
           </div>
           <div v-else>
-            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Traditional Night Handlining (Rey Masverikan)</h4>
+            <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Traditional Night Handlining
+              (Rey Masverikan)</h4>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.45;">
-              Anchor inside the lagoon edge or drift the reef slope at 30m–50m. Use fresh flying fish or scad strip baits with minimum lead weight to maintain a natural drift in the current.
+              Anchor inside the lagoon edge or drift the reef slope at 30m–50m. Use fresh flying fish or scad strip
+              baits with minimum lead weight to maintain a natural drift in the current.
             </p>
             <div style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--accent-cyan);">
               Target Species: Two-Spot Red Snapper (Raiy Mas), Malabar Grouper, Emperor (Rinmas), Green Jobfish.
@@ -441,18 +483,21 @@
             <span class="passage-stat-val" style="color: var(--accent-cyan);">
               {{ routeData ? `${routeData.distanceNm} NM` : '28.5 NM' }}
             </span>
-            <span class="passage-stat-sub">{{ routeData ? `${routeData.distanceKm} km direct line` : 'Inter-atoll crossing' }}</span>
+            <span class="passage-stat-sub">{{ routeData ? `${routeData.distanceKm} km direct line` : 'Inter-atoll
+              crossing' }}</span>
           </div>
 
           <div class="passage-stat">
             <span class="passage-stat-label">Course Heading</span>
-            <span class="passage-stat-val">{{ routeData ? `${routeData.bearing}° ${routeData.cardinal}` : '045° NE' }}</span>
+            <span class="passage-stat-val">{{ routeData ? `${routeData.bearing}° ${routeData.cardinal}` : '045° NE'
+              }}</span>
             <span class="passage-stat-sub">True Compass Course</span>
           </div>
 
           <div class="passage-stat">
             <span class="passage-stat-label">Estimated Transit Time</span>
-            <span class="passage-stat-val" style="color: #34d399;">{{ routeData ? routeData.transitTimeStr : '1 hr 15 min' }}</span>
+            <span class="passage-stat-val" style="color: #34d399;">{{ routeData ? routeData.transitTimeStr : '1 hr 15
+              min' }}</span>
             <span class="passage-stat-sub">Based on {{ selectedVessel?.name }}</span>
           </div>
 
@@ -468,14 +513,16 @@
         <!-- 24-Hour Calm Window Timeline -->
         <div class="view-header">
           <div class="view-title-wrap">
-            <h3 class="view-title"><i class="fa-solid fa-clock" style="color: var(--accent-cyan);"></i> 24-Hour Passage Feasibility Matrix</h3>
-            <p class="view-subtitle">Best departure hours highlighted in green with minimum wave heights & lightest winds</p>
+            <h3 class="view-title"><i class="fa-solid fa-clock" style="color: var(--accent-cyan);"></i> 24-Hour Passage
+              Feasibility Matrix</h3>
+            <p class="view-subtitle">Best departure hours highlighted in green with minimum wave heights & lightest
+              winds</p>
           </div>
         </div>
 
         <div class="window-timeline-slider card">
-          <div v-for="h in bestTravelWindow?.hourlyWindows || []" :key="h.time"
-               class="timeline-hour-pill" :class="{ 'is-best': h.isBest }">
+          <div v-for="h in bestTravelWindow?.hourlyWindows || []" :key="h.time" class="timeline-hour-pill"
+            :class="{ 'is-best': h.isBest }">
             <span class="timeline-hour">{{ h.timeStr }}</span>
             <span class="timeline-wave">{{ formatWave(h.waveHeight) }}</span>
             <span class="timeline-wind">{{ formatWind(h.windSpeed) }}</span>
@@ -485,11 +532,14 @@
         <!-- Captain's Pre-Departure Safety Checklist -->
         <div class="view-header" style="margin-top: 1.75rem;">
           <div class="view-title-wrap">
-            <h3 class="view-title"><i class="fa-solid fa-clipboard-check" style="color: #34d399;"></i> Captain's Pre-Departure Safety Checklist</h3>
-            <p class="view-subtitle">MNDF Coast Guard, Transport Authority & SOLAS safety items before casting off lines</p>
+            <h3 class="view-title"><i class="fa-solid fa-clipboard-check" style="color: #34d399;"></i> Captain's
+              Pre-Departure Safety Checklist</h3>
+            <p class="view-subtitle">MNDF Coast Guard, Transport Authority & SOLAS safety items before casting off lines
+            </p>
           </div>
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span class="badge" style="background: var(--color-safe-bg); color: var(--color-safe); border: 1px solid var(--color-safe-border); font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            <span class="badge"
+              style="background: var(--color-safe-bg); color: var(--color-safe); border: 1px solid var(--color-safe-border); font-size: 0.8rem; padding: 0.35rem 0.75rem;">
               {{ checklistCompletedCount }} / {{ departureChecklist.length }} Ready
             </span>
             <button type="button" class="btn-action-icon" @click="resetChecklist" title="Reset all checkboxes">
@@ -499,10 +549,10 @@
         </div>
 
         <div class="checklist-container">
-          <div v-for="item in departureChecklist" :key="item.id"
-               class="checklist-item" :class="{ 'is-done': item.checked }"
-               @click="toggleChecklistItem(item.id)">
-            <i class="checklist-check-icon" :class="item.checked ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
+          <div v-for="item in departureChecklist" :key="item.id" class="checklist-item"
+            :class="{ 'is-done': item.checked }" @click="toggleChecklistItem(item.id)">
+            <i class="checklist-check-icon"
+              :class="item.checked ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
             <div class="checklist-text">
               <div class="checklist-name">{{ item.label }}</div>
               <div class="checklist-desc">{{ item.desc }}</div>
@@ -518,10 +568,12 @@
         <div class="map-view-shell">
           <div class="map-controls-bar">
             <div class="map-btn-group">
-              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'satellite' }" @click="setBasemap('satellite')">
+              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'satellite' }"
+                @click="setBasemap('satellite')">
                 <i class="fa-solid fa-satellite"></i> Satellite
               </button>
-              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'street' }" @click="setBasemap('street')">
+              <button type="button" class="map-tool-btn" :class="{ active: activeBasemap === 'street' }"
+                @click="setBasemap('street')">
                 <i class="fa-solid fa-map"></i> Nautical/Road
               </button>
               <button type="button" class="map-tool-btn" :class="{ active: showSeamarks }" @click="toggleSeamarks">
@@ -550,22 +602,21 @@
       <section v-show="activeMainTab === 'weather'">
         <div class="view-header">
           <div class="view-title-wrap">
-            <h2 class="view-title"><i class="fa-solid fa-calendar-days" style="color: var(--accent-cyan);"></i> 10-Day Maritime Weather Outlook</h2>
+            <h2 class="view-title"><i class="fa-solid fa-calendar-days" style="color: var(--accent-cyan);"></i> 10-Day
+              Maritime Weather Outlook</h2>
             <p class="view-subtitle">Extended oceanographic forecast & tidal flow predictions</p>
           </div>
         </div>
 
         <!-- 10-Day Cards Slider -->
         <div style="display: flex; gap: 0.65rem; overflow-x: auto; padding-bottom: 1rem; scrollbar-width: thin;">
-          <div v-for="(day, idx) in tenDayForecast" :key="day.date"
-               class="card" :style="{
+          <div v-for="(day, idx) in tenDayForecast" :key="day.date" class="card" :style="{
                  minWidth: '130px',
                  flexShrink: 0,
                  cursor: 'pointer',
                  borderColor: selectedDayIndex === idx ? 'var(--primary)' : 'var(--border-card)',
                  background: selectedDayIndex === idx ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)'
-               }"
-               @click="selectForecastDay(idx)">
+               }" @click="selectForecastDay(idx)">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
               {{ day.weekday }}
             </div>
@@ -590,12 +641,14 @@
             {{ selectedDayForecast.weekday }}, {{ selectedDayForecast.date }} — Marine Passage Analysis
           </h3>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem;">
-            {{ selectedDayForecast.summary || 'Moderate waves, suitable for standard inter-atoll ferry and speedboat operations.' }}
+            {{ selectedDayForecast.summary || 'Moderate waves, suitable for standard inter-atoll ferry and speedboat
+            operations.' }}
           </p>
           <div class="telemetry-grid" style="margin-top: 1.25rem;">
             <div class="metric-card">
               <span class="metric-label">Max Waves</span>
-              <span class="metric-val" style="color: var(--accent-cyan);">{{ formatWave(selectedDayForecast.waveHeightMax) }}</span>
+              <span class="metric-val" style="color: var(--accent-cyan);">{{
+                formatWave(selectedDayForecast.waveHeightMax) }}</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">Peak Winds</span>
@@ -603,7 +656,8 @@
             </div>
             <div class="metric-card">
               <span class="metric-label">Rain Risk</span>
-              <span class="metric-val" style="color: #fbbf24;">{{ selectedDayForecast.precipitationProbabilityMax || 15 }}%</span>
+              <span class="metric-val" style="color: #fbbf24;">{{ selectedDayForecast.precipitationProbabilityMax || 15
+                }}%</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">Air Temperature</span>
@@ -648,16 +702,14 @@
           <!-- Search Input -->
           <div class="modal-search-box">
             <i class="fa-solid fa-magnifying-glass modal-search-icon"></i>
-            <input type="text" class="modal-search-input"
-              v-model="singleSearchQuery"
+            <input type="text" class="modal-search-input" v-model="singleSearchQuery"
               placeholder="Search 200+ islands (e.g. Malé, Hanimaadhoo, Maafilaafushi)..." />
           </div>
 
           <!-- Island Cards Grid -->
           <div class="island-results-grid">
             <button type="button" v-for="island in singleFilteredIslands" :key="island.island || island.name"
-              class="island-select-card"
-              :class="{ active: singleLocation?.island === island.island }"
+              class="island-select-card" :class="{ active: singleLocation?.island === island.island }"
               @click="setSingleIsland(island); showRoutePlannerModal = false;">
               <div class="island-card-name">{{ island.name.split('(')[0] }}</div>
               <div class="island-card-atoll">{{ island.atoll }} Atoll</div>
@@ -670,7 +722,8 @@
     <!-- 1-TAP EMERGENCY SOS MODAL -->
     <div v-if="showEmergencyModal" class="modal-backdrop" @click.self="showEmergencyModal = false">
       <div class="modal-dialog" style="border-color: rgba(239, 68, 68, 0.45);">
-        <div class="modal-header" style="background: rgba(239, 68, 68, 0.12); border-bottom-color: rgba(239, 68, 68, 0.25);">
+        <div class="modal-header"
+          style="background: rgba(239, 68, 68, 0.12); border-bottom-color: rgba(239, 68, 68, 0.25);">
           <div class="modal-title" style="color: #f87171;">
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span>Maldives Maritime Distress Hotlines</span>
@@ -682,13 +735,17 @@
 
         <div class="modal-body">
           <!-- Live Formatted Radio Coordinates -->
-          <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+          <div
+            style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem;">
               <i class="fa-solid fa-satellite-dish"></i> Current Vessel GPS Position (VHF Radio Format):
             </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--bg-page); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-card);">
-              <code style="font-size: 1.05rem; font-weight: 700; color: var(--accent-cyan);">{{ radioCoordinatesStr }}</code>
-              <button type="button" class="btn-action-icon" @click="copyRadioCoordinates" style="height: 30px; font-size: 0.72rem;">
+            <div
+              style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--bg-page); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-card);">
+              <code
+                style="font-size: 1.05rem; font-weight: 700; color: var(--accent-cyan);">{{ radioCoordinatesStr }}</code>
+              <button type="button" class="btn-action-icon" @click="copyRadioCoordinates"
+                style="height: 30px; font-size: 0.72rem;">
                 <i :class="emergencyCopied ? 'fa-solid fa-check' : 'fa-solid fa-copy'"></i>
                 <span>{{ emergencyCopied ? 'COPIED' : 'COPY' }}</span>
               </button>
